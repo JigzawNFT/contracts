@@ -1,4 +1,4 @@
-![Build status](https://github.com/JigzawNFT/contracts/actions/workflows/ci.yml/badge.svg?branch=main)
+![Build status](https://github.com/JigzawNFT/contracts/actions/workflows/ci.yml/badge.svg?branch=master)
 [![Coverage Status](https://coveralls.io/repos/github/JigzawNFT/contracts/badge.svg?t=wvNXqi)](https://coveralls.io/github/JigzawNFT/contracts)
 
 # JigzawNFT contracts
