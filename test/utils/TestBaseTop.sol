@@ -5,7 +5,7 @@ import { Base64 } from "openzeppelin/utils/Base64.sol";
 import { Strings } from "openzeppelin/utils/Strings.sol";
 import { TestBase01 } from "./TestBase01.sol";
 import { JigzawNFT } from "../../src/JigzawNFT.sol";  
-import { Config, Signature } from "../../src/Structs.sol";
+import { Signature } from "../../src/Structs.sol";
 
 abstract contract TestBaseTop is TestBase01 {  
   using Strings for uint256;
@@ -18,6 +18,9 @@ abstract contract TestBaseTop is TestBase01 {
 
   uint revealer1_key = 0x12345;
   address public revealer1 = vm.addr(revealer1_key);
+
+  uint pool1_key = 0x123456;
+  address public pool1 = vm.addr(pool1_key);
 
   JigzawNFT public t;
 
@@ -39,11 +42,12 @@ abstract contract TestBaseTop is TestBase01 {
     return _computeSig(owner1_key, _data, _deadline);
   }
 
-  function _getDefaultParams() internal view returns (Config memory) {
-    return Config({
+  function _getDefaultParams() internal view returns (JigzawNFT.Config memory) {
+    return JigzawNFT.Config({
       owner: owner1,
       minter: minter1,
       revealer: revealer1,
+      pool: pool1,
       royaltyFeeBips: 1000, /* 1000 bips = 10% */
       defaultImage: "img"
     });

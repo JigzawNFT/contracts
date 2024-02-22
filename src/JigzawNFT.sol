@@ -10,10 +10,16 @@ import { Strings } from "openzeppelin/utils/Strings.sol";
 import { Ownable } from "openzeppelin/access/Ownable.sol";
 import { SignatureChecker } from "lib/openzeppelin-contracts/contracts/utils/cryptography/SignatureChecker.sol";
 import { LibErrors } from "./LibErrors.sol";
-import { Config, Signature } from "./Structs.sol";
+import { Signature } from "./Structs.sol";
+import { IMintable } from "./IMintable.sol";
 
-contract JigzawNFT is ERC721, ERC721Enumerable, ERC721URIStorage, ERC721Royalty, Ownable {
+contract JigzawNFT is ERC721, ERC721Enumerable, ERC721URIStorage, ERC721Royalty, Ownable, IMintable {
   using Strings for uint256;
+
+  /**
+   * @dev The pool contract.
+   */
+  address public pool;
 
   /**
    * @dev The minter can approve new token mints.
@@ -42,14 +48,33 @@ contract JigzawNFT is ERC721, ERC721Enumerable, ERC721URIStorage, ERC721Royalty,
 
   // Constructor
 
-  constructor(Config memory _params)
+  /**
+   * @dev Configuration parameters.
+   */
+  struct Config {
+    /** Owner. */
+    address owner;
+    /** Pool. */
+    address pool;
+    /** Minter. */
+    address minter;
+    /** Revealer. */
+    address revealer;
+    /** Royalty fee */
+    uint96 royaltyFeeBips;
+    /** Default token image as a data URI. */
+    string defaultImage;
+  }
+
+  constructor(Config memory _config)
     ERC721("Jigzaw", "JIGZAW") 
-    Ownable(_params.owner)
+    Ownable(_config.owner)
   {
-    minter = _params.minter;
-    revealer = _params.revealer;
-    defaultImage = _params.defaultImage;
-    _setDefaultRoyalty(_params.owner, _params.royaltyFeeBips);
+    minter = _config.minter;
+    revealer = _config.revealer;
+    pool = _config.pool;
+    defaultImage = _config.defaultImage;
+    _setDefaultRoyalty(_config.owner, _config.royaltyFeeBips);
   }
 
   // Functions - necessary overrides
@@ -60,6 +85,10 @@ contract JigzawNFT is ERC721, ERC721Enumerable, ERC721URIStorage, ERC721Royalty,
 
   function _increaseBalance(address account, uint128 amount) internal override(ERC721, ERC721Enumerable) {
     ERC721Enumerable._increaseBalance(account, amount);
+  }
+
+  function _isAuthorized(address owner, address spender, uint256 tokenId) internal view override returns (bool) {
+    return (spender == pool || super._isAuthorized(owner, spender, tokenId));
   }
 
   function supportsInterface(bytes4 interfaceId) public view override(ERC721, ERC721Royalty, ERC721Enumerable, ERC721URIStorage) returns (bool) {
@@ -134,6 +163,16 @@ contract JigzawNFT is ERC721, ERC721Enumerable, ERC721URIStorage, ERC721Royalty,
     defaultImage = _defaultImage;
   }
 
+  // Functions - set pool
+
+  /**
+   * @dev Set the pool.
+   * @param _pool The address of the new pool.
+   */
+  function setPool(address _pool) external onlyOwner {
+    pool = _pool;
+  }
+
   // Functions - set royalty
 
   /**
@@ -154,7 +193,7 @@ contract JigzawNFT is ERC721, ERC721Enumerable, ERC721URIStorage, ERC721Royalty,
   }
 
   /**
-   * @dev Mint tokens to the address.
+   * @dev Mint tokens to the address, called by anyone.
    *
    * @param _to The address which will own the minted tokens.
    * @param _ids token ids to mint.
@@ -163,22 +202,36 @@ contract JigzawNFT is ERC721, ERC721Enumerable, ERC721URIStorage, ERC721Royalty,
   function mint(address _to, uint[] calldata _ids, Signature calldata _sig) external {
     _assertValidSignature(minter, _sig, abi.encodePacked(_to, _ids));
 
-    address caller = _msgSender();
-
-    if (_ids.length == 0) {
-      revert LibErrors.MintEmpty(caller);
-    }
-
     for(uint i = 0; i < _ids.length; i++) {
-      uint256 tokenId = _ids[i];
-
-      address owner = _ownerOf(tokenId);
-      if (owner != address(0)) {
-        revert LibErrors.AlreadyMinted(caller, tokenId);
-      }
-
-      _safeMint(_to, tokenId);
+      _safeMint(_to, _ids[i]);
     }
+  }
+
+  /**
+   * @dev Mint tokens to the address, called by the pool.
+   *
+   * @param _to The address which will own the minted tokens.
+   * @param _startId The id to start mint from.
+   * @param _count No. of tokens to mint.
+   */
+  function mint(address _to, uint _startId, uint _count) external onlyPool {
+    uint _endId = _startId + _count;
+    
+    for(uint i = _startId; i <= _endId; i++) {
+      _safeMint(_to, i);
+    }
+  }
+
+  // Modifiers
+
+  /**
+   * @dev Only the pool can call this function.
+   */
+  modifier onlyPool() {
+    if (_msgSender() != pool) {
+      revert LibErrors.UnauthorizedMustBePool(_msgSender());
+    }
+    _;
   }
 
   // Internal
@@ -186,7 +239,7 @@ contract JigzawNFT is ERC721, ERC721Enumerable, ERC721URIStorage, ERC721Royalty,
   /**
    * @dev Assert validity of given signature.
    */
-  function _assertValidSignature(address _signer, Signature memory _sig, bytes memory _data) internal {
+  function _assertValidSignature(address _signer, Signature memory _sig, bytes memory _data) private {
     if(_sig.deadline < block.timestamp) {
       revert LibErrors.SignatureExpired(_msgSender()); 
     }

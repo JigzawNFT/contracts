@@ -4,6 +4,7 @@ pragma solidity ^0.8.24;
 import { TestBaseTop } from "./utils/TestBaseTop.sol";
 import { Signature } from "../src/Structs.sol";
 import { LibErrors } from "../src/LibErrors.sol";
+import { IERC721Errors } from "openzeppelin/interfaces/draft-IERC6093.sol";
 
 contract Minting is TestBaseTop {
   address caller = address(0x999);
@@ -59,7 +60,7 @@ contract Minting is TestBaseTop {
     t.mint(wallet, ids, sigRevealer);
   }
 
-  function test_MintEmpty_Fails() public {
+  function test_MintEmpty_Succeeds() public {
     uint[] memory ids = new uint[](0);
 
     Signature memory sig = _computeMinterSig(
@@ -68,8 +69,9 @@ contract Minting is TestBaseTop {
     );
 
     vm.prank(caller);
-    vm.expectRevert(abi.encodeWithSelector(LibErrors.MintEmpty.selector, caller));
     t.mint(wallet, ids, sig);
+
+    assertEq(t.totalSupply(), 0);
   }
 
   function test_MintBadSignature_Fails() public {
@@ -140,7 +142,7 @@ contract Minting is TestBaseTop {
     );
 
     vm.prank(caller);
-    vm.expectRevert(abi.encodeWithSelector(LibErrors.AlreadyMinted.selector, caller, 1));
+    vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721InvalidSender.selector, address(0)));
     t.mint(wallet, ids2, sig2);
   }
 }

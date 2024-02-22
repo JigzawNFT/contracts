@@ -4,8 +4,6 @@ pragma solidity ^0.8.24;
 import {console2 as c} from "forge-std/Test.sol";
 import { TestBaseTop } from "./utils/TestBaseTop.sol";
 import { Ownable } from "openzeppelin/access/Ownable.sol";
-import { Config, Signature } from "../src/Structs.sol";
-
 
 contract SetDefaultImage is TestBaseTop {
   function test_SetDefaultImageWhenOwner_Succeeds() public {

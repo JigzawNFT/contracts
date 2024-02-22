@@ -1,21 +1,20 @@
 // SPDX-License-Identifier: GPLv3
 pragma solidity ^0.8.24;
 
+struct PoolStatus {
+  /** Id of last token minted. */
+  uint256 lastTokenMinted;
+  /** Current price (in wei). */
+  uint256 priceWei;
+}
 
-/**
- * @dev Configuration parameters.
- */
-struct Config {
-  /** Owner. */
-  address owner;
-  /** Minter. */
-  address minter;
-  /** Revealer. */
-  address revealer;
-  /** Royalty fee */
-  uint96 royaltyFeeBips;
-  /** Default token image as a data URI. */
-  string defaultImage;
+struct PoolCurve {
+  /** Token id which start the price curve. */
+  uint256 startId;
+  /** Price at beginning (in wei). */
+  uint256 startPriceWei;
+  /** Percentage to increase price by (in bips, 1 bip = 0.01%) for each purchase. */
+  uint256 expDeltaBips;
 }
 
 struct Signature {

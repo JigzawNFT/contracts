@@ -3,14 +3,9 @@ pragma solidity ^0.8.24;
 
 library LibErrors {
   /**
-  * @dev The caller tried to mint an already minted token.
+  * @dev Only pool is allowed to call this.
   */
-  error AlreadyMinted(address caller, uint tokenId);
-
-  /**
-  * @dev The caller tried to mint nothing.
-  */
-  error MintEmpty(address caller);
+  error UnauthorizedMustBePool(address caller);
 
   /**
    * @dev The token has already been revealed.
