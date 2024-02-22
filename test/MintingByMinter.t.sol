@@ -6,7 +6,7 @@ import { Signature } from "../src/Structs.sol";
 import { LibErrors } from "../src/LibErrors.sol";
 import { IERC721Errors } from "openzeppelin/interfaces/draft-IERC6093.sol";
 
-contract Minting is TestBaseTop {
+contract MintingByMinter is TestBaseTop {
   address caller = address(0x999);
   address wallet = address(0x888);
 

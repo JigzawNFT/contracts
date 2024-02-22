@@ -217,7 +217,7 @@ contract JigzawNFT is ERC721, ERC721Enumerable, ERC721URIStorage, ERC721Royalty,
   function mint(address _to, uint _startId, uint _count) external onlyPool {
     uint _endId = _startId + _count;
     
-    for(uint i = _startId; i <= _endId; i++) {
+    for(uint i = _startId; i < _endId; i++) {
       _safeMint(_to, i);
     }
   }

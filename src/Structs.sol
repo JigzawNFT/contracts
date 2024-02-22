@@ -9,11 +9,13 @@ struct PoolStatus {
 }
 
 struct PoolCurve {
-  /** Token id which start the price curve. */
-  uint256 startId;
+  /** Token id to mint from. */
+  uint256 mintStartId;
+  /** Token id to mint to. */
+  uint256 mintEndId;
   /** Price at beginning (in wei). */
   uint256 startPriceWei;
-  /** Percentage to increase price by (in bips, 1 bip = 0.01%) for each purchase. */
+  /** Percentage to increase/decrease price by (in bips, 1 bip = 0.01%) for each purchase/sale. */
   uint256 expDeltaBips;
 }
 

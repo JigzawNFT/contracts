@@ -47,7 +47,8 @@ contract JigzawPool is Ownable {
 
     for (uint i = 0; i < _config.curves.length; i++) {      
       curves.push(PoolCurve({
-        startId: _config.curves[i].startId,
+        mintStartId: _config.curves[i].mintStartId,
+        mintEndId: _config.curves[i].mintEndId,
         startPriceWei: _config.curves[i].startPriceWei,
         expDeltaBips: _config.curves[i].expDeltaBips
       }));
