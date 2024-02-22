@@ -1,0 +1,146 @@
+// SPDX-License-Identifier: GPLv3
+pragma solidity ^0.8.24;
+
+import { TestBaseTop } from "./utils/TestBaseTop.sol";
+import { Signature } from "../src/Structs.sol";
+import { LibErrors } from "../src/LibErrors.sol";
+
+contract Minting is TestBaseTop {
+  address caller = address(0x999);
+  address wallet = address(0x888);
+
+  function test_MintWithMinterAuthorisation_Succeeds() public {
+    uint[] memory ids = new uint[](2);
+    ids[0] = 1;
+    ids[1] = 2;
+
+    Signature memory sig = _computeMinterSig(
+      abi.encodePacked(wallet, ids), 
+      block.timestamp + 10 seconds
+    );
+
+    vm.prank(caller);
+    t.mint(wallet, ids, sig);
+
+    assertEq(t.ownerOf(1), wallet);
+    assertEq(t.ownerOf(2), wallet);
+
+    assertEq(t.totalSupply(), 2);
+    assertEq(t.balanceOf(wallet), 2);
+
+    assertEq(t.tokenByIndex(0), 1);
+    assertEq(t.tokenByIndex(1), 2);
+
+    assertEq(t.tokenOfOwnerByIndex(wallet, 0), 1);
+    assertEq(t.tokenOfOwnerByIndex(wallet, 1), 2);
+  }
+
+  function test_MintWithNotMinterAuthorisation_Fails() public {
+    uint[] memory ids = new uint[](2);
+    ids[0] = 1;
+    ids[1] = 2;
+
+    Signature memory sigOwner = _computeOwnerSig(
+      abi.encodePacked(wallet, ids), 
+      block.timestamp + 10 seconds
+    );
+
+    vm.prank(caller);
+    vm.expectRevert(abi.encodeWithSelector(LibErrors.SignatureInvalid.selector, caller));
+    t.mint(wallet, ids, sigOwner);
+
+    Signature memory sigRevealer = _computeRevealerSig(
+      abi.encodePacked(wallet, ids), 
+      block.timestamp + 10 seconds
+    );
+
+    vm.prank(caller);
+    vm.expectRevert(abi.encodeWithSelector(LibErrors.SignatureInvalid.selector, caller));
+    t.mint(wallet, ids, sigRevealer);
+  }
+
+  function test_MintEmpty_Fails() public {
+    uint[] memory ids = new uint[](0);
+
+    Signature memory sig = _computeMinterSig(
+      abi.encodePacked(wallet, ids), 
+      block.timestamp + 10 seconds
+    );
+
+    vm.prank(caller);
+    vm.expectRevert(abi.encodeWithSelector(LibErrors.MintEmpty.selector, caller));
+    t.mint(wallet, ids, sig);
+  }
+
+  function test_MintBadSignature_Fails() public {
+    uint[] memory ids = new uint[](1);
+    ids[0] = 1;
+
+    Signature memory sig = Signature({
+      signature: bytes(""),
+      deadline: block.timestamp + 10 seconds
+    });
+
+    vm.prank(caller);
+    vm.expectRevert(abi.encodeWithSelector(LibErrors.SignatureInvalid.selector, caller));
+    t.mint(wallet, ids, sig);
+  }
+
+  function test_MintExpiredSignature_Fails() public {
+    uint[] memory ids = new uint[](1);
+    ids[0] = 1;
+
+    Signature memory sig = _computeMinterSig(
+      abi.encodePacked(wallet, ids), 
+      block.timestamp - 1 seconds
+    );
+
+    vm.prank(caller);
+    vm.expectRevert(abi.encodeWithSelector(LibErrors.SignatureExpired.selector, caller));
+    t.mint(wallet, ids, sig);
+  }
+
+  function test_MintSignatureAlreadyUsed_Fails() public {
+    uint[] memory ids = new uint[](1);
+    ids[0] = 1;
+
+    Signature memory sig = _computeMinterSig(
+      abi.encodePacked(wallet, ids), 
+      block.timestamp + 10 seconds
+    );
+
+    vm.prank(caller);
+    t.mint(wallet, ids, sig);
+
+    vm.prank(caller);
+    vm.expectRevert(abi.encodeWithSelector(LibErrors.SignatureAlreadyUsed.selector, caller));
+    t.mint(wallet, ids, sig);
+  }
+
+  function test_MintAlreadyMintedToken_Fails() public {
+    uint[] memory ids = new uint[](1);
+    ids[0] = 1;
+
+    Signature memory sig = _computeMinterSig(
+      abi.encodePacked(wallet, ids), 
+      block.timestamp + 10 seconds
+    );
+
+    vm.prank(caller);
+    t.mint(wallet, ids, sig);
+
+    uint[] memory ids2 = new uint[](3);
+    ids2[0] = 2;
+    ids2[1] = 3;
+    ids2[2] = 1; // should error coz already minted!
+
+    Signature memory sig2 = _computeMinterSig(
+      abi.encodePacked(wallet, ids2), 
+      block.timestamp + 10 seconds
+    );
+
+    vm.prank(caller);
+    vm.expectRevert(abi.encodeWithSelector(LibErrors.AlreadyMinted.selector, caller, 1));
+    t.mint(wallet, ids2, sig2);
+  }
+}
