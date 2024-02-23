@@ -65,7 +65,7 @@ $ bun view-coverage
 
 _Notes:_
 
-* _The `owner`, `minter` and `revealer` are all set to be the deployment wallet's address._
+* _The `owner`, `minter`, `revealer` and `pool` roles are all set to be the deployment wallet's address._
 * _[CREATE2](https://book.getfoundry.sh/tutorials/create2-tutorial) is used for deployment, so the address will always be the same as long as the deployment wallet and bytecode are the same, irrespective of chain, nonce, etc._
 
 ### Local (anvil)
@@ -82,7 +82,7 @@ Then run:
 $ bun deploy-local
 ```
 
-### Public (tesnets, mainnets)
+### Public (testnets, mainnets)
 
 Set the following environment variables:
 
