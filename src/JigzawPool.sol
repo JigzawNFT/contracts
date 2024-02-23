@@ -2,6 +2,7 @@
 pragma solidity ^0.8.24;
 
 import { IMintable } from "./IMintable.sol";
+import { LibErrors } from "./LibErrors.sol";
 import { PoolCurve, PoolStatus } from "./Structs.sol";
 
 /**
@@ -50,7 +51,7 @@ contract JigzawPool {
   // Buying
   // ---------------------------------------------------------------
 
-  function buy() public payable {
+  function buy() external payable {
     address payable sender = payable(msg.sender);
 
     (uint numTokens, uint finalAmountWei) = getBuyInfo(msg.value);
@@ -77,9 +78,7 @@ contract JigzawPool {
     }
   }
 
-  function getBuyInfo(uint amountWei) public view returns (uint numTokens, uint finalAmountWei) {
-    // TODO: optimize this, remove the loop
-
+  function getBuyInfo(uint amountWei) public view returns (uint numTokensBought, uint finalAmountWei) {
     /*
     Since price moves up by a % after each buy, it would be possible to 
     buy and then immediately sell for a profit. To avoid this we'll 
@@ -87,14 +86,14 @@ contract JigzawPool {
     */
     uint nextPrice;
     uint tokensAvailable = nft.balanceOf(address(this)) + (curve.mintEndId - status.lastMintId);
-    while (numTokens < tokensAvailable) {
+    while (numTokensBought < tokensAvailable) {
       nextPrice = status.priceWei * curve.delta / 1e18;
       if (nextPrice > amountWei) {
         break;
       }
       amountWei -= nextPrice;
       finalAmountWei += nextPrice;
-      numTokens++;
+      numTokensBought++;
     }
   }
 
@@ -103,10 +102,52 @@ contract JigzawPool {
   // ---------------------------------------------------------------
 
 
-  function sell() public {
-    // Buy
+  function sell(uint[] calldata tokenIds) external {
+    address payable sender = payable(msg.sender);
+
+    uint tokenBal = nft.balanceOf(sender);
+    if (tokenIds.length > tokenBal) {
+      revert LibErrors.InsufficientBalance(sender, tokenBal);
+    }
+
+    (uint numTokensSold, uint finalAmountWei) = getSellInfo(tokenIds.length);
+
+    if (numTokensSold > 0) {
+      // for each token
+      for (uint i = 0; i < numTokensSold; i++) {
+        uint id = tokenIds[i];
+        
+        // must be within supported range
+        if (id < curve.mintStartId || id > curve.mintEndId) {
+          revert LibErrors.TokenCannotBeSoldIntoPool(sender, id);
+        }
+
+        // transfer to pool
+        nft.safeTransferFrom(sender, address(this), id);
+      }
+
+      // return wei
+      sender.transfer(finalAmountWei);
+    }
   }
 
-  function getSellInfo(uint amountWei) public view returns (uint) {
+  function getSellInfo(uint numTokens) public view returns (uint numTokensSold, uint finalAmountWei) {
+    /*
+    Since price down up by a % after each sell, it would be possible to 
+    sell and then immediately buy for a profit. To avoid this we'll 
+    place the sell to be at the next price down.
+    */
+    uint nextPrice;
+    uint bal = address(this).balance;
+    while (bal > 0 && numTokens > 0) {
+      nextPrice = status.priceWei * 1e18 / curve.delta;
+      if (nextPrice > bal) {
+        break;
+      }
+      bal -= nextPrice;
+      finalAmountWei += nextPrice;
+      numTokensSold++;
+      numTokens--;
+    }
   }
 }

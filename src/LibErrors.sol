@@ -26,4 +26,14 @@ library LibErrors {
    * @dev The caller supplied an already used signature.
    */
   error SignatureAlreadyUsed(address caller);
+
+  /**
+  * @dev The caller has insufficient balance.
+  */
+  error InsufficientBalance(address caller, uint currentBalance);
+
+  /**
+  * @dev The token cannot be sold into the pool.
+  */
+  error TokenCannotBeSoldIntoPool(address caller, uint tokenId);
 }
