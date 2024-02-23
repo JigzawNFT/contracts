@@ -3,9 +3,9 @@ pragma solidity ^0.8.24;
 
 import { Base64 } from "openzeppelin/utils/Base64.sol";
 import { Strings } from "openzeppelin/utils/Strings.sol";
+import { JigzawNFT } from "src/JigzawNFT.sol";  
+import { Signature } from "src/Structs.sol";
 import { TestBase01 } from "./TestBase01.sol";
-import { JigzawNFT } from "../../src/JigzawNFT.sol";  
-import { Signature } from "../../src/Structs.sol";
 
 abstract contract TestBaseTop is TestBase01 {  
   using Strings for uint256;

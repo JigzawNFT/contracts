@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPLv3
 pragma solidity ^0.8.24;
 
-import { TestBaseTop } from "./utils/TestBaseTop.sol";
+import { TestBaseTop } from "test/utils/TestBaseTop.sol";
 import { IERC165 } from "openzeppelin/interfaces/IERC165.sol";
 import { IERC721 } from "openzeppelin/interfaces/IERC721.sol";
 import { IERC721Metadata } from "openzeppelin/interfaces/IERC721Metadata.sol";

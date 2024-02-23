@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPLv3
 pragma solidity ^0.8.24;
 
-import { TestBaseTop } from "./utils/TestBaseTop.sol";
+import { TestBaseTop } from "test/utils/TestBaseTop.sol";
 
 contract Basic is TestBaseTop {
   function test_DefaultConfig() public {

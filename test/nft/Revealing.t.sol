@@ -2,9 +2,9 @@
 pragma solidity ^0.8.24;
 
 import { IERC721Errors } from "openzeppelin/interfaces/draft-IERC6093.sol";
-import { TestBaseTop } from "./utils/TestBaseTop.sol";
-import { Signature } from "../src/Structs.sol";
-import { LibErrors } from "../src/LibErrors.sol";
+import { TestBaseTop } from "test/utils/TestBaseTop.sol";
+import { Signature } from "src/Structs.sol";
+import { LibErrors } from "src/LibErrors.sol";
 
 contract Revealing is TestBaseTop {
   address caller = address(0x999);

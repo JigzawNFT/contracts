@@ -60,15 +60,32 @@ contract JigzawPool is Ownable {
     }
   }
 
-  // Buy
+  // ---------------------------------------------------------------
+  // Buying
+  // ---------------------------------------------------------------
 
   function buy() public payable {
     // Buy
   }
 
-  // Sell
+  function getBuyQuote(uint numTokens) public view returns (uint) {
+  }
+
+  function calculateBuy(uint amount) public view returns (uint) {
+  }
+
+  // ---------------------------------------------------------------
+  // Selling
+  // ---------------------------------------------------------------
+
 
   function sell() public {
     // Buy
+  }
+
+  function getSellQuote(uint numTokens) public view returns (uint) {
+  }
+
+  function calculateSell(uint amount) public view returns (uint) {
   }
 }
