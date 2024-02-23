@@ -3,7 +3,6 @@ pragma solidity ^0.8.24;
 
 import { IMintable } from "./IMintable.sol";
 import { PoolCurve, PoolStatus } from "./Structs.sol";
-import { Ownable } from "openzeppelin/access/Ownable.sol";
 
 /**
  * @dev Jigzaw NFT liquidity pool.
@@ -21,10 +20,10 @@ import { Ownable } from "openzeppelin/access/Ownable.sol";
  * Different ranges of NFTs (e.g token ids 1 to 20 could be one "range") can have different bonding curves. Each curve only 
  * has access to its own liquidity.
  */
-contract JigzawPool is Ownable {
+contract JigzawPool {
   IMintable public nft;
-  PoolCurve[] public curves;
-  PoolStatus[] public statuses;
+  PoolCurve public curve;
+  PoolStatus public status;
 
   // Constructor
 
@@ -34,30 +33,17 @@ contract JigzawPool is Ownable {
   struct Config {
     /** JigzawNFT contractx. */
     address nft;
-    /** Owner. */
-    address owner;
     /** Price curves (and thus liquidity pools) */
-    PoolCurve[] curves;
+    PoolCurve curve;
   }
 
-  constructor(Config memory _config)
-    Ownable(_config.owner)
-  {
+  constructor(Config memory _config) {
     nft = IMintable(_config.nft);
-
-    for (uint i = 0; i < _config.curves.length; i++) {      
-      curves.push(PoolCurve({
-        mintStartId: _config.curves[i].mintStartId,
-        mintEndId: _config.curves[i].mintEndId,
-        startPriceWei: _config.curves[i].startPriceWei,
-        expDeltaBips: _config.curves[i].expDeltaBips
-      }));
-
-      statuses.push(PoolStatus({
-        lastTokenMinted: 0,
-        priceWei: _config.curves[i].startPriceWei
-      }));
-    }
+    curve = _config.curve;
+    status = PoolStatus({
+      lastMintId: 0,
+      priceWei: curve.startPriceWei
+    });
   }
 
   // ---------------------------------------------------------------
@@ -65,13 +51,51 @@ contract JigzawPool is Ownable {
   // ---------------------------------------------------------------
 
   function buy() public payable {
-    // Buy
+    address payable sender = payable(msg.sender);
+
+    (uint numTokens, uint finalAmountWei) = getBuyInfo(msg.value);
+
+    if (numTokens > 0) {
+      // transfer from balance first
+      uint balance = nft.balanceOf(address(this));
+      if (balance > 0) {
+        uint toTransfer = balance < numTokens ? balance : numTokens;
+        nft.safeTransferFrom(address(this), sender, toTransfer);
+        numTokens -= toTransfer;
+      }
+
+      // mint remaining
+      if (numTokens > 0) {
+        nft.mint(sender, status.lastMintId, numTokens);
+        status.lastMintId += numTokens;
+      }
+
+      // return excess wei
+      if (finalAmountWei < msg.value) {
+        sender.transfer(msg.value - finalAmountWei);
+      }
+    }
   }
 
-  function getBuyQuote(uint numTokens) public view returns (uint) {
-  }
+  function getBuyInfo(uint amountWei) public view returns (uint numTokens, uint finalAmountWei) {
+    // TODO: optimize this, remove the loop
 
-  function calculateBuy(uint amount) public view returns (uint) {
+    /*
+    Since price moves up by a % after each buy, it would be possible to 
+    buy and then immediately sell for a profit. To avoid this we'll 
+    place the buy to be at the next price up.
+    */
+    uint nextPrice;
+    uint tokensAvailable = nft.balanceOf(address(this)) + (curve.mintEndId - status.lastMintId);
+    while (numTokens < tokensAvailable) {
+      nextPrice = status.priceWei * curve.delta / 1e18;
+      if (nextPrice > amountWei) {
+        break;
+      }
+      amountWei -= nextPrice;
+      finalAmountWei += nextPrice;
+      numTokens++;
+    }
   }
 
   // ---------------------------------------------------------------
@@ -83,9 +107,6 @@ contract JigzawPool is Ownable {
     // Buy
   }
 
-  function getSellQuote(uint numTokens) public view returns (uint) {
-  }
-
-  function calculateSell(uint amount) public view returns (uint) {
+  function getSellInfo(uint amountWei) public view returns (uint) {
   }
 }

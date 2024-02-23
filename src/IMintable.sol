@@ -2,17 +2,18 @@
 pragma solidity ^0.8.24;
 
 import { Signature } from "./Structs.sol";
+import { IERC721 } from "openzeppelin/token/ERC721/IERC721.sol";
 
 /**
- * @dev A mintable NFT token, using authorisation signatures.
+ * @dev A mintable NFT.
  */
-interface IMintable {
+interface IMintable is IERC721 {
   /**
    * @dev Mint tokens to the address.
    *
    * @param _to The address which will own the minted tokens.
-   * @param _ids token ids to mint.
-   * @param _sig minter authorisation signature.
+   * @param _startId The id to start mint from.
+   * @param _count No. of tokens to mint.
    */
-  function mint(address _to, uint[] calldata _ids, Signature calldata _sig) external;
+  function mint(address _to, uint _startId, uint _count) external;
 }
