@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: GPLv3
 pragma solidity ^0.8.24;
 
-import { TestBaseTop } from "test/utils/TestBaseTop.sol";
+import { NftTestBase } from "./NftTestBase.sol";
 import { Signature } from "src/Structs.sol";
 import { LibErrors } from "src/LibErrors.sol";
 import { IERC721Errors } from "openzeppelin/interfaces/draft-IERC6093.sol";
 
-contract MintingByMinter is TestBaseTop {
+contract NftMintingByMinter is NftTestBase {
   address caller = address(0x999);
   address wallet = address(0x888);
 

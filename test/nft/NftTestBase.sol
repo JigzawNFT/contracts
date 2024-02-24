@@ -5,9 +5,9 @@ import { Base64 } from "openzeppelin/utils/Base64.sol";
 import { Strings } from "openzeppelin/utils/Strings.sol";
 import { JigzawNFT } from "src/JigzawNFT.sol";  
 import { Signature } from "src/Structs.sol";
-import { TestBase01 } from "./TestBase01.sol";
+import { TestBase01 } from "test/utils/TestBase01.sol";
 
-abstract contract TestBaseTop is TestBase01 {  
+abstract contract NftTestBase is TestBase01 {  
   using Strings for uint256;
 
   uint owner1_key = 0x123;
@@ -25,7 +25,7 @@ abstract contract TestBaseTop is TestBase01 {
   JigzawNFT public t;
 
   function setUp() virtual public {
-    t = new JigzawNFT(_getDefaultParams());
+    t = new JigzawNFT(_getDefaultConfig());
   }
 
   // Helper methods
@@ -42,7 +42,7 @@ abstract contract TestBaseTop is TestBase01 {
     return _computeSig(owner1_key, _data, _deadline);
   }
 
-  function _getDefaultParams() internal view returns (JigzawNFT.Config memory) {
+  function _getDefaultConfig() internal view returns (JigzawNFT.Config memory) {
     return JigzawNFT.Config({
       owner: owner1,
       minter: minter1,
@@ -69,5 +69,5 @@ abstract contract TestBaseTop is TestBase01 {
     return string(abi.encodePacked("data:application/json;base64,", Base64.encode(bytes(json))));
   }
 
-  function testTestBaseTop_ExcludeFromCoverage() public {}  
+  function testNftTestBase_ExcludeFromCoverage() public {}  
 }

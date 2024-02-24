@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPLv3
 pragma solidity ^0.8.24;
 
-import { TestBaseTop } from "test/utils/TestBaseTop.sol";
+import { NftTestBase } from "./NftTestBase.sol";
 
-contract Basic is TestBaseTop {
+contract NftBasic is NftTestBase {
   function test_DefaultConfig() public {
     assertEq(t.name(), "Jigzaw");
     assertEq(t.symbol(), "JIGZAW");

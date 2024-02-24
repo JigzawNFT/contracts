@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: GPLv3
 pragma solidity ^0.8.24;
 
-import { TestBaseTop } from "test/utils/TestBaseTop.sol";
+import { NftTestBase } from "./NftTestBase.sol";
 import { Signature } from "src/Structs.sol";
 import { LibErrors } from "src/LibErrors.sol";
 import { IERC721Errors } from "openzeppelin/interfaces/draft-IERC6093.sol";
 
-contract TransferAuth is TestBaseTop {
+contract NftTransferAuth is NftTestBase {
   address wallet1 = address(0x8888);
   address wallet2 = address(0x9999);
 

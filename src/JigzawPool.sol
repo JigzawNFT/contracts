@@ -42,10 +42,16 @@ contract JigzawPool {
     nft = IMintable(_config.nft);
     curve = _config.curve;
     status = PoolStatus({
-      lastMintId: 0,
+      lastMintId: curve.mintStartId - 1,
       priceWei: curve.startPriceWei
     });
   }
+
+
+  function getCurveStatus() public view returns (PoolCurve memory, PoolStatus memory) {
+    return (curve, status);
+  }
+
 
   // ---------------------------------------------------------------
   // Buying
@@ -84,10 +90,10 @@ contract JigzawPool {
     buy and then immediately sell for a profit. To avoid this we'll 
     place the buy to be at the next price up.
     */
-    uint nextPrice;
+    uint nextPrice = status.priceWei;
     uint tokensAvailable = nft.balanceOf(address(this)) + (curve.mintEndId - status.lastMintId);
     while (numTokensBought < tokensAvailable) {
-      nextPrice = status.priceWei * curve.delta / 1e18;
+      nextPrice = nextPrice * curve.delta / 1e18;
       if (nextPrice > amountWei) {
         break;
       }
@@ -137,10 +143,10 @@ contract JigzawPool {
     sell and then immediately buy for a profit. To avoid this we'll 
     place the sell to be at the next price down.
     */
-    uint nextPrice;
+    uint nextPrice = status.priceWei;
     uint bal = address(this).balance;
     while (bal > 0 && numTokens > 0) {
-      nextPrice = status.priceWei * 1e18 / curve.delta;
+      nextPrice = nextPrice * 1e18 / curve.delta;
       if (nextPrice > bal) {
         break;
       }
