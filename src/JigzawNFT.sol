@@ -174,13 +174,21 @@ contract JigzawNFT is ERC721, ERC721Enumerable, ERC721URIStorage, ERC721Royalty,
     pool = _pool;
   }
 
-  // Functions - set royalty
+  // Functions - royalty
 
   /**
    * @dev Set the royalty receiver and fee.
    */
   function setRoyaltyFee(address _receiver, uint96 _feeBips) external onlyOwner {
     _setDefaultRoyalty(_receiver, _feeBips);
+  }
+
+  /**
+   * @dev Get the royalty info.
+   */
+  function getRoyaltyInfo() external returns (address receiver, uint256 feeBips) {
+    /* will cancel out fee denomination divisor so that we get back the bips */
+    (receiver, feeBips) = nft.royaltyInfo(1, 10000);
   }
 
   // Functions - minting

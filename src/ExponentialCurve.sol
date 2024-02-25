@@ -17,34 +17,45 @@ contract ExponentialCurve {
     // minimum price to prevent numerical issues
     uint256 public constant MIN_PRICE = 1 gwei;
 
+    struct BuyQuote {
+        CurveQuoteError error;
+        uint128 newSpotPrice;
+        uint256 inputValue;
+        uint256 fee;
+    }
+
+    struct SellQuote {
+        CurveQuoteError error;
+        uint128 newSpotPrice;
+        uint256 outputValue;
+        uint256 fee;
+    }
+
     function validateSpotPrice(uint128 newSpotPrice)
-        external
+        internal
         pure
         returns (bool)
     {
         return newSpotPrice >= MIN_PRICE;
     }
 
-    function getBuyQuote(
+    function getBuyInfo(
         uint128 spotPrice,
         uint128 delta,
         uint256 numItems,
         uint256 feeBips
     )
-        external
+        internal
         pure
         returns (
-            CurveQuoteError error,
-            uint128 newSpotPrice,
-            uint128 newDelta,
-            uint256 inputValue,
-            uint256 fee
+            BuyQuote memory quote
         )
     {
         // NOTE: we assume delta is > 1, as checked by validateDelta()
         // We only calculate changes for buying 1 or more NFTs
         if (numItems == 0) {
-            return (CurveQuoteError.INVALID_NUMITEMS, 0, 0, 0, 0);
+            quote.error = CurveQuoteError.INVALID_NUMITEMS;
+            return;
         }
 
         uint256 deltaPowN = uint256(delta).fpow(
@@ -58,9 +69,10 @@ contract ExponentialCurve {
             FixedPointMathLib.WAD
         );
         if (newSpotPrice_ > type(uint128).max) {
-            return (CurveQuoteError.SPOT_PRICE_OVERFLOW, 0, 0, 0, 0);
+            quote.error = CurveQuoteError.SPOT_PRICE_OVERFLOW;
+            return;
         }
-        newSpotPrice = uint128(newSpotPrice_);
+        quote.newSpotPrice = uint128(newSpotPrice_);
 
         // Spot price is assumed to be the instant sell price. To avoid arbitraging LPs, we adjust the buy price upwards.
         // If spot price for buy and sell were the same, then someone could buy 1 NFT and then sell for immediate profit.
@@ -76,7 +88,7 @@ contract ExponentialCurve {
         // If the user buys n items, then the total cost is equal to:
         // buySpotPrice + (delta * buySpotPrice) + (delta^2 * buySpotPrice) + ... (delta^(numItems - 1) * buySpotPrice)
         // This is equal to buySpotPrice * (delta^n - 1) / (delta - 1)
-        inputValue = buySpotPrice.fmul(
+        quote.inputValue = buySpotPrice.fmul(
             (deltaPowN - FixedPointMathLib.WAD).fdiv(
                 delta - FixedPointMathLib.WAD,
                 FixedPointMathLib.WAD
@@ -85,19 +97,16 @@ contract ExponentialCurve {
         );
 
         // Account for the fee
-        fee = inputValue.fmul(
+        quote.fee = quote.inputValue.fmul(
             feeBips,
             10000
         );
 
         // Add the fee to the required input amount
-        inputValue += fee;
+        quote.inputValue += fee;
 
-        // Keep delta the same
-        newDelta = delta;
-
-        // If we got all the way here, no math error happened
-        error = CurveQuoteError.NONE;
+        // If we got all the way here, no error happened
+        quote.error = CurveQuoteError.NONE;
     }
 
     /**
@@ -105,27 +114,24 @@ contract ExponentialCurve {
         This is to prevent the spot price from ever becoming 0, which would decouple the price
         from the bonding curve (since 0 * delta is still 0)
      */
-    function getSellQuote(
+    function getSellInfo(
         uint128 spotPrice,
         uint128 delta,
         uint256 numItems,
         uint256 feeBips
     )
-        external
+        internal
         pure
         returns (
-            CurveQuoteError error,
-            uint128 newSpotPrice,
-            uint128 newDelta,
-            uint256 outputValue,
-            uint256 fee
+            SellQuote memory quote
         )
     {
         // NOTE: we assume delta is > 1, as checked by validateDelta()
 
-        // We only calculate changes for buying 1 or more NFTs
+        // We only calculate changes for selling 1 or more NFTs
         if (numItems == 0) {
-            return (CurveQuoteError.INVALID_NUMITEMS, 0, 0, 0, 0);
+            quote.error = CurveQuoteError.INVALID_NUMITEMS;
+            return;
         }
 
         uint256 invDelta = FixedPointMathLib.WAD.fdiv(
@@ -137,17 +143,17 @@ contract ExponentialCurve {
         // For an exponential curve, the spot price is divided by delta for each item sold
         // safe to convert newSpotPrice directly into uint128 since we know newSpotPrice <= spotPrice
         // and spotPrice <= type(uint128).max
-        newSpotPrice = uint128(
+        quote.newSpotPrice = uint128(
             uint256(spotPrice).fmul(invDeltaPowN, FixedPointMathLib.WAD)
         );
-        if (newSpotPrice < MIN_PRICE) {
-            newSpotPrice = uint128(MIN_PRICE);
+        if (quote.newSpotPrice < MIN_PRICE) {
+            quote.newSpotPrice = uint128(MIN_PRICE);
         }
 
         // If the user sells n items, then the total revenue is equal to:
         // spotPrice + ((1 / delta) * spotPrice) + ((1 / delta)^2 * spotPrice) + ... ((1 / delta)^(numItems - 1) * spotPrice)
         // This is equal to spotPrice * (1 - (1 / delta^n)) / (1 - (1 / delta))
-        outputValue = uint256(spotPrice).fmul(
+        quote.outputValue = uint256(spotPrice).fmul(
             (FixedPointMathLib.WAD - invDeltaPowN).fdiv(
                 FixedPointMathLib.WAD - invDelta,
                 FixedPointMathLib.WAD
@@ -156,18 +162,15 @@ contract ExponentialCurve {
         );
 
         // Account for the fee
-        fee = outputValue.fmul(
+        quote.fee = quote.outputValue.fmul(
             feeBips,
             10000
         );
 
         // Remove the fee from the output amount
-        outputValue -= fee;
-
-        // Keep delta the same
-        newDelta = delta;
+        quote.outputValue -= fee;
 
         // If we got all the way here, no math error happened
-        error = CurveQuoteError.NONE;
+        quote.error = CurveQuoteError.NONE;
     }
 }

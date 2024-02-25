@@ -11,7 +11,7 @@ struct PoolStatus {
   /** Id of last token minted. */
   uint256 lastMintId;
   /** Current price (in wei). */
-  uint256 priceWei;
+  uint128 priceWei;
 }
 
 struct PoolCurve {
@@ -20,7 +20,7 @@ struct PoolCurve {
   /** Token id to mint to. */
   uint256 mintEndId;
   /** Price at beginning (in wei). */
-  uint256 startPriceWei;
+  uint128 startPriceWei;
   /** 
   Multipler/divisor to apply after each purchase/sale. 
   
@@ -28,7 +28,7 @@ struct PoolCurve {
   - 1.1 = 1.1 * 1^18 = 1100000000000000000
   - 1.0001 = 1.0001 * 1^18 = 1000100000000000000
   */
-  uint256 delta;
+  uint128 delta;
 }
 
 struct Signature {

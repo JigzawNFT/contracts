@@ -4,6 +4,7 @@ pragma solidity ^0.8.24;
 import { IMintable } from "./IMintable.sol";
 import { LibErrors } from "./LibErrors.sol";
 import { PoolCurve, PoolStatus } from "./Common.sol";
+import { ExponentialCurve } from "./ExponentialCurve.sol";
 
 /**
  * @dev Jigzaw NFT liquidity pool.
@@ -21,10 +22,11 @@ import { PoolCurve, PoolStatus } from "./Common.sol";
  * Different ranges of NFTs (e.g token ids 1 to 20 could be one "range") can have different bonding curves. Each curve only 
  * has access to its own liquidity.
  */
-contract JigzawPool {
+contract JigzawPool is ExponentialCurve {
   IMintable public nft;
   PoolCurve public curve;
   PoolStatus public status;
+
 
   // Constructor
 
@@ -57,50 +59,55 @@ contract JigzawPool {
   // Buying
   // ---------------------------------------------------------------
 
-  function buy() external payable {
-    address payable sender = payable(msg.sender);
+  function buy(uint numItems) external payable {
+    address sender = payable(msg.sender);
+    (BuyQuote memory quote, address feeReceiver) = getBuyQuote(numItems);
 
-    (uint numTokens, uint finalAmountWei) = getBuyInfo(msg.value);
+    if (quote.error == CurveQuoteError.NO_ERROR) {
+      // check input
+      if (quote.inputValue > msg.value) {
+        revert LibErrors.InsufficientFunds(sender, quote.inputValue, msg.value);
+      }
 
-    if (numTokens > 0) {
+      // check balance
+      uint nftsAvailable = nft.balanceOf(address(this)) + (curve.mintEndId - status.lastMintId);
+      if (numItems > nftsAvailable) {
+        revert LibErrors.InsufficientBalance(address(this), nftsAvailable, balance);
+      }
+
       // transfer from balance first
       uint balance = nft.balanceOf(address(this));
       if (balance > 0) {
-        uint toTransfer = balance < numTokens ? balance : numTokens;
+        uint toTransfer = balance < numItems ? balance : numItems;
         nft.safeTransferFrom(address(this), sender, toTransfer);
-        numTokens -= toTransfer;
+        numItems -= toTransfer;
       }
 
       // mint remaining
-      if (numTokens > 0) {
-        nft.mint(sender, status.lastMintId, numTokens);
-        status.lastMintId += numTokens;
+      if (numItems > 0) {
+        nft.mint(sender, status.lastMintId, numItems);
+        status.lastMintId += numItems;
       }
 
-      // return excess wei
-      if (finalAmountWei < msg.value) {
-        sender.transfer(msg.value - finalAmountWei);
+      // pay fee
+      payable(feeReceiver).transfer(quote.fee);
+
+      // return excess payment to caller
+      if (quote.inputValue < msg.value) {
+        payable(sender).transfer(msg.value - quote.inputValue);
       }
+
+      // update status
+      status.priceWei = quote.newSpotPrice;
     }
   }
 
-  function getBuyInfo(uint amountWei) public view returns (uint numTokensBought, uint finalAmountWei) {
-    /*
-    Since price moves up by a % after each buy, it would be possible to 
-    buy and then immediately sell for a profit. To avoid this we'll 
-    place the buy to be at the next price up.
-    */
-    uint nextPrice = status.priceWei;
-    uint tokensAvailable = nft.balanceOf(address(this)) + (curve.mintEndId - status.lastMintId);
-    while (numTokensBought < tokensAvailable) {
-      nextPrice = nextPrice * curve.delta / 1e18;
-      if (nextPrice > amountWei) {
-        break;
-      }
-      amountWei -= nextPrice;
-      finalAmountWei += nextPrice;
-      numTokensBought++;
-    }
+  /**
+   * inputValue is the amount of wei the buyer will pay, including the fee.
+   */
+  function getBuyQuote(uint numItems) public view returns (BuyQuote memory quote, address feeReceiver) {
+    (feeReceiver, uint feeBips) = nft.getRoyaltyInfo();
+    quote = getBuyInfo(status.priceWei, curve.delta, numItems, feeBips);
   }
 
   // ---------------------------------------------------------------
@@ -109,51 +116,48 @@ contract JigzawPool {
 
 
   function sell(uint[] calldata tokenIds) external {
-    address payable sender = payable(msg.sender);
+    address sender = payable(msg.sender);
+    (SellQuote memory quote, address feeReceiver) = getSellQuote(numItems);
 
-    uint tokenBal = nft.balanceOf(sender);
-    if (tokenIds.length > tokenBal) {
-      revert LibErrors.InsufficientBalance(sender, tokenBal);
-    }
+    if (quote.error == CurveQuoteError.NO_ERROR) {
+      // check balance
+      uint tokenBal = nft.balanceOf(sender);
+      if (tokenIds.length > tokenBal) {
+        revert LibErrors.InsufficientBalance(sender, tokenIds.length, tokenBal);
+      }
 
-    (uint numTokensSold, uint finalAmountWei) = getSellInfo(tokenIds.length);
+      // check that pool has enough balance to pay
+      uint totalToPay = quote.outputValue + quote.fee;
+      if (totalToPay > address(this).balance) {
+        revert LibErrors.InsufficientFunds(address(this), totalToPay, address(this).balance);
+      }
 
-    if (numTokensSold > 0) {
       // for each token
-      for (uint i = 0; i < numTokensSold; i++) {
+      for (uint i = 0; i < tokenIds.length; i++) {
         uint id = tokenIds[i];
         
         // must be within supported range
         if (id < curve.mintStartId || id > curve.mintEndId) {
-          revert LibErrors.TokenCannotBeSoldIntoPool(sender, id);
+          revert LibErrors.TokenIdOutOfRange(sender, id);
         }
 
         // transfer to pool
         nft.safeTransferFrom(sender, address(this), id);
       }
 
-      // return wei
-      sender.transfer(finalAmountWei);
+      // pay caller
+      payable(sender).transfer(quote.outputValue);
+
+      // pay fee
+      payable(feeReceiver).transfer(quote.fee);
     }
   }
 
-  function getSellInfo(uint numTokens) public view returns (uint numTokensSold, uint finalAmountWei) {
-    /*
-    Since price down up by a % after each sell, it would be possible to 
-    sell and then immediately buy for a profit. To avoid this we'll 
-    place the sell to be at the next price down.
-    */
-    uint nextPrice = status.priceWei;
-    uint bal = address(this).balance;
-    while (bal > 0 && numTokens > 0) {
-      nextPrice = nextPrice * 1e18 / curve.delta;
-      if (nextPrice > bal) {
-        break;
-      }
-      bal -= nextPrice;
-      finalAmountWei += nextPrice;
-      numTokensSold++;
-      numTokens--;
-    }
+  /**
+   * outputValue is the amount of wei the seller will receive, excluding the fee.
+   */
+  function getSellQuote(uint numItems) public view returns (SellQuote memory quote, address feeReceiver) {
+    (feeReceiver, uint feeBips) = nft.getRoyaltyInfo();
+    quote = getSellInfo(status.priceWei, curve.delta, numItems, feeBips);
   }
 }

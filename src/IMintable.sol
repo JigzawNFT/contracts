@@ -3,6 +3,7 @@ pragma solidity ^0.8.24;
 
 import { Signature } from "./Common.sol";
 import { IERC721 } from "openzeppelin/token/ERC721/IERC721.sol";
+import { IERC2981 } from "openzeppelin/interfaces/IERC2981.sol";
 
 /**
  * @dev A mintable NFT.
@@ -16,4 +17,9 @@ interface IMintable is IERC721 {
    * @param _count No. of tokens to mint.
    */
   function mint(address _to, uint _startId, uint _count) external;
+
+  /**
+  * @dev Get royalty info.
+  */
+  function getRoyaltyInfo() external returns (address receiver, uint feeBips);
 }

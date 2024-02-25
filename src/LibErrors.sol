@@ -30,10 +30,15 @@ library LibErrors {
   /**
   * @dev The caller has insufficient balance.
   */
-  error InsufficientBalance(address caller, uint currentBalance);
+  error InsufficientBalance(address caller, uint balanceRequired, uint balanceAvailable);
 
   /**
-  * @dev The token cannot be sold into the pool.
+  * @dev The caller provided insufficient funds.
   */
-  error TokenCannotBeSoldIntoPool(address caller, uint tokenId);
+  error InsufficientFunds(address caller, uint fundsRequired, uint fundsProvided);
+
+ /**
+  * @dev The token id is out of range.
+  */
+  error TokenIdOutOfRange(address caller, uint tokenId);
 }
