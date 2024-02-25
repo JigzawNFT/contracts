@@ -12,9 +12,9 @@ import { Ownable } from "openzeppelin/access/Ownable.sol";
 import { SignatureChecker } from "lib/openzeppelin-contracts/contracts/utils/cryptography/SignatureChecker.sol";
 import { LibErrors } from "./LibErrors.sol";
 import { Signature } from "./Common.sol";
-import { IMintable } from "./IMintable.sol";
+import { IPoolNFT } from "./IPoolNFT.sol";
 
-contract JigzawNFT is ERC721, ERC721Enumerable, ERC721URIStorage, ERC721Royalty, Ownable, IMintable {
+contract JigzawNFT is ERC721, ERC721Enumerable, ERC721URIStorage, ERC721Royalty, Ownable, IPoolNFT {
   using Strings for uint256;
 
   /**
@@ -188,7 +188,7 @@ contract JigzawNFT is ERC721, ERC721Enumerable, ERC721URIStorage, ERC721Royalty,
    */
   function getRoyaltyInfo() external returns (address receiver, uint256 feeBips) {
     /* will cancel out fee denomination divisor so that we get back the bips */
-    (receiver, feeBips) = nft.royaltyInfo(1, 10000);
+    (receiver, feeBips) = royaltyInfo(1, 10000);
   }
 
   // Functions - minting
@@ -212,22 +212,33 @@ contract JigzawNFT is ERC721, ERC721Enumerable, ERC721URIStorage, ERC721Royalty,
     _assertValidSignature(minter, _sig, abi.encodePacked(_to, _ids));
 
     for(uint i = 0; i < _ids.length; i++) {
-      _safeMint(_to, _ids[i]);
+      _safeMint(_to, _ids[i], "");
     }
   }
 
-  /**
-   * @dev Mint tokens to the address, called by the pool.
-   *
-   * @param _to The address which will own the minted tokens.
-   * @param _startId The id to start mint from.
-   * @param _count No. of tokens to mint.
-   */
+  // Pool functions
+
   function mint(address _to, uint _startId, uint _count) external onlyPool {
     uint _endId = _startId + _count;
     
     for(uint i = _startId; i < _endId; i++) {
-      _safeMint(_to, i);
+      _safeMint(_to, i, "");
+    }
+  }
+
+  function batchTransferTokenIds(address _from, address _to, uint[] calldata _tokenIds) external {
+    for (uint i = 0; i < _tokenIds.length; i++) {
+      _safeTransfer(_from, _to, _tokenIds[i], "");
+    }
+  }
+
+  function batchTransferNumTokens(address _from, address _to, uint _numTokens) external {
+    if (balanceOf(_from) < _numTokens) {
+      revert LibErrors.InsufficientBalance(_from, _numTokens, balanceOf(_from));
+    }
+
+    for (uint i = 0; i < _numTokens; i++) {
+      _safeTransfer(_from, _to, tokenOfOwnerByIndex(_from, i), "");
     }
   }
 

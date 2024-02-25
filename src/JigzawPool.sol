@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPLv3
 pragma solidity ^0.8.24;
 
-import { IMintable } from "./IMintable.sol";
+import { IPoolNFT } from "./IPoolNFT.sol";
 import { LibErrors } from "./LibErrors.sol";
-import { PoolCurve, PoolStatus } from "./Common.sol";
+import { PoolCurve, PoolStatus, CurveQuoteError } from "./Common.sol";
 import { ExponentialCurve } from "./ExponentialCurve.sol";
 
 /**
@@ -23,7 +23,7 @@ import { ExponentialCurve } from "./ExponentialCurve.sol";
  * has access to its own liquidity.
  */
 contract JigzawPool is ExponentialCurve {
-  IMintable public nft;
+  IPoolNFT public nft;
   PoolCurve public curve;
   PoolStatus public status;
 
@@ -41,7 +41,7 @@ contract JigzawPool is ExponentialCurve {
   }
 
   constructor(Config memory _config) {
-    nft = IMintable(_config.nft);
+    nft = IPoolNFT(_config.nft);
     curve = _config.curve;
     status = PoolStatus({
       lastMintId: curve.mintStartId - 1,
@@ -70,16 +70,16 @@ contract JigzawPool is ExponentialCurve {
       }
 
       // check balance
-      uint nftsAvailable = nft.balanceOf(address(this)) + (curve.mintEndId - status.lastMintId);
+      uint nftsAvailable = getTotalNftsForSale(); 
       if (numItems > nftsAvailable) {
-        revert LibErrors.InsufficientBalance(address(this), nftsAvailable, balance);
+        revert LibErrors.InsufficientBalance(address(this), numItems, nftsAvailable);
       }
 
       // transfer from balance first
       uint balance = nft.balanceOf(address(this));
       if (balance > 0) {
         uint toTransfer = balance < numItems ? balance : numItems;
-        nft.safeTransferFrom(address(this), sender, toTransfer);
+        nft.batchTransferNumTokens(address(this), sender, toTransfer);
         numItems -= toTransfer;
       }
 
@@ -103,10 +103,18 @@ contract JigzawPool is ExponentialCurve {
   }
 
   /**
+   * @dev Get total available NFTs for sale.
+   */
+  function getTotalNftsForSale() public view returns (uint) {
+    return nft.balanceOf(address(this)) + (curve.mintEndId - status.lastMintId);
+  }
+
+  /**
    * inputValue is the amount of wei the buyer will pay, including the fee.
    */
   function getBuyQuote(uint numItems) public view returns (BuyQuote memory quote, address feeReceiver) {
-    (feeReceiver, uint feeBips) = nft.getRoyaltyInfo();
+    uint feeBips;
+    (feeReceiver, feeBips) = nft.getRoyaltyInfo();
     quote = getBuyInfo(status.priceWei, curve.delta, numItems, feeBips);
   }
 
@@ -117,7 +125,7 @@ contract JigzawPool is ExponentialCurve {
 
   function sell(uint[] calldata tokenIds) external {
     address sender = payable(msg.sender);
-    (SellQuote memory quote, address feeReceiver) = getSellQuote(numItems);
+    (SellQuote memory quote, address feeReceiver) = getSellQuote(tokenIds.length);
 
     if (quote.error == CurveQuoteError.NO_ERROR) {
       // check balance
@@ -140,10 +148,10 @@ contract JigzawPool is ExponentialCurve {
         if (id < curve.mintStartId || id > curve.mintEndId) {
           revert LibErrors.TokenIdOutOfRange(sender, id);
         }
-
-        // transfer to pool
-        nft.safeTransferFrom(sender, address(this), id);
       }
+
+      // transfer NFTs to pool
+      nft.batchTransferTokenIds(sender, address(this), tokenIds);
 
       // pay caller
       payable(sender).transfer(quote.outputValue);
@@ -157,7 +165,8 @@ contract JigzawPool is ExponentialCurve {
    * outputValue is the amount of wei the seller will receive, excluding the fee.
    */
   function getSellQuote(uint numItems) public view returns (SellQuote memory quote, address feeReceiver) {
-    (feeReceiver, uint feeBips) = nft.getRoyaltyInfo();
+    uint feeBips;
+    (feeReceiver, feeBips) = nft.getRoyaltyInfo();
     quote = getSellInfo(status.priceWei, curve.delta, numItems, feeBips);
   }
 }

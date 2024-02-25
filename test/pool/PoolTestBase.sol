@@ -5,12 +5,12 @@ import { IERC165 } from "openzeppelin/interfaces/IERC165.sol";
 import { ERC721 } from "openzeppelin/token/ERC721/ERC721.sol";
 import { ERC721Enumerable } from "openzeppelin/token/ERC721/extensions/ERC721Enumerable.sol";
 import { TestBase01 } from "test/utils/TestBase01.sol";
-import { IMintable } from "src/IMintable.sol";
+import { IPoolNFT } from "src/IPoolNFT.sol";
 import { JigzawPool } from "src/JigzawPool.sol";
 import { PoolCurve } from "src/Common.sol";
 
 
-contract TestNFT is ERC721, ERC721Enumerable, IMintable {
+contract TestNFT is ERC721, ERC721Enumerable, IPoolNFT {
   constructor() ERC721("Test","TEST") {}
 
   // Functions - necessary overrides
@@ -27,11 +27,27 @@ contract TestNFT is ERC721, ERC721Enumerable, IMintable {
     return true;
   }
 
-  // IMintable
+  // IPoolNFT
+
+  function getRoyaltyInfo() external returns (address receiver, uint feeBips) {
+    return (???, 1000); // 10%
+  }
 
   function mint(address _to, uint _startId, uint _count) external {
     for (uint i = _startId; i < _startId + _count; i++) {
       _safeMint(_to, i);
+    }
+  }
+
+  function batchTransferTokenIds(address _from, address _to, uint[] calldata _tokenIds) external {
+    for (uint i = 0; i < _tokenIds.length; i++) {
+      _safeTransfer(_from, _to, _tokenIds[i], "");
+    }
+  }
+
+  function batchTransferNumTokens(address _from, address _to, uint _numTokens) external {
+    for (uint i = 0; i < _numTokens; i++) {
+      _safeTransfer(_from, _to, tokenOfOwnerByIndex(_from, i), "");
     }
   }
 }

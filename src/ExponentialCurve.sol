@@ -103,7 +103,7 @@ contract ExponentialCurve {
         );
 
         // Add the fee to the required input amount
-        quote.inputValue += fee;
+        quote.inputValue += quote.fee;
 
         // If we got all the way here, no error happened
         quote.error = CurveQuoteError.NONE;
@@ -168,7 +168,7 @@ contract ExponentialCurve {
         );
 
         // Remove the fee from the output amount
-        quote.outputValue -= fee;
+        quote.outputValue -= quote.fee;
 
         // If we got all the way here, no math error happened
         quote.error = CurveQuoteError.NONE;
