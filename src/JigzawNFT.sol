@@ -11,7 +11,7 @@ import { Strings } from "openzeppelin/utils/Strings.sol";
 import { Ownable } from "openzeppelin/access/Ownable.sol";
 import { SignatureChecker } from "lib/openzeppelin-contracts/contracts/utils/cryptography/SignatureChecker.sol";
 import { LibErrors } from "./LibErrors.sol";
-import { Signature } from "./Structs.sol";
+import { Signature } from "./Common.sol";
 import { IMintable } from "./IMintable.sol";
 
 contract JigzawNFT is ERC721, ERC721Enumerable, ERC721URIStorage, ERC721Royalty, Ownable, IMintable {

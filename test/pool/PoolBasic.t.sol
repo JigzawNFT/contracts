@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 import { PoolTestBase } from "./PoolTestBase.sol";
-import { PoolCurve, PoolStatus } from "src/Structs.sol";
+import { PoolCurve, PoolStatus } from "src/Common.sol";
 
 contract PoolBasic is PoolTestBase {
   function test_DefaultConfig() public {

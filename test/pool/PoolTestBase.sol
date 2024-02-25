@@ -7,7 +7,7 @@ import { ERC721Enumerable } from "openzeppelin/token/ERC721/extensions/ERC721Enu
 import { TestBase01 } from "test/utils/TestBase01.sol";
 import { IMintable } from "src/IMintable.sol";
 import { JigzawPool } from "src/JigzawPool.sol";
-import { PoolCurve } from "src/Structs.sol";
+import { PoolCurve } from "src/Common.sol";
 
 
 contract TestNFT is ERC721, ERC721Enumerable, IMintable {

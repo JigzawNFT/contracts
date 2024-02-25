@@ -3,7 +3,7 @@ pragma solidity ^0.8.24;
 
 import { console2 as c } from "forge-std/Test.sol";
 import { PoolTestBase } from "./PoolTestBase.sol";
-import { PoolCurve, PoolStatus } from "src/Structs.sol";
+import { PoolCurve, PoolStatus } from "src/Common.sol";
 
 contract PoolBuy is PoolTestBase {
   function test_GetBuyInfo_InitialMint_AtCurrentPrice() public {

@@ -3,7 +3,7 @@ pragma solidity ^0.8.24;
 
 import { IMintable } from "./IMintable.sol";
 import { LibErrors } from "./LibErrors.sol";
-import { PoolCurve, PoolStatus } from "./Structs.sol";
+import { PoolCurve, PoolStatus } from "./Common.sol";
 
 /**
  * @dev Jigzaw NFT liquidity pool.

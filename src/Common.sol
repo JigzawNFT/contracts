@@ -1,6 +1,12 @@
 // SPDX-License-Identifier: GPLv3
 pragma solidity ^0.8.24;
 
+enum CurveQuoteError {
+  NONE,
+  INVALID_NUMITEMS,
+  SPOT_PRICE_OVERFLOW
+}
+
 struct PoolStatus {
   /** Id of last token minted. */
   uint256 lastMintId;

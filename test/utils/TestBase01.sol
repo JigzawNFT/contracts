@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPLv3
 pragma solidity ^0.8.24;
 
-import { Signature } from "src/Structs.sol";
+import { Signature } from "src/Common.sol";
 
 import {Test, console2 as c} from "forge-std/Test.sol";
 import {Vm} from "forge-std/Vm.sol";

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPLv3
 pragma solidity ^0.8.24;
 
-import { Signature } from "./Structs.sol";
+import { Signature } from "./Common.sol";
 import { IERC721 } from "openzeppelin/token/ERC721/IERC721.sol";
 
 /**
