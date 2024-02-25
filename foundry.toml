@@ -5,7 +5,8 @@ out = "out"
 libs = ["lib"]
 remappings = [
   "forge-std/=lib/forge-std/src/",
-  "openzeppelin/=lib/openzeppelin-contracts/contracts/"
+  "openzeppelin/=lib/openzeppelin-contracts/contracts/",
+  "solmate=lib/solmate/contracts/"
 ]
 cache = true
 force = false
