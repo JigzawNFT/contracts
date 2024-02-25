@@ -20,7 +20,6 @@ contract ExponentialCurve {
     function validateSpotPrice(uint128 newSpotPrice)
         external
         pure
-        override
         returns (bool)
     {
         return newSpotPrice >= MIN_PRICE;
@@ -34,7 +33,6 @@ contract ExponentialCurve {
     )
         external
         pure
-        override
         returns (
             CurveQuoteError error,
             uint128 newSpotPrice,
@@ -49,13 +47,16 @@ contract ExponentialCurve {
             return (CurveQuoteError.INVALID_NUMITEMS, 0, 0, 0, 0);
         }
 
-        uint256 deltaPowN = uint256(delta).rpow(
+        uint256 deltaPowN = uint256(delta).fpow(
             numItems,
             FixedPointMathLib.WAD
         );
 
         // For an exponential curve, the spot price is multiplied by delta for each item bought
-        uint256 newSpotPrice_ = uint256(spotPrice).mulWadDown(deltaPowN);
+        uint256 newSpotPrice_ = uint256(spotPrice).fmul(
+            deltaPowN,
+            FixedPointMathLib.WAD
+        );
         if (newSpotPrice_ > type(uint128).max) {
             return (CurveQuoteError.SPOT_PRICE_OVERFLOW, 0, 0, 0, 0);
         }
@@ -67,25 +68,29 @@ contract ExponentialCurve {
         // The same person could then sell for (S * delta) ETH, netting them delta ETH profit.
         // If spot price for buy and sell differ by delta, then buying costs (S * delta) ETH.
         // The new spot price would become (S * delta), so selling would also yield (S * delta) ETH.
-        uint256 buySpotPrice = uint256(spotPrice).mulWadDown(delta);
+        uint256 buySpotPrice = uint256(spotPrice).fmul(
+            delta,
+            FixedPointMathLib.WAD
+        );
 
         // If the user buys n items, then the total cost is equal to:
         // buySpotPrice + (delta * buySpotPrice) + (delta^2 * buySpotPrice) + ... (delta^(numItems - 1) * buySpotPrice)
         // This is equal to buySpotPrice * (delta^n - 1) / (delta - 1)
-        inputValue = buySpotPrice.mulWadDown(
+        inputValue = buySpotPrice.fmul(
             (deltaPowN - FixedPointMathLib.WAD).fdiv(
                 delta - FixedPointMathLib.WAD,
                 FixedPointMathLib.WAD
-            )
+            ),
+            FixedPointMathLib.WAD
         );
 
-        // Account for the trading fee, a flat percentage of the buy amount
-        fee = inputValue.mulDivDown(
+        // Account for the fee
+        fee = inputValue.fmul(
             feeBips,
             10000
         );
 
-        // Account for the trade fee, only for Trade pools
+        // Add the fee to the required input amount
         inputValue += fee;
 
         // Keep delta the same
@@ -96,12 +101,11 @@ contract ExponentialCurve {
     }
 
     /**
-        @dev See {ICurve-getSellInfo}
         If newSpotPrice is less than MIN_PRICE, newSpotPrice is set to MIN_PRICE instead.
         This is to prevent the spot price from ever becoming 0, which would decouple the price
         from the bonding curve (since 0 * delta is still 0)
      */
-    function getSellInfo(
+    function getSellQuote(
         uint128 spotPrice,
         uint128 delta,
         uint256 numItems,
@@ -109,9 +113,8 @@ contract ExponentialCurve {
     )
         external
         pure
-        override
         returns (
-            Error error,
+            CurveQuoteError error,
             uint128 newSpotPrice,
             uint128 newDelta,
             uint256 outputValue,
@@ -152,22 +155,19 @@ contract ExponentialCurve {
             FixedPointMathLib.WAD
         );
 
-        // Account for the protocol fee, a flat percentage of the sell amount
-        protocolFee = outputValue.fmul(
-            protocolFeeMultiplier,
-            FixedPointMathLib.WAD
+        // Account for the fee
+        fee = outputValue.fmul(
+            feeBips,
+            10000
         );
 
-        // Account for the trade fee, only for Trade pools
-        outputValue -= outputValue.fmul(feeMultiplier, FixedPointMathLib.WAD);
-
-        // Remove the protocol fee from the output amount
-        outputValue -= protocolFee;
+        // Remove the fee from the output amount
+        outputValue -= fee;
 
         // Keep delta the same
         newDelta = delta;
 
         // If we got all the way here, no math error happened
-        error = CurveQuoteError.OK;
+        error = CurveQuoteError.NONE;
     }
 }
