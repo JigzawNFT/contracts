@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 import { NftTestBase } from "./NftTestBase.sol";
-import { Signature } from "src/Common.sol";
+import { Auth } from "src/Auth.sol";
 import { LibErrors } from "src/LibErrors.sol";
 import { IERC721Errors } from "openzeppelin/interfaces/draft-IERC6093.sol";
 
@@ -15,13 +15,13 @@ contract NftMintingByMinter is NftTestBase {
     ids[0] = 1;
     ids[1] = 2;
 
-    Signature memory sig = _computeMinterSig(
+    Auth.Signature memory sig = _computeMinterSig(
       abi.encodePacked(wallet, ids), 
       block.timestamp + 10 seconds
     );
 
     vm.prank(caller);
-    t.mint(wallet, ids, sig);
+    t.batchMint(wallet, ids, sig);
 
     assertEq(t.ownerOf(1), wallet);
     assertEq(t.ownerOf(2), wallet);
@@ -41,35 +41,35 @@ contract NftMintingByMinter is NftTestBase {
     ids[0] = 1;
     ids[1] = 2;
 
-    Signature memory sigOwner = _computeOwnerSig(
+    Auth.Signature memory sigOwner = _computeOwnerSig(
       abi.encodePacked(wallet, ids), 
       block.timestamp + 10 seconds
     );
 
     vm.prank(caller);
     vm.expectRevert(abi.encodeWithSelector(LibErrors.SignatureInvalid.selector, caller));
-    t.mint(wallet, ids, sigOwner);
+    t.batchMint(wallet, ids, sigOwner);
 
-    Signature memory sigRevealer = _computeRevealerSig(
+    Auth.Signature memory sigRevealer = _computeRevealerSig(
       abi.encodePacked(wallet, ids), 
       block.timestamp + 10 seconds
     );
 
     vm.prank(caller);
     vm.expectRevert(abi.encodeWithSelector(LibErrors.SignatureInvalid.selector, caller));
-    t.mint(wallet, ids, sigRevealer);
+    t.batchMint(wallet, ids, sigRevealer);
   }
 
   function test_MintEmpty_Succeeds() public {
     uint[] memory ids = new uint[](0);
 
-    Signature memory sig = _computeMinterSig(
+    Auth.Signature memory sig = _computeMinterSig(
       abi.encodePacked(wallet, ids), 
       block.timestamp + 10 seconds
     );
 
     vm.prank(caller);
-    t.mint(wallet, ids, sig);
+    t.batchMint(wallet, ids, sig);
 
     assertEq(t.totalSupply(), 0);
   }
@@ -78,71 +78,71 @@ contract NftMintingByMinter is NftTestBase {
     uint[] memory ids = new uint[](1);
     ids[0] = 1;
 
-    Signature memory sig = Signature({
+    Auth.Signature memory sig = Auth.Signature({
       signature: bytes(""),
       deadline: block.timestamp + 10 seconds
     });
 
     vm.prank(caller);
     vm.expectRevert(abi.encodeWithSelector(LibErrors.SignatureInvalid.selector, caller));
-    t.mint(wallet, ids, sig);
+    t.batchMint(wallet, ids, sig);
   }
 
   function test_MintExpiredSignature_Fails() public {
     uint[] memory ids = new uint[](1);
     ids[0] = 1;
 
-    Signature memory sig = _computeMinterSig(
+    Auth.Signature memory sig = _computeMinterSig(
       abi.encodePacked(wallet, ids), 
       block.timestamp - 1 seconds
     );
 
     vm.prank(caller);
     vm.expectRevert(abi.encodeWithSelector(LibErrors.SignatureExpired.selector, caller));
-    t.mint(wallet, ids, sig);
+    t.batchMint(wallet, ids, sig);
   }
 
   function test_MintSignatureAlreadyUsed_Fails() public {
     uint[] memory ids = new uint[](1);
     ids[0] = 1;
 
-    Signature memory sig = _computeMinterSig(
+    Auth.Signature memory sig = _computeMinterSig(
       abi.encodePacked(wallet, ids), 
       block.timestamp + 10 seconds
     );
 
     vm.prank(caller);
-    t.mint(wallet, ids, sig);
+    t.batchMint(wallet, ids, sig);
 
     vm.prank(caller);
     vm.expectRevert(abi.encodeWithSelector(LibErrors.SignatureAlreadyUsed.selector, caller));
-    t.mint(wallet, ids, sig);
+    t.batchMint(wallet, ids, sig);
   }
 
   function test_MintAlreadyMintedToken_Fails() public {
     uint[] memory ids = new uint[](1);
     ids[0] = 1;
 
-    Signature memory sig = _computeMinterSig(
+    Auth.Signature memory sig = _computeMinterSig(
       abi.encodePacked(wallet, ids), 
       block.timestamp + 10 seconds
     );
 
     vm.prank(caller);
-    t.mint(wallet, ids, sig);
+    t.batchMint(wallet, ids, sig);
 
     uint[] memory ids2 = new uint[](3);
     ids2[0] = 2;
     ids2[1] = 3;
     ids2[2] = 1; // should error coz already minted!
 
-    Signature memory sig2 = _computeMinterSig(
+    Auth.Signature memory sig2 = _computeMinterSig(
       abi.encodePacked(wallet, ids2), 
       block.timestamp + 10 seconds
     );
 
     vm.prank(caller);
     vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721InvalidSender.selector, address(0)));
-    t.mint(wallet, ids2, sig2);
+    t.batchMint(wallet, ids2, sig2);
   }
 }

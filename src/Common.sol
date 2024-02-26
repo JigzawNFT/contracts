@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPLv3
+// SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.24;
 
 enum CurveQuoteError {
@@ -31,9 +31,3 @@ struct PoolCurve {
   uint128 delta;
 }
 
-struct Signature {
-  /** Signature bytes. */
-  bytes signature;
-  /** Deadline (block timestamp) */
-  uint256 deadline;
-}

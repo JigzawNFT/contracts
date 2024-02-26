@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 import { NftTestBase } from "./NftTestBase.sol";
-import { Signature } from "src/Common.sol";
+import { Auth } from "src/Auth.sol";
 import { LibErrors } from "src/LibErrors.sol";
 import { IERC721Errors } from "openzeppelin/interfaces/draft-IERC6093.sol";
 
@@ -14,7 +14,7 @@ contract NftTransferAuth is NftTestBase {
     super.setUp();
 
     vm.prank(pool1);
-    t.mint(wallet1, 1, 2);
+    t.batchMint(wallet1, 1, 2);
   }
 
   function test_AnonTransfer_Fails() public {

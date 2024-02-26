@@ -3,7 +3,7 @@ pragma solidity ^0.8.24;
 
 import { IERC721Errors } from "openzeppelin/interfaces/draft-IERC6093.sol";
 import { NftTestBase } from "./NftTestBase.sol";
-import { Signature } from "src/Common.sol";
+import { Auth } from "src/Auth.sol";
 import { LibErrors } from "src/LibErrors.sol";
 
 contract NftRevealing is NftTestBase {
@@ -17,13 +17,13 @@ contract NftRevealing is NftTestBase {
     ids[0] = 1;
     ids[1] = 2;
 
-    Signature memory sig = _computeMinterSig(
+    Auth.Signature memory sig = _computeMinterSig(
       abi.encodePacked(wallet, ids), 
       block.timestamp + 10 seconds
     );
 
     vm.prank(caller);
-    t.mint(wallet, ids, sig);
+    t.batchMint(wallet, ids, sig);
   }
 
   function test_RevealWithRevealerAuthorisation_Succeeds() public {
@@ -35,7 +35,7 @@ contract NftRevealing is NftTestBase {
     uris[0] = "uri1";
     uris[1] = "uri2";
 
-    Signature memory sig = _computeRevealerSig(
+    Auth.Signature memory sig = _computeRevealerSig(
       abi.encodePacked(ids),
       block.timestamp + 10 seconds
     );
@@ -60,7 +60,7 @@ contract NftRevealing is NftTestBase {
     uris[0] = "uri1";
     uris[1] = "uri2";
 
-    Signature memory sigOwner = _computeOwnerSig(
+    Auth.Signature memory sigOwner = _computeOwnerSig(
       abi.encodePacked(ids),
       block.timestamp + 10 seconds
     );
@@ -69,7 +69,7 @@ contract NftRevealing is NftTestBase {
     vm.expectRevert(abi.encodeWithSelector(LibErrors.SignatureInvalid.selector, caller));
     t.reveal(ids, uris, sigOwner);
 
-    Signature memory sigMinter = _computeOwnerSig(
+    Auth.Signature memory sigMinter = _computeOwnerSig(
       abi.encodePacked(ids),
       block.timestamp + 10 seconds
     );
@@ -88,7 +88,7 @@ contract NftRevealing is NftTestBase {
     uris[0] = "uri1";
     uris[1] = "uri2";
 
-    Signature memory sig = _computeRevealerSig(
+    Auth.Signature memory sig = _computeRevealerSig(
       abi.encodePacked(ids),
       block.timestamp - 1 seconds
     );
@@ -105,7 +105,7 @@ contract NftRevealing is NftTestBase {
     string[] memory uris = new string[](1);
     uris[0] = "uri1";
 
-    Signature memory sig = _computeRevealerSig(
+    Auth.Signature memory sig = _computeRevealerSig(
       abi.encodePacked(ids),
       block.timestamp + 10 seconds
     );
@@ -127,7 +127,7 @@ contract NftRevealing is NftTestBase {
     uris[0] = "uri1";
     uris[1] = "uri2";
 
-    Signature memory sig = _computeRevealerSig(
+    Auth.Signature memory sig = _computeRevealerSig(
       abi.encodePacked(ids),
       block.timestamp + 10 seconds
     );
@@ -141,7 +141,7 @@ contract NftRevealing is NftTestBase {
     string[] memory uris2 = new string[](1);
     uris2[0] = "uri3";
 
-    Signature memory sig2 = _computeRevealerSig(
+    Auth.Signature memory sig2 = _computeRevealerSig(
       abi.encodePacked(ids2),
       block.timestamp + 10 seconds
     );
@@ -160,7 +160,7 @@ contract NftRevealing is NftTestBase {
     uris[0] = "uri1";
     uris[1] = "uri3";
 
-    Signature memory sig = _computeRevealerSig(
+    Auth.Signature memory sig = _computeRevealerSig(
       abi.encodePacked(ids),
       block.timestamp + 10 seconds
     );

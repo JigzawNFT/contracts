@@ -1,20 +1,19 @@
 // SPDX-License-Identifier: GPLv3
 pragma solidity ^0.8.24;
 
+import { Auth } from "./Auth.sol";
+import { ERC721 } from "./ERC721.sol";
 import { IERC165 } from "openzeppelin/interfaces/IERC165.sol";
-import { ERC721 } from "openzeppelin/token/ERC721/ERC721.sol";
-import { ERC721Enumerable } from "openzeppelin/token/ERC721/extensions/ERC721Enumerable.sol";
-import { ERC721URIStorage } from "openzeppelin/token/ERC721/extensions/ERC721URIStorage.sol";
-import { ERC721Royalty } from "openzeppelin/token/ERC721/extensions/ERC721Royalty.sol";
+import { IERC721 } from "openzeppelin/interfaces/IERC721.sol";
+import { ERC2981 } from "openzeppelin/token/common/ERC2981.sol";
+import { IERC4906 } from "openzeppelin/interfaces/IERC4906.sol";
 import { Base64 } from "openzeppelin/utils/Base64.sol";
 import { Strings } from "openzeppelin/utils/Strings.sol";
 import { Ownable } from "openzeppelin/access/Ownable.sol";
-import { SignatureChecker } from "lib/openzeppelin-contracts/contracts/utils/cryptography/SignatureChecker.sol";
 import { LibErrors } from "./LibErrors.sol";
-import { Signature } from "./Common.sol";
 import { IPoolNFT } from "./IPoolNFT.sol";
 
-contract JigzawNFT is ERC721, ERC721Enumerable, ERC721URIStorage, ERC721Royalty, Ownable, IPoolNFT {
+contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, Ownable, IPoolNFT {
   using Strings for uint256;
 
   /**
@@ -33,24 +32,24 @@ contract JigzawNFT is ERC721, ERC721Enumerable, ERC721URIStorage, ERC721Royalty,
   address public revealer;
 
   /**
-   * @dev Default tile image as a data URI.
+   * @dev Default token image as a data URI.
    */
   string public defaultImage;
 
   /**
-   * @dev Whether tile has been revealed.
+   * @dev Token metadata.
    */
-  mapping(uint256 => bool) public revealed;
+  mapping(uint256 => string) tokenMetadata;
 
   /**
-   * @dev Keep track of used signatures.
+   * @dev Whether token has been revealed.
    */
-  mapping(bytes32 => bool) public usedSignatures;
+  mapping(uint256 => bool) public revealed;
 
   // Constructor
 
   /**
-   * @dev Configuration parameters.
+   * @dev Configuration parameters for constructor.
    */
   struct Config {
     /** Owner. */
@@ -66,7 +65,10 @@ contract JigzawNFT is ERC721, ERC721Enumerable, ERC721URIStorage, ERC721Royalty,
     /** Default token image as a data URI. */
     string defaultImage;
   }
-
+  
+  /**
+   * @dev Constructor.
+   */
   constructor(Config memory _config)
     ERC721("Jigzaw", "JIGZAW") 
     Ownable(_config.owner)
@@ -78,38 +80,38 @@ contract JigzawNFT is ERC721, ERC721Enumerable, ERC721URIStorage, ERC721Royalty,
     _setDefaultRoyalty(_config.owner, _config.royaltyFeeBips);
   }
 
-  // Functions - necessary overrides
+  // Approvals
 
-  function _update(address to, uint256 tokenId, address auth) internal override(ERC721, ERC721Enumerable) returns (address) {
-    return ERC721Enumerable._update(to, tokenId, auth);
+  /**
+   * @dev See {IERC721-isApprovedForAll}.
+   */
+  function isApprovedForAll(address owner, address spender) public view override(ERC721, IERC721) returns (bool) {
+    return (spender == pool || ERC721.isApprovedForAll(owner, spender));
   }
 
-  function _increaseBalance(address account, uint128 amount) internal override(ERC721, ERC721Enumerable) {
-    ERC721Enumerable._increaseBalance(account, amount);
-  }
+  // Interface
 
-  function _isAuthorized(address owner, address spender, uint256 tokenId) internal view override returns (bool) {
-    return (spender == pool || super._isAuthorized(owner, spender, tokenId));
-  }
-
-  function supportsInterface(bytes4 interfaceId) public view override(ERC721, ERC721Royalty, ERC721Enumerable, ERC721URIStorage, IERC165) returns (bool) {
+  function supportsInterface(bytes4 interfaceId) public view override(ERC721, ERC2981, IERC165) returns (bool) {
     return ERC721.supportsInterface(interfaceId)
-      || ERC721URIStorage.supportsInterface(interfaceId)
-      || ERC721Enumerable.supportsInterface(interfaceId)
-      || ERC721Royalty.supportsInterface(interfaceId);
+      || ERC2981.supportsInterface(interfaceId);
   }
 
-  function tokenURI(uint256 tokenId) public view override(ERC721, ERC721URIStorage) returns (string memory) {
+  // Metadata
+
+  /**
+   * @dev See {IERC721Metadata-tokenURI}.
+   */
+  function tokenURI(uint256 tokenId) public view override returns (string memory) {
       _requireOwned(tokenId);
 
       if (revealed[tokenId]) {
-        return ERC721URIStorage.tokenURI(tokenId);
+        return tokenMetadata[tokenId];
       } else {
         string memory json = string(
           abi.encodePacked(
             '{',
                 '"name": "Tile #', tokenId.toString(), '",',
-                '"description": "Jigzaw unrevealed tile - see https://jigsaw.xyz for instructions.",',
+                '"description": "Jigzaw unrevealed token - see https://jigsaw.xyz for instructions.",',
                 '"image": "', defaultImage, '"',
             '}'
           ) 
@@ -136,12 +138,23 @@ contract JigzawNFT is ERC721, ERC721Enumerable, ERC721URIStorage, ERC721Royalty,
    * @param _tokenURIs The new token URIs to set.
    * @param _sig The minter authorisation signature.
    */
-  function reveal(uint256[] calldata _tokenIds, string[] calldata _tokenURIs, Signature calldata _sig) external {
-    _assertValidSignature(revealer, _sig, abi.encodePacked(_tokenIds));
+  function reveal(uint256[] calldata _tokenIds, string[] calldata _tokenURIs, Auth.Signature calldata _sig) external {
+    _assertValidSignature(msg.sender, revealer, _sig, abi.encodePacked(_tokenIds));
+
+    uint id;
+    string memory uri;
+
+    if (_tokenIds.length == 0) {
+      revert LibErrors.InvalidTokenList();
+    }
+
+    if (_tokenIds.length != _tokenURIs.length) {
+      revert LibErrors.InvalidBatchLengths(_tokenIds.length, _tokenURIs.length);
+    }
 
     for (uint i = 0; i < _tokenIds.length; i++) {
-      uint256 id = _tokenIds[i];
-      string memory uri = _tokenURIs[i];
+      id = _tokenIds[i];
+      uri = _tokenURIs[i];
 
       _requireOwned(id);
 
@@ -149,19 +162,25 @@ contract JigzawNFT is ERC721, ERC721Enumerable, ERC721URIStorage, ERC721Royalty,
         revert LibErrors.AlreadyRevealed(id);
       }
 
-      _setTokenURI(id, uri);
+      tokenMetadata[id] = uri;
 
       revealed[id] = true;
     }
+
+    // IERC4906
+    emit BatchMetadataUpdate(_tokenIds[0], _tokenIds[_tokenIds.length - 1]);
   }
 
-  // Functions - set default tile image
+  // Functions - set default image
 
   /**
-   * @dev Set the default tile image.
+   * @dev Set the default token image.
    */
   function setDefaultImage(string calldata _defaultImage) external onlyOwner {
     defaultImage = _defaultImage;
+    
+    // IERC4906
+    emit BatchMetadataUpdate(1, totalSupply);
   }
 
   // Functions - set pool
@@ -174,7 +193,7 @@ contract JigzawNFT is ERC721, ERC721Enumerable, ERC721URIStorage, ERC721Royalty,
     pool = _pool;
   }
 
-  // Functions - royalty
+  // Set royalty
 
   /**
    * @dev Set the royalty receiver and fee.
@@ -183,15 +202,7 @@ contract JigzawNFT is ERC721, ERC721Enumerable, ERC721URIStorage, ERC721Royalty,
     _setDefaultRoyalty(_receiver, _feeBips);
   }
 
-  /**
-   * @dev Get the royalty info.
-   */
-  function getRoyaltyInfo() external returns (address receiver, uint256 feeBips) {
-    /* will cancel out fee denomination divisor so that we get back the bips */
-    (receiver, feeBips) = royaltyInfo(1, 10000);
-  }
-
-  // Functions - minting
+  // Minting
 
   /**
    * @dev Set the minter.
@@ -202,44 +213,54 @@ contract JigzawNFT is ERC721, ERC721Enumerable, ERC721URIStorage, ERC721Royalty,
   }
 
   /**
-   * @dev Mint tokens to the address, called by anyone.
+   * @dev Batch mint tokens to the address, callable by anyone but authorized by the minter.
    *
    * @param _to The address which will own the minted tokens.
    * @param _ids token ids to mint.
    * @param _sig minter authorisation signature.
    */
-  function mint(address _to, uint[] calldata _ids, Signature calldata _sig) external {
-    _assertValidSignature(minter, _sig, abi.encodePacked(_to, _ids));
-
-    for(uint i = 0; i < _ids.length; i++) {
-      _safeMint(_to, _ids[i], "");
-    }
+  function batchMint(address _to, uint[] calldata _ids, Signature calldata _sig) external {
+    _assertValidSignature(msg.sender, minter, _sig, abi.encodePacked(_to, _ids));
+    _safeBatchMintSpecific(_to, _ids);
   }
 
-  // Pool functions
+  // Pool functions 
 
-  function mint(address _to, uint _startId, uint _count) external onlyPool {
-    uint _endId = _startId + _count;
-    
-    for(uint i = _startId; i < _endId; i++) {
-      _safeMint(_to, i, "");
-    }
+  /**
+   * @dev See {IPoolNFT-getRoyaltyInfo}.
+   */
+  function getRoyaltyInfo() external view override returns (address receiver, uint256 feeBips) {
+    /* will cancel out fee denomination divisor so that we get back the bips */
+    (receiver, feeBips) = royaltyInfo(1, _feeDenominator());
   }
 
-  function batchTransferTokenIds(address _from, address _to, uint[] calldata _tokenIds) external {
-    for (uint i = 0; i < _tokenIds.length; i++) {
-      _safeTransfer(_from, _to, _tokenIds[i], "");
-    }
+  /**
+   * @dev See {IPoolNFT-batchMint}.
+   */
+  function batchMint(address _to, uint _startId, uint _count) external override onlyPool {
+    _safeBatchMintRange(_to, _startId, _count);
   }
 
-  function batchTransferNumTokens(address _from, address _to, uint _numTokens) external {
-    if (balanceOf(_from) < _numTokens) {
-      revert LibErrors.InsufficientBalance(_from, _numTokens, balanceOf(_from));
-    }
+  /**
+   * @dev See {IPoolNFT-batchTransferTokenIds}.
+   */
+  function batchTransferTokenIds(address _from, address _to, uint[] calldata _tokenIds) external override {
+    // for (uint i = 0; i < _tokenIds.length; i++) {
+    //   _safeTransfer(_from, _to, _tokenIds[i], "");
+    // }
+  }
 
-    for (uint i = 0; i < _numTokens; i++) {
-      _safeTransfer(_from, _to, tokenOfOwnerByIndex(_from, i), "");
-    }
+  /**
+    * @dev See {IPoolNFT-batchTransferNumTokens}.
+    */
+  function batchTransferNumTokens(address _from, address _to, uint _numTokens) external override {
+    // if (balanceOf(_from) < _numTokens) {
+    //   revert LibErrors.InsufficientBalance(_from, _numTokens, balanceOf(_from));
+    // }
+
+    // for (uint i = 0; i < _numTokens; i++) {
+    //   _safeTransfer(_from, _to, tokenOfOwnerByIndex(_from, i), "");
+    // }
   }
 
   // Modifiers
@@ -252,27 +273,5 @@ contract JigzawNFT is ERC721, ERC721Enumerable, ERC721URIStorage, ERC721Royalty,
       revert LibErrors.UnauthorizedMustBePool(_msgSender());
     }
     _;
-  }
-
-  // Internal
-
-  /**
-   * @dev Assert validity of given signature.
-   */
-  function _assertValidSignature(address _signer, Signature memory _sig, bytes memory _data) private {
-    if(_sig.deadline < block.timestamp) {
-      revert LibErrors.SignatureExpired(_msgSender()); 
-    }
-
-    bytes32 sigHash = keccak256(abi.encodePacked(_data, _sig.deadline));
-    if (!SignatureChecker.isValidSignatureNow(_signer, sigHash, _sig.signature)) {
-      revert LibErrors.SignatureInvalid(_msgSender());
-    }
-
-    if(usedSignatures[sigHash]) {
-      revert LibErrors.SignatureAlreadyUsed(_msgSender());
-    }
-
-    usedSignatures[sigHash] = true;
   }
 }

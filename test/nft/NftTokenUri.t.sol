@@ -3,7 +3,7 @@ pragma solidity ^0.8.24;
 
 import { IERC721Errors } from "openzeppelin/interfaces/draft-IERC6093.sol";
 import { NftTestBase } from "./NftTestBase.sol";
-import { Signature } from "src/Common.sol";
+import { Auth } from "src/Auth.sol";
 import { LibErrors } from "src/LibErrors.sol";
 
 contract NftTokenUri is NftTestBase {
@@ -17,13 +17,13 @@ contract NftTokenUri is NftTestBase {
     ids[0] = 1;
     ids[1] = 2;
 
-    Signature memory sig = _computeMinterSig(
+    Auth.Signature memory sig = _computeMinterSig(
       abi.encodePacked(wallet, ids), 
       block.timestamp + 10 seconds
     );
 
     vm.prank(caller);
-    t.mint(wallet, ids, sig);
+    t.batchMint(wallet, ids, sig);
   }
 
   function test_TokenUriReturnsDefaultUri() public {
@@ -38,7 +38,7 @@ contract NftTokenUri is NftTestBase {
     string[] memory uris = new string[](1);
     uris[0] = "uri2";
 
-    Signature memory sig = _computeRevealerSig(
+    Auth.Signature memory sig = _computeRevealerSig(
       abi.encodePacked(ids),
       block.timestamp + 10 seconds
     );
