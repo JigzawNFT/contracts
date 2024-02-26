@@ -4,7 +4,10 @@ pragma solidity ^0.8.24;
 import { NftTestBase } from "./NftTestBase.sol";
 import { Auth } from "src/Auth.sol";
 import { LibErrors } from "src/LibErrors.sol";
-import { IERC721Errors } from "openzeppelin/interfaces/draft-IERC6093.sol";
+import { 
+  ERC721TokenAlreadyMinted, 
+  ERC721InvalidBatchSize 
+} from "src/IERC721Errors.sol";
 
 contract NftMintingByMinter is NftTestBase {
   address caller = address(0x999);
@@ -60,7 +63,7 @@ contract NftMintingByMinter is NftTestBase {
     t.batchMint(wallet, ids, sigRevealer);
   }
 
-  function test_MintEmpty_Succeeds() public {
+  function test_MintEmpty_Fails() public {
     uint[] memory ids = new uint[](0);
 
     Auth.Signature memory sig = _computeMinterSig(
@@ -69,6 +72,7 @@ contract NftMintingByMinter is NftTestBase {
     );
 
     vm.prank(caller);
+    vm.expectRevert(abi.encodeWithSelector(ERC721InvalidBatchSize.selector, 0));
     t.batchMint(wallet, ids, sig);
 
     assertEq(t.totalSupply(), 0);
@@ -142,7 +146,7 @@ contract NftMintingByMinter is NftTestBase {
     );
 
     vm.prank(caller);
-    vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721InvalidSender.selector, address(0)));
+    vm.expectRevert(abi.encodeWithSelector(ERC721TokenAlreadyMinted.selector, 1));
     t.batchMint(wallet, ids2, sig2);
   }
 }

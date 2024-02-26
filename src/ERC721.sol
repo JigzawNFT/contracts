@@ -4,6 +4,7 @@ pragma solidity >=0.8.24;
 import { IERC721 } from "openzeppelin/interfaces/IERC721.sol";
 import { IERC2309 } from "openzeppelin/interfaces/IERC2309.sol";
 import { IERC721Enumerable } from "openzeppelin/token/ERC721/extensions/IERC721Enumerable.sol";
+import "./IERC721Errors.sol";
 
 /*
   Custom ERC721 contract for Jigzaw NFT.
@@ -166,7 +167,7 @@ abstract contract ERC721 is IERC721, IERC721Enumerable {
     }
 
     if (_ids.length == 0) {
-      revert ERC721InvalidBatchSize();
+      revert ERC721InvalidBatchSize(0);
     }
 
     for (uint256 i = 0; i < _ids.length; i++) {
@@ -184,7 +185,7 @@ abstract contract ERC721 is IERC721, IERC721Enumerable {
     }
 
     if (_count == 0) {
-      revert ERC721InvalidBatchSize();
+      revert ERC721InvalidBatchSize(0);
     }
 
     while (_count > 0) {
@@ -213,13 +214,6 @@ abstract contract ERC721 is IERC721, IERC721Enumerable {
       revert ERC721TokenAlreadyMinted(id);
     }
 
-    // Counter overflow is incredibly unrealistic.
-    unchecked {
-      _balanceOf[to]++;
-    }
-
-    _ownerOf[id] = to;
-    
     // update enumeration
     {
       tokenByIndex[totalSupply] = id;
@@ -231,6 +225,13 @@ abstract contract ERC721 is IERC721, IERC721Enumerable {
       totalSupply++;
     }
 
+    // Counter overflow is incredibly unrealistic.
+    unchecked {
+      _balanceOf[to]++;
+    }
+
+    _ownerOf[id] = to;
+    
     emit Transfer(address(0), to, id);
   }
 
@@ -313,11 +314,3 @@ abstract contract ERC721TokenReceiver {
 }
 
 
-// errors
-error ERC721TokenNotMinted(uint256 id);
-error ERC721TokenAlreadyMinted(uint256 id);
-error ERC721ZeroAddress();
-error ERC721InvalidBatchSize();
-error ERC721InvalidOwner(address from, uint256 id);
-error ERC721NotAuthorized(address sender, uint256 id);
-error ERC721UnsafeTokenReceiver(address to, uint256 id);
