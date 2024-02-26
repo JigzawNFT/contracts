@@ -4,7 +4,7 @@ pragma solidity ^0.8.24;
 import { NftTestBase } from "./NftTestBase.sol";
 import { Auth } from "src/Auth.sol";
 import { LibErrors } from "src/LibErrors.sol";
-import { IERC721Errors } from "openzeppelin/interfaces/draft-IERC6093.sol";
+import { IERC721Errors } from "src/IERC721Errors.sol";
 
 contract NftTransferAuth is NftTestBase {
   address wallet1 = address(0x8888);
@@ -19,7 +19,7 @@ contract NftTransferAuth is NftTestBase {
 
   function test_AnonTransfer_Fails() public {
     vm.prank(wallet2);
-    vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721InsufficientApproval.selector, wallet2, 1));
+    vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NotAuthorized.selector, wallet1, wallet2, 1));
     t.transferFrom(wallet1, wallet2, 1);
   }
 

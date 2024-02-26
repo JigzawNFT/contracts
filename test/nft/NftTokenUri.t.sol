@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPLv3
 pragma solidity ^0.8.24;
 
+import {console2 as c} from "forge-std/Test.sol";
 import { IERC721Errors } from "openzeppelin/interfaces/draft-IERC6093.sol";
 import { NftTestBase } from "./NftTestBase.sol";
 import { Auth } from "src/Auth.sol";
@@ -13,17 +14,23 @@ contract NftTokenUri is NftTestBase {
   function setUp() virtual override public {
     super.setUp();
 
-    uint[] memory ids = new uint[](2);
-    ids[0] = 1;
-    ids[1] = 2;
-
-    Auth.Signature memory sig = _computeMinterSig(
-      abi.encodePacked(wallet, ids), 
-      block.timestamp + 10 seconds
-    );
+    uint id = 1;
+    string memory uri = "";
 
     vm.prank(caller);
-    t.batchMint(wallet, ids, sig);
+    t.mint(wallet, id, uri, _computeMinterSig(
+      abi.encodePacked(wallet, id, uri), 
+      block.timestamp + 10 seconds
+    ));
+
+    id = 2;
+    uri = "";
+
+    vm.prank(caller);
+    t.mint(wallet, id, uri, _computeMinterSig(
+      abi.encodePacked(wallet, id, uri), 
+      block.timestamp + 10 seconds
+    ));
   }
 
   function test_TokenUriReturnsDefaultUri() public {

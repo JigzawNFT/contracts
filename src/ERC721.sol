@@ -4,7 +4,7 @@ pragma solidity >=0.8.24;
 import { IERC721 } from "openzeppelin/interfaces/IERC721.sol";
 import { IERC2309 } from "openzeppelin/interfaces/IERC2309.sol";
 import { IERC721Enumerable } from "openzeppelin/token/ERC721/extensions/IERC721Enumerable.sol";
-import "./IERC721Errors.sol";
+import { IERC721Errors } from "./IERC721Errors.sol";
 
 /*
   Custom ERC721 contract for Jigzaw NFT.
@@ -16,7 +16,7 @@ import "./IERC721Errors.sol";
   - `isApprovedForAll` can be overridden.
   - Batch minting and transfers.
 */
-abstract contract ERC721 is IERC721, IERC721Enumerable {  
+abstract contract ERC721 is IERC721, IERC721Errors, IERC721Enumerable {  
   // constructor
 
   constructor(string memory _name, string memory _symbol) {
@@ -66,7 +66,7 @@ abstract contract ERC721 is IERC721, IERC721Enumerable {
     address owner = _ownerOf[id];
 
     if (owner != msg.sender && !isApprovedForAll(owner, msg.sender)) {
-      revert ERC721NotAuthorized(msg.sender, id);
+      revert ERC721NotAuthorized(owner, msg.sender, id);
     }
 
     getApproved[id] = spender;
@@ -107,7 +107,7 @@ abstract contract ERC721 is IERC721, IERC721Enumerable {
         msg.sender == getApproved[id]
     );
     if (!approved) {
-      revert ERC721NotAuthorized(msg.sender, id);
+      revert ERC721NotAuthorized(from, msg.sender, id);
     }
 
     // Underflow of the sender's balance is impossible because we check for
@@ -157,24 +157,6 @@ abstract contract ERC721 is IERC721, IERC721Enumerable {
   }
 
   // mint/burn
-
-  /**
-   * @dev Batch mint specific tokens to the address.
-   */
-  function _safeBatchMintSpecific(address _to, uint256[] calldata _ids) internal virtual {
-    if (_to == address(0)) {
-      revert ERC721ZeroAddress();
-    }
-
-    if (_ids.length == 0) {
-      revert ERC721InvalidBatchSize(0);
-    }
-
-    for (uint256 i = 0; i < _ids.length; i++) {
-      _mint(_to, _ids[i]);
-      _informRecipient(msg.sender, address(0), _to, _ids[i], "");
-    }
-  }
 
   /**
     * @dev Batch mint a range of tokens to the address.

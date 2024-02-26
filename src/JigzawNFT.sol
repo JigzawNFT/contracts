@@ -41,11 +41,6 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, Ownable, IPoolNFT {
    */
   mapping(uint256 => string) tokenMetadata;
 
-  /**
-   * @dev Whether token has been revealed.
-   */
-  mapping(uint256 => bool) public revealed;
-
   // Constructor
 
   /**
@@ -104,14 +99,14 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, Ownable, IPoolNFT {
   function tokenURI(uint256 tokenId) public view override returns (string memory) {
       _requireOwned(tokenId);
 
-      if (revealed[tokenId]) {
+      if (bytes(tokenMetadata[tokenId]).length > 0) {
         return tokenMetadata[tokenId];
       } else {
         string memory json = string(
           abi.encodePacked(
             '{',
                 '"name": "Tile #', tokenId.toString(), '",',
-                '"description": "Jigzaw unrevealed token - see https://jigsaw.xyz for instructions.",',
+                '"description": "Jigzaw unrevealed tile - see https://jigsaw.xyz for instructions.",',
                 '"image": "', defaultImage, '"',
             '}'
           ) 
@@ -158,13 +153,11 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, Ownable, IPoolNFT {
 
       _requireOwned(id);
 
-      if (revealed[id]) {
+      if (bytes(tokenMetadata[id]).length > 0) {
         revert LibErrors.AlreadyRevealed(id);
       }
 
       tokenMetadata[id] = uri;
-
-      revealed[id] = true;
     }
 
     // IERC4906
@@ -213,16 +206,21 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, Ownable, IPoolNFT {
   }
 
   /**
-   * @dev Batch mint tokens to the address, callable by anyone but authorized by the minter.
+   * @dev Mint a token, callable by anyone but authorized by the minter.
    *
-   * @param _to The address which will own the minted tokens.
-   * @param _ids token ids to mint.
+   * @param _to The address which will own the minted token.
+   * @param _id token id to mint.
+   * @param _uri token uri.
    * @param _sig minter authorisation signature.
    */
-  function batchMint(address _to, uint[] calldata _ids, Signature calldata _sig) external {
-    _assertValidSignature(msg.sender, minter, _sig, abi.encodePacked(_to, _ids));
-    _safeBatchMintSpecific(_to, _ids);
+  function mint(address _to, uint256 _id, string calldata _uri, Signature calldata _sig) external {
+    _assertValidSignature(msg.sender, minter, _sig, abi.encodePacked(_to, _id, _uri));
+    _safeMint(_to, _id, "");
+    if (bytes(_uri).length > 0) {
+      tokenMetadata[_id] = _uri;
+    }
   }
+
 
   // Pool functions 
 

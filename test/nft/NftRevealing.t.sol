@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPLv3
 pragma solidity ^0.8.24;
 
-import { IERC721Errors } from "openzeppelin/interfaces/draft-IERC6093.sol";
+import { IERC721Errors } from "src/IERC721Errors.sol";
 import { NftTestBase } from "./NftTestBase.sol";
 import { Auth } from "src/Auth.sol";
 import { LibErrors } from "src/LibErrors.sol";
@@ -13,17 +13,23 @@ contract NftRevealing is NftTestBase {
   function setUp() virtual override public {
     super.setUp();
 
-    uint[] memory ids = new uint[](2);
-    ids[0] = 1;
-    ids[1] = 2;
-
-    Auth.Signature memory sig = _computeMinterSig(
-      abi.encodePacked(wallet, ids), 
-      block.timestamp + 10 seconds
-    );
+    uint id = 1;
+    string memory uri = "";
 
     vm.prank(caller);
-    t.batchMint(wallet, ids, sig);
+    t.mint(wallet, id, uri, _computeMinterSig(
+      abi.encodePacked(wallet, id, uri), 
+      block.timestamp + 10 seconds
+    ));
+
+    id = 2;
+    uri = "";
+
+    vm.prank(caller);
+    t.mint(wallet, id, uri, _computeMinterSig(
+      abi.encodePacked(wallet, id, uri), 
+      block.timestamp + 10 seconds
+    ));
   }
 
   function test_RevealWithRevealerAuthorisation_Succeeds() public {
@@ -45,10 +51,6 @@ contract NftRevealing is NftTestBase {
 
     assertEq(t.tokenURI(1), "uri1");
     assertEq(t.tokenURI(2), "uri2");
-
-    assertEq(t.revealed(1), true);
-    assertEq(t.revealed(2), true);
-    assertEq(t.revealed(3), false);
   }
 
   function test_RevealWithNotRevealerAuthorisation_Fails() public {
@@ -118,6 +120,38 @@ contract NftRevealing is NftTestBase {
     t.reveal(ids, uris, sig);
   }
 
+  function test_RevealEmptyList_Fails() public {
+    uint[] memory ids = new uint[](0);
+    string[] memory uris = new string[](0);
+
+    Auth.Signature memory sig = _computeRevealerSig(
+      abi.encodePacked(ids),
+      block.timestamp + 10 seconds
+    );
+
+    vm.prank(caller);
+    vm.expectRevert(abi.encodeWithSelector(LibErrors.InvalidTokenList.selector));
+    t.reveal(ids, uris, sig);
+  }
+
+  function test_MismatchingBatchListLengths_Fails() public {
+    uint[] memory ids = new uint[](1);
+    ids[0] = 1;
+
+    string[] memory uris = new string[](2);
+    uris[0] = "uri1";
+    uris[1] = "uri2";
+
+    Auth.Signature memory sig = _computeRevealerSig(
+      abi.encodePacked(ids),
+      block.timestamp + 10 seconds
+    );
+
+    vm.prank(caller);
+    vm.expectRevert(abi.encodeWithSelector(LibErrors.InvalidBatchLengths.selector, 1, 2));
+    t.reveal(ids, uris, sig);
+  }
+
   function test_RevealWhenAlreadyRevealed_Fails() public {
     uint[] memory ids = new uint[](2);
     ids[0] = 1;
@@ -160,13 +194,11 @@ contract NftRevealing is NftTestBase {
     uris[0] = "uri1";
     uris[1] = "uri3";
 
-    Auth.Signature memory sig = _computeRevealerSig(
+    vm.prank(caller);
+    vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721TokenNotMinted.selector, 3));
+    t.reveal(ids, uris, _computeRevealerSig(
       abi.encodePacked(ids),
       block.timestamp + 10 seconds
-    );
-
-    vm.prank(caller);
-    vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NonexistentToken.selector, 3));
-    t.reveal(ids, uris, sig);
+    ));
   }
 }

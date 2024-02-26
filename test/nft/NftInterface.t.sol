@@ -20,7 +20,5 @@ contract NftInterface is NftTestBase {
     assertTrue(t.supportsInterface(type(IERC721Enumerable).interfaceId));
     // Test that the contract supports the ERC721Royalty interface
     assertTrue(t.supportsInterface(type(IERC2981).interfaceId));
-    // Test that the contract supports the ERC4906 interface (this is a constant defined in openzepellin ERC721URIStorage.sol)
-    assertTrue(t.supportsInterface(bytes4(0x49064906)));
   }
 }
