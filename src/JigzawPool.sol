@@ -63,7 +63,7 @@ contract JigzawPool is ExponentialCurve {
     address sender = payable(msg.sender);
     (BuyQuote memory quote, address feeReceiver) = getBuyQuote(numItems);
 
-    if (quote.error == CurveQuoteError.NO_ERROR) {
+    if (quote.error == CurveQuoteError.NONE) {
       // check input
       if (quote.inputValue > msg.value) {
         revert LibErrors.InsufficientFunds(sender, quote.inputValue, msg.value);
@@ -85,7 +85,7 @@ contract JigzawPool is ExponentialCurve {
 
       // mint remaining
       if (numItems > 0) {
-        nft.mint(sender, status.lastMintId, numItems);
+        nft.batchMint(sender, status.lastMintId + 1, numItems);
         status.lastMintId += numItems;
       }
 
@@ -127,7 +127,7 @@ contract JigzawPool is ExponentialCurve {
     address sender = payable(msg.sender);
     (SellQuote memory quote, address feeReceiver) = getSellQuote(tokenIds.length);
 
-    if (quote.error == CurveQuoteError.NO_ERROR) {
+    if (quote.error == CurveQuoteError.NONE) {
       // check balance
       uint tokenBal = nft.balanceOf(sender);
       if (tokenIds.length > tokenBal) {

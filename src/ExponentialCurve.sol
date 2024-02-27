@@ -55,7 +55,7 @@ contract ExponentialCurve {
         // We only calculate changes for buying 1 or more NFTs
         if (numItems == 0) {
             quote.error = CurveQuoteError.INVALID_NUMITEMS;
-            return;
+            return quote;
         }
 
         uint256 deltaPowN = uint256(delta).fpow(
@@ -70,7 +70,7 @@ contract ExponentialCurve {
         );
         if (newSpotPrice_ > type(uint128).max) {
             quote.error = CurveQuoteError.SPOT_PRICE_OVERFLOW;
-            return;
+            return quote;
         }
         quote.newSpotPrice = uint128(newSpotPrice_);
 
@@ -131,7 +131,7 @@ contract ExponentialCurve {
         // We only calculate changes for selling 1 or more NFTs
         if (numItems == 0) {
             quote.error = CurveQuoteError.INVALID_NUMITEMS;
-            return;
+            return quote;
         }
 
         uint256 invDelta = FixedPointMathLib.WAD.fdiv(

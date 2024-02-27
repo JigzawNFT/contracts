@@ -90,6 +90,18 @@ abstract contract ERC721 is IERC721, IERC721Errors, IERC721Enumerable {
   /** The index at which a token is stored in the `tokenByIndex` mapping. */
   mapping(uint256 => uint256) internal _tokenIndex;
 
+  // IERC165
+
+  function supportsInterface(
+    bytes4 interfaceId
+  ) public view virtual returns (bool) {
+    return
+      interfaceId == 0x01ffc9a7 || // ERC165 Interface ID for ERC165
+      interfaceId == 0x80ac58cd || // ERC165 Interface ID for ERC721
+      interfaceId == 0x5b5e139f || // ERC165 Interface ID for ERC721Metadata
+      interfaceId == type(IERC721Enumerable).interfaceId;
+  }
+
   // single transfers
 
   function transferFrom(address from, address to, uint256 id) public virtual {
@@ -164,16 +176,21 @@ abstract contract ERC721 is IERC721, IERC721Errors, IERC721Enumerable {
     _informRecipient(msg.sender, from, to, id, data);
   }
 
-  // erc165
+  // batch transfers
 
-  function supportsInterface(
-    bytes4 interfaceId
-  ) public view virtual returns (bool) {
-    return
-      interfaceId == 0x01ffc9a7 || // ERC165 Interface ID for ERC165
-      interfaceId == 0x80ac58cd || // ERC165 Interface ID for ERC721
-      interfaceId == 0x5b5e139f || // ERC165 Interface ID for ERC721Metadata
-      interfaceId == type(IERC721Enumerable).interfaceId;
+  function _safeBatchTransfer(address caller, address _from, address _to, uint[] calldata tokenIds, "") internal virtual {
+    if (to == address(0)) {
+      revert ERC721ZeroAddress();
+    }
+
+    bool approved = (
+      msg.sender == from ||
+        isApprovedForAll(from, msg.sender) ||
+        msg.sender == getApproved[id]
+    );
+    if (!approved) {
+      revert ERC721NotAuthorized(from, msg.sender, id);
+    }
   }
 
   // mint/burn
