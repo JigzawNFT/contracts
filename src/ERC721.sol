@@ -109,6 +109,26 @@ abstract contract ERC721 is IERC721, IERC721Errors, IERC721Enumerable {
     if (!approved) {
       revert ERC721NotAuthorized(from, msg.sender, id);
     }
+    
+    // update enumeration
+    {
+      // remove from source
+      uint256 index = _ownedTokenIndex[id];
+      // if not the last one then we need to replace it with last one
+      if (index < _balanceOf[from] - 1) {
+        uint256 lastToken = tokenOfOwnerByIndex[from][_balanceOf[from] - 1];
+        tokenOfOwnerByIndex[from][index] = lastToken;
+        _ownedTokenIndex[lastToken] = index;
+        delete tokenOfOwnerByIndex[from][_balanceOf[from] - 1];
+      } else {
+        // else we can just delete it
+        delete tokenOfOwnerByIndex[from][index];
+      }
+
+      // add to destination
+      tokenOfOwnerByIndex[to][_balanceOf[to]] = id;
+      _ownedTokenIndex[id] = _balanceOf[to];
+    }
 
     // Underflow of the sender's balance is impossible because we check for
     // ownership above and the recipient's balance can't realistically overflow.
@@ -232,6 +252,7 @@ abstract contract ERC721 is IERC721, IERC721Errors, IERC721Enumerable {
         uint256 lastToken = tokenByIndex[totalSupply - 1];
         tokenByIndex[index] = lastToken;
         _tokenIndex[lastToken] = index;
+        delete tokenByIndex[totalSupply - 1];
       } else {
         // else we can just delete it
         delete tokenByIndex[index];
@@ -243,6 +264,7 @@ abstract contract ERC721 is IERC721, IERC721Errors, IERC721Enumerable {
         uint256 lastToken = tokenOfOwnerByIndex[owner][_balanceOf[owner] - 1];
         tokenOfOwnerByIndex[owner][index] = lastToken;
         _ownedTokenIndex[lastToken] = index;
+        delete tokenOfOwnerByIndex[owner][_balanceOf[owner] - 1];
       } else {
         // else we can just delete it
         delete tokenOfOwnerByIndex[owner][index];

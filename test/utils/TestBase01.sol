@@ -24,6 +24,10 @@ abstract contract TestBase01 is Test {
     });
   }
 
+  function _toBytes32(address _addr) internal pure returns (bytes32) {
+    return bytes32(uint256(uint160(_addr)));
+  }
+
   // to exclude this file from coverage report
   function testTestBase01_ExcludeFromCoverage() public {}  
 }
