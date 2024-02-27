@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPLv3
 pragma solidity ^0.8.24;
 
-import {console2 as c} from "forge-std/Test.sol";
+import { console2 as c } from "forge-std/Test.sol";
 import { NftTestBase } from "./NftTestBase.sol";
 import { Ownable } from "openzeppelin/access/Ownable.sol";
 

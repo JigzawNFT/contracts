@@ -37,7 +37,7 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, Ownable, IPoolNFT {
   string public defaultImage;
 
   /**
-   * @dev Token metadata.
+   * @dev Per-token metadata.
    */
   mapping(uint256 => string) tokenMetadata;
 
@@ -106,7 +106,7 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, Ownable, IPoolNFT {
       string memory json = string(
         abi.encodePacked(
           '{',
-              '"name": "Tile #', tokenId.toString(), '",',
+              '"name": "Unrevealed tile",',
               '"description": "Jigzaw unrevealed tile - see https://jigsaw.xyz for instructions.",',
               '"image": "', defaultImage, '"',
           '}'
@@ -130,29 +130,33 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, Ownable, IPoolNFT {
   /**
    * @dev Reveal tokens.
    *
-   * @param _tokenId The token id.
-   * @param _tokenURI The new token URI to set.
-   * @param _sig The minter authorisation signature.
+   * @param _id The token id.
+   * @param _uri The new token URI to set.
+   * @param _sig The revealer authorisation signature.
    */
-  function reveal(uint256 _tokenId, string calldata _tokenURI, Auth.Signature calldata _sig) external {
-    _assertValidSignature(msg.sender, revealer, _sig, abi.encodePacked(_tokenId, _tokenURI));
+  function reveal(uint256 _id, string calldata _uri, Auth.Signature calldata _sig) external {
+    _assertValidSignature(msg.sender, revealer, _sig, abi.encodePacked(_id, _uri));
 
-    _requireOwned(_tokenId);
+    _requireOwned(_id);
 
-    if (bytes(tokenMetadata[id]).length > 0) {
-      revert LibErrors.AlreadyRevealed(id);
+    if (bytes(tokenMetadata[_id]).length > 0) {
+      revert LibErrors.AlreadyRevealed(_id);
     }
 
-    tokenMetadata[id] = uri;
+    _setTokenMetadata(_id, _uri);
+  }
 
+  function _setTokenMetadata(uint256 _id, string memory _uri) internal {
+    tokenMetadata[_id] = _uri;
     // IERC4906
-    emit MetadataUpdate(_tokenId);
+    emit MetadataUpdate(_id);
   }
 
   // Functions - set default image
 
   /**
    * @dev Set the default token image.
+   * @param _defaultImage The new default image.
    */
   function setDefaultImage(string calldata _defaultImage) external onlyOwner {
     defaultImage = _defaultImage;
@@ -175,6 +179,8 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, Ownable, IPoolNFT {
 
   /**
    * @dev Set the royalty receiver and fee.
+   * @param _receiver The address of the new receiver.
+   * @param _feeBips The fee in bips.
    */
   function setRoyaltyFee(address _receiver, uint96 _feeBips) external onlyOwner {
     _setDefaultRoyalty(_receiver, _feeBips);
@@ -201,9 +207,7 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, Ownable, IPoolNFT {
   function mint(address _to, uint256 _id, string calldata _uri, Signature calldata _sig) external {
     _assertValidSignature(msg.sender, minter, _sig, abi.encodePacked(_to, _id, _uri));
     _safeMint(_to, _id, "");
-    if (bytes(_uri).length > 0) {
-      tokenMetadata[_id] = _uri;
-    }
+    _setTokenMetadata(_id, _uri);
   }
 
 

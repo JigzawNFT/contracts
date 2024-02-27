@@ -22,38 +22,21 @@ contract NftTokenUri is NftTestBase {
       abi.encodePacked(wallet, id, uri), 
       block.timestamp + 10 seconds
     ));
-
-    id = 2;
-    uri = "";
-
-    vm.prank(caller);
-    t.mint(wallet, id, uri, _computeMinterSig(
-      abi.encodePacked(wallet, id, uri), 
-      block.timestamp + 10 seconds
-    ));
   }
 
   function test_TokenUriReturnsDefaultUri() public {
     assertEq(t.tokenURI(1), _buildDefaultTokenUri(1));
-    assertEq(t.tokenURI(2), _buildDefaultTokenUri(2));
   }
 
   function test_TokenUriReturnsRevealedUri() public {
-    uint[] memory ids = new uint[](1);
-    ids[0] = 2;
-
-    string[] memory uris = new string[](1);
-    uris[0] = "uri2";
-
     Auth.Signature memory sig = _computeRevealerSig(
-      abi.encodePacked(ids),
+      abi.encodePacked(uint(1), "uri"),
       block.timestamp + 10 seconds
     );
 
     vm.prank(caller);
-    t.reveal(ids, uris, sig);
+    t.reveal(uint(1), "uri", sig);
 
-    assertEq(t.tokenURI(1), _buildDefaultTokenUri(1));
-    assertEq(t.tokenURI(2), "uri2");
+    assertEq(t.tokenURI(1), "uri");
   }
 }

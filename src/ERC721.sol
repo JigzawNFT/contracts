@@ -14,7 +14,7 @@ import { IERC721Errors } from "./IERC721Errors.sol";
 
   Improvements:
   - `isApprovedForAll` can be overridden.
-  - Batch minting.
+  - Batch minting and transfers are supported.
 */
 abstract contract ERC721 is IERC721, IERC721Errors, IERC721Enumerable {  
   // constructor

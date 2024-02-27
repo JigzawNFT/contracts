@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPLv3
 pragma solidity ^0.8.24;
 
+import { Vm } from "forge-std/Vm.sol";
 import { NftTestBase } from "./NftTestBase.sol";
 import { Auth } from "src/Auth.sol";
 import { LibErrors } from "src/LibErrors.sol";
@@ -46,6 +47,27 @@ contract NftMintingByMinter is NftTestBase {
     assertEq(t.tokenByIndex(1), 3);
     assertEq(t.tokenOfOwnerByIndex(wallet, 1), 3);
     assertEq(t.tokenURI(3), "uri3");
+  }
+
+  function test_MintWithMinterAuthorisation_EmitsEvent() public {
+    vm.recordLogs();
+
+    vm.prank(caller);
+    t.mint(wallet, 1, "uri", _computeMinterSig(
+      abi.encodePacked(wallet, uint256(1), "uri"), 
+      block.timestamp + 10 seconds
+    ));
+
+    Vm.Log[] memory entries = vm.getRecordedLogs();
+    assertEq(entries.length, 2, "Invalid entry count");
+    assertEq(entries[1].topics.length, 1, "Invalid event count");
+    assertEq(
+        entries[1].topics[0],
+        keccak256("MetadataUpdate(uint256)"),
+        "Invalid event signature"
+    );
+    (uint256 tokenId) = abi.decode(entries[1].data, (uint256));
+    assertEq(tokenId, 1, "Invalid token id");
   }
 
   function test_MintWithNotMinterAuthorisation_Fails() public {

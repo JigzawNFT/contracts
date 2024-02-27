@@ -53,11 +53,11 @@ abstract contract NftTestBase is TestBase01 {
     });
   }  
 
-  function _buildDefaultTokenUri(uint tokenId) internal view returns (string memory) {
+  function _buildDefaultTokenUri(uint /*tokenId*/) internal view returns (string memory) {
     string memory json = string(
       abi.encodePacked(
         '{',
-            '"name": "Tile #', tokenId.toString(), '",',
+            '"name": "Unrevealed tile",',
             '"description": "Jigzaw unrevealed tile - see https://jigsaw.xyz for instructions.",',
             '"image": "', t.defaultImage(), '"',
         '}'
