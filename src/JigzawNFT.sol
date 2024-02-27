@@ -88,32 +88,33 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, Ownable, IPoolNFT {
 
   function supportsInterface(bytes4 interfaceId) public view override(ERC721, ERC2981, IERC165) returns (bool) {
     return ERC721.supportsInterface(interfaceId)
-      || ERC2981.supportsInterface(interfaceId);
+      || ERC2981.supportsInterface(interfaceId)
+      || type(IERC4906).interfaceId == interfaceId;
   }
 
-  // Metadata
+  // token URI
 
   /**
    * @dev See {IERC721Metadata-tokenURI}.
    */
   function tokenURI(uint256 tokenId) public view override returns (string memory) {
-      _requireOwned(tokenId);
+    _requireOwned(tokenId);
 
-      if (bytes(tokenMetadata[tokenId]).length > 0) {
-        return tokenMetadata[tokenId];
-      } else {
-        string memory json = string(
-          abi.encodePacked(
-            '{',
-                '"name": "Tile #', tokenId.toString(), '",',
-                '"description": "Jigzaw unrevealed tile - see https://jigsaw.xyz for instructions.",',
-                '"image": "', defaultImage, '"',
-            '}'
-          ) 
-        );
+    if (bytes(tokenMetadata[tokenId]).length > 0) {
+      return tokenMetadata[tokenId];
+    } else {
+      string memory json = string(
+        abi.encodePacked(
+          '{',
+              '"name": "Tile #', tokenId.toString(), '",',
+              '"description": "Jigzaw unrevealed tile - see https://jigsaw.xyz for instructions.",',
+              '"image": "', defaultImage, '"',
+          '}'
+        ) 
+      );
 
-        return string(abi.encodePacked("data:application/json;base64,", Base64.encode(bytes(json))));
-      }
+      return string(abi.encodePacked("data:application/json;base64,", Base64.encode(bytes(json))));
+    }
   }
 
   // Functions - reveal token
@@ -129,39 +130,23 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, Ownable, IPoolNFT {
   /**
    * @dev Reveal tokens.
    *
-   * @param _tokenIds The token ids.
-   * @param _tokenURIs The new token URIs to set.
+   * @param _tokenId The token id.
+   * @param _tokenURI The new token URI to set.
    * @param _sig The minter authorisation signature.
    */
-  function reveal(uint256[] calldata _tokenIds, string[] calldata _tokenURIs, Auth.Signature calldata _sig) external {
-    _assertValidSignature(msg.sender, revealer, _sig, abi.encodePacked(_tokenIds));
+  function reveal(uint256 _tokenId, string calldata _tokenURI, Auth.Signature calldata _sig) external {
+    _assertValidSignature(msg.sender, revealer, _sig, abi.encodePacked(_tokenId, _tokenURI));
 
-    uint id;
-    string memory uri;
+    _requireOwned(_tokenId);
 
-    if (_tokenIds.length == 0) {
-      revert LibErrors.InvalidTokenList();
+    if (bytes(tokenMetadata[id]).length > 0) {
+      revert LibErrors.AlreadyRevealed(id);
     }
 
-    if (_tokenIds.length != _tokenURIs.length) {
-      revert LibErrors.InvalidBatchLengths(_tokenIds.length, _tokenURIs.length);
-    }
-
-    for (uint i = 0; i < _tokenIds.length; i++) {
-      id = _tokenIds[i];
-      uri = _tokenURIs[i];
-
-      _requireOwned(id);
-
-      if (bytes(tokenMetadata[id]).length > 0) {
-        revert LibErrors.AlreadyRevealed(id);
-      }
-
-      tokenMetadata[id] = uri;
-    }
+    tokenMetadata[id] = uri;
 
     // IERC4906
-    emit BatchMetadataUpdate(_tokenIds[0], _tokenIds[_tokenIds.length - 1]);
+    emit MetadataUpdate(_tokenId);
   }
 
   // Functions - set default image
