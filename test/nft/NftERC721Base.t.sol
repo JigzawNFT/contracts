@@ -91,7 +91,7 @@ contract NftERC721Base is NftTestBase, IERC721Errors {
 
     assertEq(b.ownerOf(1), good);
 
-    GoodERC721Receiver.Received memory r = GoodERC721Receiver(good).getReceived();
+    GoodERC721Receiver.Received memory r = GoodERC721Receiver(good).getReceived(0);
     assertEq(r.operator, wallet1);
     assertEq(r.from, address(0));
     assertEq(r.tokenId, 1);
@@ -115,6 +115,194 @@ contract NftERC721Base is NftTestBase, IERC721Errors {
   function test_SingleMintToZeroAddress_Fails() public {
     vm.expectRevert(abi.encodeWithSelector(ERC721ZeroAddress.selector));
     b.mint(address(0), 1, "");
+  }
+
+  // Batch mint
+
+  function test_BatchMint_UpdatesEnumeration() public {
+    b.batchMint(wallet1, 2, "");
+    b.batchMint(wallet2, 1, "");
+
+    assertEq(b.totalSupply(), 3);
+    assertEq(b.tokenByIndex(0), 1);
+    assertEq(b.tokenByIndex(1), 2);
+    assertEq(b.tokenByIndex(2), 3);
+    assertEq(b.tokenOfOwnerByIndex(wallet1, 0), 1);
+    assertEq(b.tokenOfOwnerByIndex(wallet1, 1), 2);
+    assertEq(b.tokenOfOwnerByIndex(wallet2, 0), 3);
+    assertEq(b.balanceOf(wallet1), 2);
+    assertEq(b.balanceOf(wallet2), 1);
+    assertEq(b.ownerOf(1), wallet1);
+    assertEq(b.ownerOf(2), wallet1);
+    assertEq(b.ownerOf(3), wallet2);
+  }
+
+  function test_BatchMint_FiresTransferEvent() public {
+    vm.recordLogs();
+
+    b.batchMint(wallet1, 2, "");
+
+    Vm.Log[] memory entries = vm.getRecordedLogs();
+    assertEq(entries.length, 2, "Invalid entry count");
+    assertEq(entries[0].topics.length, 4, "Invalid event count");
+    assertEq(
+        entries[0].topics[0],
+        keccak256("Transfer(address,address,uint256)"),
+        "Invalid event signature"
+    );
+    assertEq(entries[1].topics.length, 4, "Invalid event count");
+    assertEq(
+        entries[1].topics[0],
+        keccak256("Transfer(address,address,uint256)"),
+        "Invalid event signature"
+    );
+  }
+
+  function test_BatchMint_InvokesReceiver_Good() public {
+    address good = address(new GoodERC721Receiver());
+
+    vm.prank(wallet1);
+    b.batchMint(good, 2, "test");
+
+    assertEq(b.ownerOf(1), good);
+    assertEq(b.ownerOf(2), good);
+
+    GoodERC721Receiver.Received memory r = GoodERC721Receiver(good).getReceived(0);
+    assertEq(r.operator, wallet1);
+    assertEq(r.from, address(0));
+    assertEq(r.tokenId, 1);
+    assertEq(r.data, "test");
+
+    r = GoodERC721Receiver(good).getReceived(1);
+    assertEq(r.operator, wallet1);
+    assertEq(r.from, address(0));
+    assertEq(r.tokenId, 2);
+    assertEq(r.data, "test");
+  }
+
+  function test_BatchMint_InvokesReceiver_Bad() public {
+    address bad = address(new BadERC721Receiver());
+
+    vm.expectRevert(abi.encodeWithSelector(ERC721UnsafeTokenReceiver.selector, bad, uint(1)));
+    b.mint(bad, 1, "test");
+  }
+
+  function test_BatchMint_ToZeroAddress_Fails() public {
+    vm.expectRevert(abi.encodeWithSelector(ERC721ZeroAddress.selector));
+    b.batchMint(address(0), 2, "");
+  }
+
+  function test_BatchMint_EmptyBatch_Fails() public {
+    vm.expectRevert(abi.encodeWithSelector(ERC721InvalidBatchSize.selector, uint(0)));
+    b.batchMint(wallet1, 0, "");
+  }
+
+  // Single token Approval
+
+  function test_SingleTokenApproval() public {
+    b.mint(wallet1, 1, "");
+
+    vm.prank(wallet2);
+    vm.expectRevert(abi.encodeWithSelector(ERC721NotAuthorized.selector, wallet1, wallet2, uint(1)));
+    b.transferFrom(wallet1, wallet2, 1);
+
+    vm.prank(wallet1);
+    b.approve(wallet2, 1);
+    assertEq(b.getApproved(1), wallet2);
+
+    vm.prank(wallet2);
+    b.transferFrom(wallet1, wallet2, 1);
+
+    assertEq(b.ownerOf(1), wallet2);
+  }
+
+  function test_SingleTokenApproval_TransferCancelsApprovals() public {
+    b.mint(wallet1, 1, "");
+
+    vm.prank(wallet1);
+    b.approve(wallet2, 1);
+
+    vm.prank(wallet2);
+    b.transferFrom(wallet1, wallet2, 1);
+
+    assertEq(b.getApproved(1), address(0));
+  }
+
+  function test_SingleTokenApproval_EmitsEvent() public {
+    b.mint(wallet1, 1, "");
+
+    vm.recordLogs();
+
+    vm.prank(wallet1);
+    b.approve(wallet2, 1);
+
+    Vm.Log[] memory entries = vm.getRecordedLogs();
+    assertEq(entries.length, 1, "Invalid entry count");
+    assertEq(entries[0].topics.length, 4, "Invalid event count");
+    assertEq(
+        entries[0].topics[0],
+        keccak256("Approval(address,address,uint256)"),
+        "Invalid event signature"
+    );
+    assertEq(entries[0].topics[1], _toBytes32(wallet1), "Invalid owner");
+    assertEq(entries[0].topics[2], _toBytes32(wallet2), "Invalid spender");
+    assertEq(entries[0].topics[3], bytes32(uint(1)), "Invalid id");
+  }
+
+  function test_SingleTokenApproval_AnonCannotApprove() public {
+    b.mint(wallet1, 1, "");
+
+    vm.prank(wallet2);
+    vm.expectRevert(abi.encodeWithSelector(ERC721NotAuthorized.selector, wallet1, wallet2, uint(1)));
+    b.approve(wallet2, 1);
+  }
+
+  // All tokens Approval
+
+  function test_AllTokenApproval() public {
+    b.mint(wallet1, 1, "");
+    b.mint(wallet1, 2, "");
+
+    vm.prank(wallet2);
+    vm.expectRevert(abi.encodeWithSelector(ERC721NotAuthorized.selector, wallet1, wallet2, uint(1)));
+    b.transferFrom(wallet1, wallet2, 1);
+
+    vm.prank(wallet1);
+    b.setApprovalForAll(wallet2, true);
+    assertTrue(b.isApprovedForAll(wallet1, wallet2));
+
+    vm.prank(wallet2);
+    b.transferFrom(wallet1, wallet2, 1);
+
+    assertEq(b.ownerOf(1), wallet2);
+
+    vm.prank(wallet1);
+    b.setApprovalForAll(wallet2, false);
+    assertFalse(b.isApprovedForAll(wallet1, wallet2));
+
+    vm.prank(wallet2);
+    vm.expectRevert(abi.encodeWithSelector(ERC721NotAuthorized.selector, wallet1, wallet2, uint(2)));
+    b.transferFrom(wallet1, wallet2, 2);
+  }
+
+  function test_AllTokenApproval_EmitsEvent() public {
+    vm.recordLogs();
+
+    vm.prank(wallet1);
+    b.setApprovalForAll(wallet2, true);
+
+    Vm.Log[] memory entries = vm.getRecordedLogs();
+    assertEq(entries.length, 1, "Invalid entry count");
+    assertEq(entries[0].topics.length, 3, "Invalid event count");
+    assertEq(
+        entries[0].topics[0],
+        keccak256("ApprovalForAll(address,address,bool)"),
+        "Invalid event signature"
+    );
+    assertEq(entries[0].topics[1], _toBytes32(wallet1), "Invalid owner");
+    assertEq(entries[0].topics[2], _toBytes32(wallet2), "Invalid operator");
+    (bool val) = abi.decode(entries[0].data, (bool));
+    assertTrue(val, "Invalid approved");
   }
 
   // Transfer
@@ -145,7 +333,31 @@ contract NftERC721Base is NftTestBase, IERC721Errors {
     assertEq(b.balanceOf(wallet2), 3);
   }
 
-  function test_TransferFrom_CancelsApprovals() public {
+  function test_TransferFrom_IfSingleTokenApproved() public {
+    b.mint(wallet1, 1, "");
+
+    vm.prank(wallet1);
+    b.approve(wallet2, 1);
+
+    vm.prank(wallet2);
+    b.transferFrom(wallet1, wallet2, 1);
+
+    assertEq(b.ownerOf(1), wallet2);
+  }
+
+  function test_TransferFrom_IfAllTokensApproved() public {
+    b.mint(wallet1, 1, "");
+
+    vm.prank(wallet1);
+    b.setApprovalForAll(wallet2, true);
+
+    vm.prank(wallet2);
+    b.transferFrom(wallet1, wallet2, 1);
+
+    assertEq(b.ownerOf(1), wallet2);
+  }
+
+  function test_TransferFrom_CancelsSingleTokenApprovals() public {
     b.mint(wallet1, 1, "");
 
     vm.prank(wallet1);
@@ -221,7 +433,31 @@ contract NftERC721Base is NftTestBase, IERC721Errors {
     assertEq(b.balanceOf(wallet2), 3);
   }
 
-  function test_SafeTransferFrom_CancelsApprovals() public {
+  function test_SafgeTransferFrom_IfSingleTokenApproved() public {
+    b.mint(wallet1, 1, "");
+
+    vm.prank(wallet1);
+    b.approve(wallet2, 1);
+
+    vm.prank(wallet2);
+    b.safeTransferFrom(wallet1, wallet2, 1);
+
+    assertEq(b.ownerOf(1), wallet2);
+  }
+
+  function test_SafeTransferFrom_IfAllTokensApproved() public {
+    b.mint(wallet1, 1, "");
+
+    vm.prank(wallet1);
+    b.setApprovalForAll(wallet2, true);
+
+    vm.prank(wallet2);
+    b.safeTransferFrom(wallet1, wallet2, 1);
+
+    assertEq(b.ownerOf(1), wallet2);
+  }
+
+  function test_SafeTransferFrom_CancelsSingleTokenApprovals() public {
     b.mint(wallet1, 1, "");
 
     vm.prank(wallet1);
@@ -264,7 +500,7 @@ contract NftERC721Base is NftTestBase, IERC721Errors {
 
     assertEq(b.ownerOf(1), good);
 
-    GoodERC721Receiver.Received memory r = GoodERC721Receiver(good).getReceived();
+    GoodERC721Receiver.Received memory r = GoodERC721Receiver(good).getReceived(0);
     assertEq(r.operator, wallet1);
     assertEq(r.from, wallet1);
     assertEq(r.tokenId, 1);
@@ -296,7 +532,7 @@ contract NftERC721Base is NftTestBase, IERC721Errors {
 
     assertEq(b.ownerOf(1), good);
 
-    GoodERC721Receiver.Received memory r = GoodERC721Receiver(good).getReceived();
+    GoodERC721Receiver.Received memory r = GoodERC721Receiver(good).getReceived(0);
     assertEq(r.operator, wallet1);
     assertEq(r.from, wallet1);
     assertEq(r.tokenId, 1);
@@ -393,8 +629,8 @@ contract MockERC721 is ERC721 {
     _safeMint(to, id, data);
   }
 
-  function batchMint(address to, uint256 count) public {
-    _safeBatchMintRange(to, lastMintedId + 1, count);
+  function batchMint(address to, uint256 count, bytes memory _data) public {
+    _safeBatchMint(to, lastMintedId + 1, count, _data);
     lastMintedId += count;
   }
 
@@ -415,10 +651,10 @@ contract GoodERC721Receiver is ERC721TokenReceiver {
     bytes data;
   }
 
-  Received internal received;
+  Received[] internal received;
 
-  function getReceived() public view returns (Received memory) {
-    return received;
+  function getReceived(uint i) public view returns (Received memory) {
+    return received[i];
   }
 
   function onERC721Received(
@@ -427,7 +663,7 @@ contract GoodERC721Receiver is ERC721TokenReceiver {
     uint256 tokenId,
     bytes calldata data
   ) public override returns (bytes4) {
-    received = Received(operator, from, tokenId, data);
+    received.push(Received(operator, from, tokenId, data));
     return this.onERC721Received.selector;
   }
 }

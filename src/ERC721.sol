@@ -14,7 +14,7 @@ import { IERC721Errors } from "./IERC721Errors.sol";
 
   Improvements:
   - `isApprovedForAll` can be overridden.
-  - Batch minting and transfers.
+  - Batch minting.
 */
 abstract contract ERC721 is IERC721, IERC721Errors, IERC721Enumerable {  
   // constructor
@@ -181,7 +181,7 @@ abstract contract ERC721 is IERC721, IERC721Errors, IERC721Enumerable {
   /**
     * @dev Batch mint a range of tokens to the address.
     */
-  function _safeBatchMintRange(address _to, uint256 _startId, uint256 _count) internal virtual {
+  function _safeBatchMint(address _to, uint256 _startId, uint256 _count, bytes memory _data) internal virtual {
     if (_to == address(0)) {
       revert ERC721ZeroAddress();
     }
@@ -192,7 +192,7 @@ abstract contract ERC721 is IERC721, IERC721Errors, IERC721Enumerable {
 
     while (_count > 0) {
       _mint(_to, _startId);
-      _informRecipient(msg.sender, address(0), _to, _startId, "");
+      _informRecipient(msg.sender, address(0), _to, _startId, _data);
       _startId++;
       _count--;
     }

@@ -236,7 +236,7 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, Ownable, IPoolNFT {
    * @dev See {IPoolNFT-batchMint}.
    */
   function batchMint(address _to, uint _startId, uint _count) external override onlyPool {
-    _safeBatchMintRange(_to, _startId, _count);
+    _safeBatchMint(_to, _startId, _count, "");
   }
 
   /**
