@@ -104,22 +104,14 @@ abstract contract ERC721 is IERC721, IERC721Errors, IERC721Enumerable {
 
   // single transfers
 
-  function transferFrom(address from, address to, uint256 id) public virtual {
-    if (from != _ownerOf[id]) {
-      revert ERC721InvalidOwner(from, id);
-    }
-
-    if (to == address(0)) {
-      revert ERC721ZeroAddress();
-    }
-
+  function _transfer(address caller, address from, address to, uint256 id) internal virtual {
     bool approved = (
-      msg.sender == from ||
-        isApprovedForAll(from, msg.sender) ||
-        msg.sender == getApproved[id]
+      caller == from ||
+        isApprovedForAll(from, caller) ||
+        caller == getApproved[id]
     );
     if (!approved) {
-      revert ERC721NotAuthorized(from, msg.sender, id);
+      revert ERC721NotAuthorized(from, caller, id);
     }
     
     // update enumeration
@@ -157,6 +149,18 @@ abstract contract ERC721 is IERC721, IERC721Errors, IERC721Enumerable {
     emit Transfer(from, to, id);
   }
 
+  function transferFrom(address from, address to, uint256 id) public virtual {
+    if (from != _ownerOf[id]) {
+      revert ERC721InvalidOwner(from, id);
+    }
+
+    if (to == address(0)) {
+      revert ERC721ZeroAddress();
+    }
+
+    _transfer(msg.sender, from, to, id);
+  }
+
   function safeTransferFrom(
     address from,
     address to,
@@ -178,18 +182,37 @@ abstract contract ERC721 is IERC721, IERC721Errors, IERC721Enumerable {
 
   // batch transfers
 
-  function _safeBatchTransfer(address caller, address _from, address _to, uint[] calldata tokenIds, "") internal virtual {
-    if (to == address(0)) {
+  function _safeBatchTransfer(address _caller, address _from, address _to, uint[] memory _tokenIds, bytes memory _data) internal virtual {
+    if (_to == address(0)) {
       revert ERC721ZeroAddress();
     }
 
-    bool approved = (
-      msg.sender == from ||
-        isApprovedForAll(from, msg.sender) ||
-        msg.sender == getApproved[id]
-    );
-    if (!approved) {
-      revert ERC721NotAuthorized(from, msg.sender, id);
+    for (uint i = 0; i < _tokenIds.length; i++) {
+      uint256 id = _tokenIds[i];
+
+      if (_from != _ownerOf[id]) {
+        revert ERC721InvalidOwner(_from, id);
+      }
+
+      _transfer(_caller, _from, _to, id);
+      _informRecipient(_caller, _from, _to, id, _data);
+    }
+  }
+
+  function _safeBatchTransfer(address _caller, address _from, address _to, uint _count, bytes memory _data) internal virtual {
+    if (_to == address(0)) {
+      revert ERC721ZeroAddress();
+    }
+
+    if (_balanceOf[_from] < _count) {
+      revert ERC721InsufficientBalance(_from, _count, _balanceOf[_from]);
+    }
+
+    for (uint i = 0; i < _count; i++) {
+      uint256 id = tokenOfOwnerByIndex[_from][i];
+
+      _transfer(_caller, _from, _to, id);
+      _informRecipient(_caller, _from, _to, id, _data);
     }
   }
 
@@ -329,7 +352,7 @@ interface IERC721TokenReceiver {
     address,
     uint256,
     bytes calldata
-  ) external virtual returns (bytes4);
+  ) external returns (bytes4);
 }
 
 

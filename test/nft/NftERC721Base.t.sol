@@ -310,7 +310,7 @@ contract NftERC721Base is NftTestBase {
     assertTrue(val, "Invalid approved");
   }
 
-  // Transfer
+  // Transfers
 
   function test_TransferFrom_UpdatesEnumeration() public {
     b.mint(wallet1, 1, "");
@@ -438,7 +438,7 @@ contract NftERC721Base is NftTestBase {
     assertEq(b.balanceOf(wallet2), 3);
   }
 
-  function test_SafgeTransferFrom_IfSingleTokenApproved() public {
+  function test_SafeTransferFrom_IfSingleTokenApproved() public {
     b.mint(wallet1, 1, "");
 
     vm.prank(wallet1);
@@ -554,6 +554,334 @@ contract NftERC721Base is NftTestBase {
     vm.stopPrank();
   }
 
+  // Safe Batch Transfer - specific ids
+  
+  function _mintTokensForBatchTransferIdsTest() internal returns (uint[] memory ids) {
+    b.mint(wallet1, 1, "");
+    b.mint(wallet1, 2, "");
+    b.mint(wallet1, 3, "");
+    b.mint(wallet2, 4, "");
+
+    ids = new uint[](2);
+    ids[0] = 1;
+    ids[1] = 2;
+  }
+
+  function test_SafeBatchTransferIds_UpdatesEnumeration() public {
+    uint[] memory ids = _mintTokensForBatchTransferIdsTest();
+
+    vm.startPrank(wallet1);
+    b.batchTransfer(wallet1, wallet2, ids, "");
+    vm.stopPrank();
+
+    assertEq(b.totalSupply(), 4);
+    
+    assertEq(b.tokenByIndex(0), 1);
+    assertEq(b.tokenByIndex(1), 2);
+    assertEq(b.tokenByIndex(2), 3);
+    assertEq(b.tokenByIndex(3), 4);
+
+    assertEq(b.tokenOfOwnerByIndex(wallet1, 0), 3);
+
+    assertEq(b.tokenOfOwnerByIndex(wallet2, 0), 4);
+    assertEq(b.tokenOfOwnerByIndex(wallet2, 1), 1);
+    assertEq(b.tokenOfOwnerByIndex(wallet2, 2), 2);
+
+    assertEq(b.balanceOf(wallet1), 1);
+    assertEq(b.balanceOf(wallet2), 3);
+  }
+
+  function test_SafeBatchTransferIds_IfTokensApprovedIndividually() public {
+    uint[] memory ids = _mintTokensForBatchTransferIdsTest();
+
+    vm.startPrank(wallet1);
+    b.approve(wallet2, 1);
+    b.approve(wallet2, 2);
+    vm.stopPrank();
+
+    vm.prank(wallet2);
+    b.batchTransfer(wallet1, wallet2, ids, "");
+
+    assertEq(b.ownerOf(1), wallet2);
+    assertEq(b.ownerOf(2), wallet2);
+  }
+
+  function test_SafeBatchTransferIds_IfNotAllTokensApprovedIndividually_Fails() public {
+    uint[] memory ids = _mintTokensForBatchTransferIdsTest();
+
+    vm.startPrank(wallet1);
+    b.approve(wallet2, 1);
+    vm.stopPrank();
+
+    vm.prank(wallet2);
+    vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NotAuthorized.selector, wallet1, wallet2, uint(2)));
+    b.batchTransfer(wallet1, wallet2, ids, "");
+  }
+
+  function test_SafeBatchTransferIds_IfAllTokensApproved() public {
+    uint[] memory ids = _mintTokensForBatchTransferIdsTest();
+
+    vm.prank(wallet1);
+    b.setApprovalForAll(wallet2, true);
+
+    vm.prank(wallet2);
+    b.batchTransfer(wallet1, wallet2, ids, "");
+
+    assertEq(b.ownerOf(1), wallet2);
+    assertEq(b.ownerOf(2), wallet2);
+  }
+
+  function test_SafeBatchTransferIds_CancelsSingleTokenApprovals() public {
+    uint[] memory ids = _mintTokensForBatchTransferIdsTest();
+
+    vm.startPrank(wallet1);
+    b.approve(wallet2, 1);
+    b.approve(wallet2, 2);
+    vm.stopPrank();
+
+    vm.prank(wallet2);
+    b.batchTransfer(wallet1, wallet2, ids, "");
+
+    assertEq(b.getApproved(1), address(0));
+    assertEq(b.getApproved(2), address(0));
+  }
+
+  function test_SafeBatchTransferIds_FiresTransferEvents() public {
+    uint[] memory ids = _mintTokensForBatchTransferIdsTest();
+
+    vm.recordLogs();
+
+    vm.prank(wallet1);
+    b.batchTransfer(wallet1, wallet2, ids, "");
+
+    Vm.Log[] memory entries = vm.getRecordedLogs();
+    assertEq(entries.length, 2, "Invalid entry count");
+    assertEq(entries[0].topics.length, 4, "Invalid event count");
+    assertEq(
+        entries[0].topics[0],
+        keccak256("Transfer(address,address,uint256)"),
+        "Invalid event signature"
+    );
+    assertEq(entries[1].topics.length, 4, "Invalid event count");
+    assertEq(
+        entries[1].topics[0],
+        keccak256("Transfer(address,address,uint256)"),
+        "Invalid event signature"
+    );
+  }
+
+  function test_SafeBatchTransferIds_InvalidFrom_Fails() public {    
+    uint[] memory ids = _mintTokensForBatchTransferIdsTest();
+
+    vm.prank(wallet2);
+    vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721InvalidOwner.selector, wallet2, uint(1)));
+    b.batchTransfer(wallet2, wallet1, ids, "");
+  }
+
+  function test_SafeBatchTransferIds_ToZeroAddress_Fails() public {
+    uint[] memory ids = _mintTokensForBatchTransferIdsTest();
+
+    vm.prank(wallet1);
+    vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721ZeroAddress.selector));
+    b.batchTransfer(wallet1, address(0), ids, "");
+  }
+
+  function test_SafeBatchTransferIds_InvokesReceiver_Good() public {
+    uint[] memory ids = _mintTokensForBatchTransferIdsTest();
+
+    address good = address(new GoodERC721Receiver());
+
+    vm.prank(wallet1);
+    b.batchTransfer(wallet1, good, ids, "test");
+
+    assertEq(b.ownerOf(1), good);
+    assertEq(b.ownerOf(2), good);
+
+    GoodERC721Receiver.Received memory r = GoodERC721Receiver(good).getReceived(0);
+    assertEq(r.operator, wallet1);
+    assertEq(r.from, wallet1);
+    assertEq(r.tokenId, 1);
+    assertEq(r.data, "test");
+
+    r = GoodERC721Receiver(good).getReceived(1);
+    assertEq(r.operator, wallet1);
+    assertEq(r.from, wallet1);
+    assertEq(r.tokenId, 2);
+    assertEq(r.data, "test");
+  }
+
+  function test_SafeBatchTransferIds_InvokesReceiver_Bad() public {
+    uint[] memory ids = _mintTokensForBatchTransferIdsTest();
+
+    address bad = address(new BadERC721Receiver());
+
+    vm.prank(wallet1);
+    vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721UnsafeTokenReceiver.selector, bad, uint(1)));
+    b.batchTransfer(wallet1, bad, ids, "test");
+  }
+
+  // Safe Batch Transfer - range
+  
+  function _mintTokensForBatchTransferRangeTest() internal {
+    b.mint(wallet1, 1, "");
+    b.mint(wallet1, 2, "");
+    b.mint(wallet1, 3, "");
+    b.mint(wallet2, 4, "");
+  }
+
+  function test_SafeBatchTransferRange_UpdatesEnumeration() public {
+    _mintTokensForBatchTransferRangeTest();
+
+    vm.startPrank(wallet1);
+    b.batchTransfer(wallet1, wallet2, 2, "");
+    vm.stopPrank();
+
+    assertEq(b.totalSupply(), 4);
+    
+    assertEq(b.tokenByIndex(0), 1);
+    assertEq(b.tokenByIndex(1), 2);
+    assertEq(b.tokenByIndex(2), 3);
+    assertEq(b.tokenByIndex(3), 4);
+
+    assertEq(b.tokenOfOwnerByIndex(wallet1, 0), 3);
+
+    assertEq(b.tokenOfOwnerByIndex(wallet2, 0), 4);
+    assertEq(b.tokenOfOwnerByIndex(wallet2, 1), 1);
+    assertEq(b.tokenOfOwnerByIndex(wallet2, 2), 2);
+
+    assertEq(b.balanceOf(wallet1), 1);
+    assertEq(b.balanceOf(wallet2), 3);
+  }
+
+  function test_SafeBatchTransferRange_IfTokensApprovedIndividually() public {
+    _mintTokensForBatchTransferRangeTest();
+
+    vm.startPrank(wallet1);
+    b.approve(wallet2, 1);
+    b.approve(wallet2, 2);
+    vm.stopPrank();
+
+    vm.prank(wallet2);
+    b.batchTransfer(wallet1, wallet2, 2, "");
+
+    assertEq(b.ownerOf(1), wallet2);
+    assertEq(b.ownerOf(2), wallet2);
+  }
+
+  function test_SafeBatchTransferRange_IfNotAllTokensApprovedIndividually_Fails() public {
+    _mintTokensForBatchTransferIdsTest();
+
+    vm.startPrank(wallet1);
+    b.approve(wallet2, 1);
+    vm.stopPrank();
+
+    vm.prank(wallet2);
+    vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NotAuthorized.selector, wallet1, wallet2, uint(2)));
+    b.batchTransfer(wallet1, wallet2, 2, "");
+  }
+
+  function test_SafeBatchTransferRange_IfAllTokensApproved() public {
+    _mintTokensForBatchTransferRangeTest();
+
+    vm.prank(wallet1);
+    b.setApprovalForAll(wallet2, true);
+
+    vm.prank(wallet2);
+    b.batchTransfer(wallet1, wallet2, 2, "");
+
+    assertEq(b.ownerOf(1), wallet2);
+    assertEq(b.ownerOf(2), wallet2);
+  }
+
+  function test_SafeBatchTransferRange_CancelsSingleTokenApprovals() public {
+    _mintTokensForBatchTransferRangeTest();
+
+    vm.startPrank(wallet1);
+    b.approve(wallet2, 1);
+    b.approve(wallet2, 2);
+    vm.stopPrank();
+
+    vm.prank(wallet2);
+    b.batchTransfer(wallet1, wallet2, 2, "");
+
+    assertEq(b.getApproved(1), address(0));
+    assertEq(b.getApproved(2), address(0));
+  }
+
+  function test_SafeBatchTransferRange_FiresTransferEvents() public {
+    _mintTokensForBatchTransferRangeTest();
+
+    vm.recordLogs();
+
+    vm.prank(wallet1);
+    b.batchTransfer(wallet1, wallet2, 2, "");
+
+    Vm.Log[] memory entries = vm.getRecordedLogs();
+    assertEq(entries.length, 2, "Invalid entry count");
+    assertEq(entries[0].topics.length, 4, "Invalid event count");
+    assertEq(
+        entries[0].topics[0],
+        keccak256("Transfer(address,address,uint256)"),
+        "Invalid event signature"
+    );
+    assertEq(entries[1].topics.length, 4, "Invalid event count");
+    assertEq(
+        entries[1].topics[0],
+        keccak256("Transfer(address,address,uint256)"),
+        "Invalid event signature"
+    );
+  }
+
+  function test_SafeBatchTransferRange_ToZeroAddress_Fails() public {
+    _mintTokensForBatchTransferRangeTest();
+
+    vm.prank(wallet1);
+    vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721ZeroAddress.selector));
+    b.batchTransfer(wallet1, address(0), 2, "");
+  }
+
+  function test_SafeBatchTransferRange_TooMuch_Fails() public {
+    _mintTokensForBatchTransferRangeTest();
+
+    vm.prank(wallet1);
+    vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721InsufficientBalance.selector, wallet1, uint(4), uint(3)));
+    b.batchTransfer(wallet1, wallet2, 4, "");
+  }
+
+  function test_SafeBatchTransferRange_InvokesReceiver_Good() public {
+    _mintTokensForBatchTransferRangeTest();
+
+    address good = address(new GoodERC721Receiver());
+
+    vm.prank(wallet1);
+    b.batchTransfer(wallet1, good, 2, "test");
+
+    assertEq(b.ownerOf(1), good);
+    assertEq(b.ownerOf(2), good);
+
+    GoodERC721Receiver.Received memory r = GoodERC721Receiver(good).getReceived(0);
+    assertEq(r.operator, wallet1);
+    assertEq(r.from, wallet1);
+    assertEq(r.tokenId, 1);
+    assertEq(r.data, "test");
+
+    r = GoodERC721Receiver(good).getReceived(1);
+    assertEq(r.operator, wallet1);
+    assertEq(r.from, wallet1);
+    assertEq(r.tokenId, 2);
+    assertEq(r.data, "test");
+  }
+
+  function test_SafeBatchTransferRange_InvokesReceiver_Bad() public {
+    _mintTokensForBatchTransferRangeTest();
+
+    address bad = address(new BadERC721Receiver());
+
+    vm.prank(wallet1);
+    vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721UnsafeTokenReceiver.selector, bad, uint(1)));
+    b.batchTransfer(wallet1, bad, 2, "test");
+  }
+
   // Burn
 
   function test_Burn_UpdatesEnumeration() public {
@@ -633,13 +961,21 @@ contract MockERC721 is ERC721 {
     _safeMint(to, id, data);
   }
 
+  function burn(uint256 id) public {
+    _burn(id);
+  }
+
   function batchMint(address to, uint256 count, bytes memory _data) public {
     _safeBatchMint(to, lastMintedId + 1, count, _data);
     lastMintedId += count;
   }
 
-  function burn(uint256 id) public {
-    _burn(id);
+  function batchTransfer(address from, address to, uint256[] calldata ids, bytes memory data) public {
+    _safeBatchTransfer(msg.sender, from, to, ids, data);
+  }
+
+  function batchTransfer(address from, address to, uint count, bytes memory data) public {
+    _safeBatchTransfer(msg.sender, from, to, count, data);
   }
 
   function tokenURI(uint256 /*id*/) public pure override returns (string memory) {
