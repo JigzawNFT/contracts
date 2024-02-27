@@ -4,6 +4,7 @@ pragma solidity >=0.8.24;
 import { IERC721 } from "openzeppelin/interfaces/IERC721.sol";
 import { IERC2309 } from "openzeppelin/interfaces/IERC2309.sol";
 import { IERC721Enumerable } from "openzeppelin/token/ERC721/extensions/IERC721Enumerable.sol";
+import { IERC721Metadata } from "openzeppelin/token/ERC721/extensions/IERC721Metadata.sol";
 import { IERC721Errors } from "./IERC721Errors.sol";
 
 /*
@@ -16,7 +17,7 @@ import { IERC721Errors } from "./IERC721Errors.sol";
   - `isApprovedForAll` can be overridden.
   - Batch minting and transfers are supported.
 */
-abstract contract ERC721 is IERC721, IERC721Errors, IERC721Enumerable {  
+abstract contract ERC721 is IERC721, IERC721Metadata, IERC721Enumerable, IERC721Errors {  
   // constructor
 
   constructor(string memory _name, string memory _symbol) {
