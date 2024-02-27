@@ -6,13 +6,13 @@ import { IERC165 } from "openzeppelin/interfaces/IERC165.sol";
 import { IERC721 } from "openzeppelin/interfaces/IERC721.sol";
 import { IERC721Metadata } from "openzeppelin/interfaces/IERC721Metadata.sol";
 import { IERC721Enumerable } from "openzeppelin/interfaces/IERC721Enumerable.sol";
-import { ERC721, ERC721TokenReceiver } from "src/ERC721.sol";
 import { IERC721Errors } from "src/IERC721Errors.sol";
 import { NftTestBase } from "./NftTestBase.sol";
 import { Bytes32AddressLib } from "solmate/utils/Bytes32AddressLib.sol";
+import { ERC721, IERC721TokenReceiver } from "src/ERC721.sol";
 
 
-contract NftERC721Base is NftTestBase, IERC721Errors {
+contract NftERC721Base is NftTestBase {
   MockERC721 b;
   address public wallet1 = vm.addr(0x56565656);
   address public wallet2 = vm.addr(0x12121212);
@@ -40,6 +40,11 @@ contract NftERC721Base is NftTestBase, IERC721Errors {
   function test_TokenURI() public {
     assertEq(b.tokenURI(1), "uri");
     assertEq(b.tokenURI(2), "uri");
+  }
+
+  function test_BalanceOf_ZeroAddress_Fails() public {
+    vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721ZeroAddress.selector));
+    b.balanceOf(address(0));
   }
 
   // Mint
@@ -101,19 +106,19 @@ contract NftERC721Base is NftTestBase, IERC721Errors {
   function test_SingleMint_InvokesReceiver_Bad() public {
     address bad = address(new BadERC721Receiver());
 
-    vm.expectRevert(abi.encodeWithSelector(ERC721UnsafeTokenReceiver.selector, bad, uint(1)));
+    vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721UnsafeTokenReceiver.selector, bad, uint(1)));
     b.mint(bad, 1, "test");
   }
 
   function test_SingleMintAlreadyMintedToken_Fails() public {
     b.mint(wallet1, 1, "");
     
-    vm.expectRevert(abi.encodeWithSelector(ERC721TokenAlreadyMinted.selector, uint(1)));
+    vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721TokenAlreadyMinted.selector, uint(1)));
     b.mint(wallet1, 1, "");
   }
 
   function test_SingleMintToZeroAddress_Fails() public {
-    vm.expectRevert(abi.encodeWithSelector(ERC721ZeroAddress.selector));
+    vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721ZeroAddress.selector));
     b.mint(address(0), 1, "");
   }
 
@@ -183,17 +188,17 @@ contract NftERC721Base is NftTestBase, IERC721Errors {
   function test_BatchMint_InvokesReceiver_Bad() public {
     address bad = address(new BadERC721Receiver());
 
-    vm.expectRevert(abi.encodeWithSelector(ERC721UnsafeTokenReceiver.selector, bad, uint(1)));
+    vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721UnsafeTokenReceiver.selector, bad, uint(1)));
     b.mint(bad, 1, "test");
   }
 
   function test_BatchMint_ToZeroAddress_Fails() public {
-    vm.expectRevert(abi.encodeWithSelector(ERC721ZeroAddress.selector));
+    vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721ZeroAddress.selector));
     b.batchMint(address(0), 2, "");
   }
 
   function test_BatchMint_EmptyBatch_Fails() public {
-    vm.expectRevert(abi.encodeWithSelector(ERC721InvalidBatchSize.selector, uint(0)));
+    vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721InvalidBatchSize.selector, uint(0)));
     b.batchMint(wallet1, 0, "");
   }
 
@@ -203,7 +208,7 @@ contract NftERC721Base is NftTestBase, IERC721Errors {
     b.mint(wallet1, 1, "");
 
     vm.prank(wallet2);
-    vm.expectRevert(abi.encodeWithSelector(ERC721NotAuthorized.selector, wallet1, wallet2, uint(1)));
+    vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NotAuthorized.selector, wallet1, wallet2, uint(1)));
     b.transferFrom(wallet1, wallet2, 1);
 
     vm.prank(wallet1);
@@ -253,7 +258,7 @@ contract NftERC721Base is NftTestBase, IERC721Errors {
     b.mint(wallet1, 1, "");
 
     vm.prank(wallet2);
-    vm.expectRevert(abi.encodeWithSelector(ERC721NotAuthorized.selector, wallet1, wallet2, uint(1)));
+    vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NotAuthorized.selector, wallet1, wallet2, uint(1)));
     b.approve(wallet2, 1);
   }
 
@@ -264,7 +269,7 @@ contract NftERC721Base is NftTestBase, IERC721Errors {
     b.mint(wallet1, 2, "");
 
     vm.prank(wallet2);
-    vm.expectRevert(abi.encodeWithSelector(ERC721NotAuthorized.selector, wallet1, wallet2, uint(1)));
+    vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NotAuthorized.selector, wallet1, wallet2, uint(1)));
     b.transferFrom(wallet1, wallet2, 1);
 
     vm.prank(wallet1);
@@ -281,7 +286,7 @@ contract NftERC721Base is NftTestBase, IERC721Errors {
     assertFalse(b.isApprovedForAll(wallet1, wallet2));
 
     vm.prank(wallet2);
-    vm.expectRevert(abi.encodeWithSelector(ERC721NotAuthorized.selector, wallet1, wallet2, uint(2)));
+    vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NotAuthorized.selector, wallet1, wallet2, uint(2)));
     b.transferFrom(wallet1, wallet2, 2);
   }
 
@@ -393,7 +398,7 @@ contract NftERC721Base is NftTestBase, IERC721Errors {
   function test_TransferFrom_InvalidFrom_Fails() public {
     b.mint(wallet2, 1, "");
 
-    vm.expectRevert(abi.encodeWithSelector(ERC721InvalidOwner.selector, wallet1, uint(1)));
+    vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721InvalidOwner.selector, wallet1, uint(1)));
     b.transferFrom(wallet1, wallet2, 1);
   }
 
@@ -401,7 +406,7 @@ contract NftERC721Base is NftTestBase, IERC721Errors {
     b.mint(wallet2, 1, "");
 
     vm.prank(wallet2);
-    vm.expectRevert(abi.encodeWithSelector(ERC721ZeroAddress.selector));
+    vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721ZeroAddress.selector));
     b.transferFrom(wallet2, address(0), 1);
   }  
 
@@ -510,7 +515,7 @@ contract NftERC721Base is NftTestBase, IERC721Errors {
   function test_SafeTransferFrom_InvalidFrom_Fails() public {
     b.mint(wallet2, 1, "");
 
-    vm.expectRevert(abi.encodeWithSelector(ERC721InvalidOwner.selector, wallet1, uint(1)));
+    vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721InvalidOwner.selector, wallet1, uint(1)));
     b.safeTransferFrom(wallet1, wallet2, 1);
   }
 
@@ -518,7 +523,7 @@ contract NftERC721Base is NftTestBase, IERC721Errors {
     b.mint(wallet2, 1, "");
 
     vm.prank(wallet2);
-    vm.expectRevert(abi.encodeWithSelector(ERC721ZeroAddress.selector));
+    vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721ZeroAddress.selector));
     b.safeTransferFrom(wallet2, address(0), 1);
   }
 
@@ -544,7 +549,7 @@ contract NftERC721Base is NftTestBase, IERC721Errors {
 
     vm.startPrank(wallet1);
     b.mint(wallet1, 1, "");
-    vm.expectRevert(abi.encodeWithSelector(ERC721UnsafeTokenReceiver.selector, bad, uint(1)));
+    vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721UnsafeTokenReceiver.selector, bad, uint(1)));
     b.safeTransferFrom(wallet1, bad, 1, "test");
     vm.stopPrank();
   }
@@ -575,11 +580,11 @@ contract NftERC721Base is NftTestBase, IERC721Errors {
     assertEq(b.ownerOf(1), wallet1);
     assertEq(b.ownerOf(4), wallet2);
 
-    vm.expectRevert(abi.encodeWithSelector(ERC721TokenNotMinted.selector, uint(2)));
+    vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721TokenNotMinted.selector, uint(2)));
     assertEq(b.ownerOf(2), address(0));
-    vm.expectRevert(abi.encodeWithSelector(ERC721TokenNotMinted.selector, uint(3)));
+    vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721TokenNotMinted.selector, uint(3)));
     assertEq(b.ownerOf(3), address(0));
-    vm.expectRevert(abi.encodeWithSelector(ERC721TokenNotMinted.selector, uint(5)));
+    vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721TokenNotMinted.selector, uint(5)));
     assertEq(b.ownerOf(5), address(0));
   }
 
@@ -613,11 +618,10 @@ contract NftERC721Base is NftTestBase, IERC721Errors {
   }
 
   function test_BurnUnmintedToken_Fails() public {
-    vm.expectRevert(abi.encodeWithSelector(ERC721TokenNotMinted.selector, uint(1)));
+    vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721TokenNotMinted.selector, uint(1)));
     b.burn(1);
   }
 }
-
 
 
 contract MockERC721 is ERC721 {
@@ -643,7 +647,7 @@ contract MockERC721 is ERC721 {
   }
 }
 
-contract GoodERC721Receiver is ERC721TokenReceiver {
+contract GoodERC721Receiver is IERC721TokenReceiver {
   struct Received {
     address operator;
     address from;
@@ -662,13 +666,13 @@ contract GoodERC721Receiver is ERC721TokenReceiver {
     address from,
     uint256 tokenId,
     bytes calldata data
-  ) public override returns (bytes4) {
+  ) external override returns (bytes4) {
     received.push(Received(operator, from, tokenId, data));
-    return this.onERC721Received.selector;
+    return IERC721TokenReceiver.onERC721Received.selector;
   }
 }
 
-contract BadERC721Receiver is ERC721TokenReceiver {
+contract BadERC721Receiver is IERC721TokenReceiver {
   function onERC721Received(
     address /*operator*/,
     address /*from*/,

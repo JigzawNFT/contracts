@@ -295,9 +295,9 @@ abstract contract ERC721 is IERC721, IERC721Errors, IERC721Enumerable {
     bytes memory data
   ) internal virtual {
     if (to.code.length > 0) {
-      if (ERC721TokenReceiver(to).onERC721Received(
+      if (IERC721TokenReceiver(to).onERC721Received(
         sender, from, id, data
-      ) != ERC721TokenReceiver.onERC721Received.selector) {
+      ) != IERC721TokenReceiver.onERC721Received.selector) {
         revert ERC721UnsafeTokenReceiver(to, id);
       }
     }
@@ -306,15 +306,13 @@ abstract contract ERC721 is IERC721, IERC721Errors, IERC721Enumerable {
 
 /// @notice A generic interface for a contract which properly accepts ERC721 tokens.
 /// @author Solmate (https://github.com/transmissions11/solmate/blob/main/src/tokens/ERC721.sol)
-abstract contract ERC721TokenReceiver {
+interface IERC721TokenReceiver {
   function onERC721Received(
     address,
     address,
     uint256,
     bytes calldata
-  ) external virtual returns (bytes4) {
-    return ERC721TokenReceiver.onERC721Received.selector;
-  }
+  ) external virtual returns (bytes4);
 }
 
 
