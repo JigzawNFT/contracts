@@ -79,7 +79,7 @@ contract JigzawPool is ExponentialCurve {
       uint balance = nft.balanceOf(address(this));
       if (balance > 0) {
         uint toTransfer = balance < numItems ? balance : numItems;
-        nft.batchTransferNumTokens(address(this), sender, toTransfer);
+        nft.batchTransferRange(address(this), sender, toTransfer);
         numItems -= toTransfer;
       }
 
@@ -151,7 +151,7 @@ contract JigzawPool is ExponentialCurve {
       }
 
       // transfer NFTs to pool
-      nft.batchTransferTokenIds(sender, address(this), tokenIds);
+      nft.batchTransferIds(sender, address(this), tokenIds);
 
       // pay caller
       payable(sender).transfer(quote.outputValue);

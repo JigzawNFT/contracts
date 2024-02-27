@@ -25,16 +25,16 @@ interface IPoolNFT is IERC721 {
    * @param _to The address to transfer to.
    * @param _tokenIds token ids to transfer.
    */
-  function batchTransferTokenIds(address _from, address _to, uint[] calldata _tokenIds) external;
+  function batchTransferIds(address _from, address _to, uint[] calldata _tokenIds) external;
 
   /**
-   * @dev Batch transfer tokens to given address.
+   * @dev Batch transfer a range of tokens to given address.
    *
    * @param _from The address to transfer from.
    * @param _to The address to transfer to.
-   * @param _num num tokens to transfer.
+   * @param _num num tokens to transfer, starting from the first token owned by the wallet.
    */
-  function batchTransferNumTokens(address _from, address _to, uint _num) external;
+  function batchTransferRange(address _from, address _to, uint _num) external;
 
   /**
   * @dev Get royalty info.

@@ -240,25 +240,17 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, Ownable, IPoolNFT {
   }
 
   /**
-   * @dev See {IPoolNFT-batchTransferTokenIds}.
+   * @dev See {IPoolNFT-batchTransferIds}.
    */
-  function batchTransferTokenIds(address _from, address _to, uint[] calldata _tokenIds) external override {
-    // for (uint i = 0; i < _tokenIds.length; i++) {
-    //   _safeTransfer(_from, _to, _tokenIds[i], "");
-    // }
+  function batchTransferIds(address _from, address _to, uint[] calldata _tokenIds) external override {
+    _safeBatchTransfer(msg.sender, _from, _to, _tokenIds, "");
   }
 
   /**
-    * @dev See {IPoolNFT-batchTransferNumTokens}.
+    * @dev See {IPoolNFT-batchTransferRange}.
     */
-  function batchTransferNumTokens(address _from, address _to, uint _numTokens) external override {
-    // if (balanceOf(_from) < _numTokens) {
-    //   revert LibErrors.InsufficientBalance(_from, _numTokens, balanceOf(_from));
-    // }
-
-    // for (uint i = 0; i < _numTokens; i++) {
-    //   _safeTransfer(_from, _to, tokenOfOwnerByIndex(_from, i), "");
-    // }
+  function batchTransferRange(address _from, address _to, uint _numTokens) external override {
+    _safeBatchTransfer(msg.sender, _from, _to, _numTokens, "");
   }
 
   // Modifiers
