@@ -119,6 +119,82 @@ contract NftERC721Base is NftTestBase, IERC721Errors {
 
   // Transfer
 
+  function test_TransferFrom_UpdatesEnumeration() public {
+    b.mint(wallet1, 1, "");
+    b.mint(wallet1, 2, "");
+    b.mint(wallet2, 3, "");
+
+    vm.startPrank(wallet1);
+    b.transferFrom(wallet1, wallet2, 1);
+    b.transferFrom(wallet1, wallet2, 2);
+    vm.stopPrank();
+
+    assertEq(b.totalSupply(), 3);
+    
+    assertEq(b.tokenByIndex(0), 1);
+    assertEq(b.tokenByIndex(1), 2);
+    assertEq(b.tokenByIndex(2), 3);
+
+    assertEq(b.tokenOfOwnerByIndex(wallet1, 0), 0);
+
+    assertEq(b.tokenOfOwnerByIndex(wallet2, 0), 3);
+    assertEq(b.tokenOfOwnerByIndex(wallet2, 1), 1);
+    assertEq(b.tokenOfOwnerByIndex(wallet2, 2), 2);
+
+    assertEq(b.balanceOf(wallet1), 0);
+    assertEq(b.balanceOf(wallet2), 3);
+  }
+
+  function test_TransferFrom_CancelsApprovals() public {
+    b.mint(wallet1, 1, "");
+
+    vm.prank(wallet1);
+    b.approve(wallet2, 1);
+
+    vm.prank(wallet1);
+    b.transferFrom(wallet1, wallet2, 1);
+
+    assertEq(b.getApproved(1), address(0));
+  }
+
+  function test_TransferFrom_FiresTransferEvent() public {
+    b.mint(wallet1, 1, "");
+
+    vm.recordLogs();
+
+    vm.prank(wallet1);
+    b.transferFrom(wallet1, wallet2, 1);
+
+    Vm.Log[] memory entries = vm.getRecordedLogs();
+    assertEq(entries.length, 1, "Invalid entry count");
+    assertEq(entries[0].topics.length, 4, "Invalid event count");
+    assertEq(
+        entries[0].topics[0],
+        keccak256("Transfer(address,address,uint256)"),
+        "Invalid event signature"
+    );
+    assertEq(entries[0].topics[1], _toBytes32(wallet1), "Invalid from");
+    assertEq(entries[0].topics[2], _toBytes32(wallet2), "Invalid to");
+    assertEq(entries[0].topics[3], bytes32(uint(1)), "Invalid tokenId");
+  }
+
+  function test_TransferFrom_InvalidFrom_Fails() public {
+    b.mint(wallet2, 1, "");
+
+    vm.expectRevert(abi.encodeWithSelector(ERC721InvalidOwner.selector, wallet1, uint(1)));
+    b.transferFrom(wallet1, wallet2, 1);
+  }
+
+  function test_TransferFrom_ToZeroAddress_Fails() public {
+    b.mint(wallet2, 1, "");
+
+    vm.prank(wallet2);
+    vm.expectRevert(abi.encodeWithSelector(ERC721ZeroAddress.selector));
+    b.transferFrom(wallet2, address(0), 1);
+  }  
+
+  // Safe Transfer
+
   function test_SafeTransferFrom_UpdatesEnumeration() public {
     b.mint(wallet1, 1, "");
     b.mint(wallet1, 2, "");
@@ -143,6 +219,18 @@ contract NftERC721Base is NftTestBase, IERC721Errors {
 
     assertEq(b.balanceOf(wallet1), 0);
     assertEq(b.balanceOf(wallet2), 3);
+  }
+
+  function test_SafeTransferFrom_CancelsApprovals() public {
+    b.mint(wallet1, 1, "");
+
+    vm.prank(wallet1);
+    b.approve(wallet2, 1);
+
+    vm.prank(wallet1);
+    b.safeTransferFrom(wallet1, wallet2, 1, "");
+
+    assertEq(b.getApproved(1), address(0));
   }
 
   function test_SafeTransferFrom_FiresTransferEvent() public {
@@ -183,6 +271,21 @@ contract NftERC721Base is NftTestBase, IERC721Errors {
     assertEq(r.data, "test");
   }
 
+  function test_SafeTransferFrom_InvalidFrom_Fails() public {
+    b.mint(wallet2, 1, "");
+
+    vm.expectRevert(abi.encodeWithSelector(ERC721InvalidOwner.selector, wallet1, uint(1)));
+    b.safeTransferFrom(wallet1, wallet2, 1);
+  }
+
+  function test_SafeTransferFrom_ToZeroAddress_Fails() public {
+    b.mint(wallet2, 1, "");
+
+    vm.prank(wallet2);
+    vm.expectRevert(abi.encodeWithSelector(ERC721ZeroAddress.selector));
+    b.safeTransferFrom(wallet2, address(0), 1);
+  }
+
   function test_SafeTransferFromWithoutData_InvokesReceiver_Good() public {
     address good = address(new GoodERC721Receiver());
 
@@ -208,21 +311,6 @@ contract NftERC721Base is NftTestBase, IERC721Errors {
     vm.expectRevert(abi.encodeWithSelector(ERC721UnsafeTokenReceiver.selector, bad, uint(1)));
     b.safeTransferFrom(wallet1, bad, 1, "test");
     vm.stopPrank();
-  }
-
-  function test_SafeTransferFrom_InvalidFrom_Fails() public {
-    b.mint(wallet2, 1, "");
-
-    vm.expectRevert(abi.encodeWithSelector(ERC721InvalidOwner.selector, wallet1, uint(1)));
-    b.safeTransferFrom(wallet1, wallet2, 1);
-  }
-
-  function test_SafeTransferFrom_ToZeroAddress_Fails() public {
-    b.mint(wallet2, 1, "");
-
-    vm.prank(wallet2);
-    vm.expectRevert(abi.encodeWithSelector(ERC721ZeroAddress.selector));
-    b.safeTransferFrom(wallet2, address(0), 1);
   }
 
   // Burn
@@ -257,6 +345,16 @@ contract NftERC721Base is NftTestBase, IERC721Errors {
     assertEq(b.ownerOf(3), address(0));
     vm.expectRevert(abi.encodeWithSelector(ERC721TokenNotMinted.selector, uint(5)));
     assertEq(b.ownerOf(5), address(0));
+  }
+
+  function test_Burn_CancelsApprovals() public {
+    b.mint(wallet1, 1, "");
+    
+    vm.prank(wallet1);
+    b.approve(wallet2, 1);
+    b.burn(1);
+
+    assertEq(b.getApproved(1), address(0));
   }
 
   function test_Burn_FiresTransferEvent() public {
