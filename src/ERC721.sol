@@ -198,9 +198,13 @@ abstract contract ERC721 is IERC721, IERC721Metadata, IERC721Enumerable, IERC721
     Batch transfer range counts tokens from the end of the list backwards so that the 
     list order is preserved, i.e. it transfers the most recently received tokens first.
     */
-    uint startIndex = _balanceOf[_from] - 1;
+    uint i = _balanceOf[_from];
     uint endIndex = _balanceOf[_from] - _count;
-    for (uint i = startIndex; i >= endIndex; i--) {
+
+    while (i > endIndex) {
+      // endIndex could be 0, so we check if i is above it before decrementing to prevent underflow
+      i--;
+
       uint256 id = tokenOfOwnerByIndex[_from][i];
 
       _transfer(_caller, _from, _to, id);

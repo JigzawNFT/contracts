@@ -597,6 +597,66 @@ contract NftERC721Base is NftTestBase {
     assertEq(b.balanceOf(wallet2), 3);
   }
 
+  function test_SafeBatchTransferIds_CanTransferAll() public {
+    _mintTokensForBatchTransferIdsTest();
+
+    uint[] memory ids = new uint[](4);
+    ids[0] = 1;
+    ids[1] = 2;
+    ids[2] = 3;
+    ids[3] = 4;
+
+    vm.startPrank(wallet1);
+    b.batchTransfer(wallet1, wallet2, ids, "");
+    vm.stopPrank();
+
+    assertEq(b.totalSupply(), 5);
+  
+    assertEq(b.tokenByIndex(0), 1);
+    assertEq(b.tokenByIndex(1), 2);
+    assertEq(b.tokenByIndex(2), 3);
+    assertEq(b.tokenByIndex(3), 4);
+    assertEq(b.tokenByIndex(4), 5);
+
+    assertEq(b.tokenOfOwnerByIndex(wallet1, 0), 0);
+
+    assertEq(b.tokenOfOwnerByIndex(wallet2, 0), 5);
+    assertEq(b.tokenOfOwnerByIndex(wallet2, 1), 1);
+    assertEq(b.tokenOfOwnerByIndex(wallet2, 2), 2);
+    assertEq(b.tokenOfOwnerByIndex(wallet2, 3), 3);
+    assertEq(b.tokenOfOwnerByIndex(wallet2, 4), 4);
+
+    assertEq(b.balanceOf(wallet1), 0);
+    assertEq(b.balanceOf(wallet2), 5);
+  }
+
+  function test_SafeBatchTransferIds_CanTransferNone() public {
+    _mintTokensForBatchTransferIdsTest();
+
+    uint[] memory ids = new uint[](0);
+
+    vm.prank(wallet1);
+    b.batchTransfer(wallet1, wallet2, ids, "");
+
+    assertEq(b.totalSupply(), 5);
+
+    assertEq(b.tokenByIndex(0), 1);
+    assertEq(b.tokenByIndex(1), 2);
+    assertEq(b.tokenByIndex(2), 3);
+    assertEq(b.tokenByIndex(3), 4);
+    assertEq(b.tokenByIndex(4), 5);
+
+    assertEq(b.tokenOfOwnerByIndex(wallet1, 0), 1);
+    assertEq(b.tokenOfOwnerByIndex(wallet1, 1), 2);
+    assertEq(b.tokenOfOwnerByIndex(wallet1, 2), 3);
+    assertEq(b.tokenOfOwnerByIndex(wallet1, 3), 4);
+
+    assertEq(b.tokenOfOwnerByIndex(wallet2, 0), 5);
+
+    assertEq(b.balanceOf(wallet1), 4);
+    assertEq(b.balanceOf(wallet2), 1);
+  }
+
   function test_SafeBatchTransferIds_IfTokensApprovedIndividually() public {
     uint[] memory ids = _mintTokensForBatchTransferIdsTest();
 
@@ -763,6 +823,57 @@ contract NftERC721Base is NftTestBase {
 
     assertEq(b.balanceOf(wallet1), 2);
     assertEq(b.balanceOf(wallet2), 3);
+  }
+
+  function test_SafeBatchTransferRange_CanTransferAll() public {
+    _mintTokensForBatchTransferRangeTest();
+
+    vm.prank(wallet1);
+    b.batchTransfer(wallet1, wallet2, 4, "");
+
+    assertEq(b.totalSupply(), 5);
+  
+    assertEq(b.tokenByIndex(0), 1);
+    assertEq(b.tokenByIndex(1), 2);
+    assertEq(b.tokenByIndex(2), 3);
+    assertEq(b.tokenByIndex(3), 4);
+    assertEq(b.tokenByIndex(4), 5);
+
+    assertEq(b.tokenOfOwnerByIndex(wallet1, 0), 0);
+
+    assertEq(b.tokenOfOwnerByIndex(wallet2, 0), 5);
+    assertEq(b.tokenOfOwnerByIndex(wallet2, 1), 4);
+    assertEq(b.tokenOfOwnerByIndex(wallet2, 2), 3);
+    assertEq(b.tokenOfOwnerByIndex(wallet2, 3), 2);
+    assertEq(b.tokenOfOwnerByIndex(wallet2, 4), 1);
+
+    assertEq(b.balanceOf(wallet1), 0);
+    assertEq(b.balanceOf(wallet2), 5);
+  }
+
+  function test_SafeBatchTransferRange_CanTransferNone() public {
+    _mintTokensForBatchTransferRangeTest();
+
+    vm.prank(wallet1);
+    b.batchTransfer(wallet1, wallet2, 0, "");
+
+    assertEq(b.totalSupply(), 5);
+
+    assertEq(b.tokenByIndex(0), 1);
+    assertEq(b.tokenByIndex(1), 2);
+    assertEq(b.tokenByIndex(2), 3);
+    assertEq(b.tokenByIndex(3), 4);
+    assertEq(b.tokenByIndex(4), 5);
+
+    assertEq(b.tokenOfOwnerByIndex(wallet1, 0), 1);
+    assertEq(b.tokenOfOwnerByIndex(wallet1, 1), 2);
+    assertEq(b.tokenOfOwnerByIndex(wallet1, 2), 3);
+    assertEq(b.tokenOfOwnerByIndex(wallet1, 3), 4);
+
+    assertEq(b.tokenOfOwnerByIndex(wallet2, 0), 5);
+
+    assertEq(b.balanceOf(wallet1), 4);
+    assertEq(b.balanceOf(wallet2), 1);
   }
 
   function test_SafeBatchTransferRange_IfTokensApprovedIndividually() public {
