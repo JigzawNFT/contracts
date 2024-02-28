@@ -209,7 +209,13 @@ abstract contract ERC721 is IERC721, IERC721Metadata, IERC721Enumerable, IERC721
       revert ERC721InsufficientBalance(_from, _count, _balanceOf[_from]);
     }
 
-    for (uint i = 0; i < _count; i++) {
+    /**
+    Batch transfer range counts tokens from the end of the list backwards so that the 
+    list order is preserved, i.e. it transfers the most recently received tokens first.
+    */
+    uint startIndex = _balanceOf[_from] - 1;
+    uint endIndex = _balanceOf[_from] - _count;
+    for (uint i = startIndex; i >= endIndex; i--) {
       uint256 id = tokenOfOwnerByIndex[_from][i];
 
       _transfer(_caller, _from, _to, id);

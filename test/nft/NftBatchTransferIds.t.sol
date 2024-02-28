@@ -64,7 +64,7 @@ contract NftBatchTransferIds is NftTestBase {
     t.batchTransferIds(wallet1, wallet2, ids);
   }
 
-  function test_NftBatchTransferIds_IfAuthorised_Succeeds() public {
+  function test_NftBatchTransferIds_IfAllAuthorised_Succeeds() public {
     uint[] memory ids = _getIdsToTransfer();
 
     vm.startPrank(wallet1);
@@ -77,6 +77,18 @@ contract NftBatchTransferIds is NftTestBase {
 
     assertEq(t.ownerOf(1), wallet2);
     assertEq(t.ownerOf(2), wallet2);
+  }
+
+  function test_NftBatchTransferIds_IfNotAllAuthorised_Succeeds() public {
+    uint[] memory ids = _getIdsToTransfer();
+
+    vm.startPrank(wallet1);
+    t.approve(wallet2, 1);
+    vm.stopPrank();
+
+    vm.prank(wallet2);
+    vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NotAuthorized.selector, wallet1, wallet2, 2));
+    t.batchTransferIds(wallet1, wallet2, ids);
   }
 
   function test_NftBatchTransferIds_ToZeroAddress_Fails() public {

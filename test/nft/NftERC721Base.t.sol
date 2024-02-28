@@ -309,7 +309,7 @@ contract NftERC721Base is NftTestBase {
     assertTrue(val, "Invalid approved");
   }
 
-  // Transfers
+  // Single transfers
 
   function test_TransferFrom_UpdatesEnumeration() public {
     b.mint(wallet1, 1, "");
@@ -409,7 +409,7 @@ contract NftERC721Base is NftTestBase {
     b.transferFrom(wallet2, address(0), 1);
   }  
 
-  // Safe Transfer
+  // Safe single transfers
 
   function test_SafeTransferFrom_UpdatesEnumeration() public {
     b.mint(wallet1, 1, "");
@@ -559,7 +559,8 @@ contract NftERC721Base is NftTestBase {
     b.mint(wallet1, 1, "");
     b.mint(wallet1, 2, "");
     b.mint(wallet1, 3, "");
-    b.mint(wallet2, 4, "");
+    b.mint(wallet1, 4, "");
+    b.mint(wallet2, 5, "");
 
     ids = new uint[](2);
     ids[0] = 1;
@@ -573,20 +574,26 @@ contract NftERC721Base is NftTestBase {
     b.batchTransfer(wallet1, wallet2, ids, "");
     vm.stopPrank();
 
-    assertEq(b.totalSupply(), 4);
+    assertEq(b.totalSupply(), 5);
     
     assertEq(b.tokenByIndex(0), 1);
     assertEq(b.tokenByIndex(1), 2);
     assertEq(b.tokenByIndex(2), 3);
     assertEq(b.tokenByIndex(3), 4);
+    assertEq(b.tokenByIndex(4), 5);
 
-    assertEq(b.tokenOfOwnerByIndex(wallet1, 0), 3);
+    /*
+    The reverse order is due to the fact that the last token is 
+    moved to the position of the token being removed from the list.
+    */
+    assertEq(b.tokenOfOwnerByIndex(wallet1, 0), 4);
+    assertEq(b.tokenOfOwnerByIndex(wallet1, 1), 3);
 
-    assertEq(b.tokenOfOwnerByIndex(wallet2, 0), 4);
+    assertEq(b.tokenOfOwnerByIndex(wallet2, 0), 5);
     assertEq(b.tokenOfOwnerByIndex(wallet2, 1), 1);
     assertEq(b.tokenOfOwnerByIndex(wallet2, 2), 2);
 
-    assertEq(b.balanceOf(wallet1), 1);
+    assertEq(b.balanceOf(wallet1), 2);
     assertEq(b.balanceOf(wallet2), 3);
   }
 
@@ -725,30 +732,36 @@ contract NftERC721Base is NftTestBase {
     b.mint(wallet1, 1, "");
     b.mint(wallet1, 2, "");
     b.mint(wallet1, 3, "");
-    b.mint(wallet2, 4, "");
+    b.mint(wallet1, 4, "");
+    b.mint(wallet2, 5, "");
   }
 
   function test_SafeBatchTransferRange_UpdatesEnumeration() public {
     _mintTokensForBatchTransferRangeTest();
 
-    vm.startPrank(wallet1);
+    vm.prank(wallet1);
     b.batchTransfer(wallet1, wallet2, 2, "");
-    vm.stopPrank();
 
-    assertEq(b.totalSupply(), 4);
+    assertEq(b.totalSupply(), 5);
     
     assertEq(b.tokenByIndex(0), 1);
     assertEq(b.tokenByIndex(1), 2);
     assertEq(b.tokenByIndex(2), 3);
     assertEq(b.tokenByIndex(3), 4);
+    assertEq(b.tokenByIndex(4), 5);
 
-    assertEq(b.tokenOfOwnerByIndex(wallet1, 0), 3);
+    /**
+    Batch transfer range counts tokens from the end of the list backwards so that the 
+    list order is preserved, i.e. it transfers the most recently received tokens first.
+    */
+    assertEq(b.tokenOfOwnerByIndex(wallet1, 0), 1);
+    assertEq(b.tokenOfOwnerByIndex(wallet1, 1), 2);
 
-    assertEq(b.tokenOfOwnerByIndex(wallet2, 0), 4);
-    assertEq(b.tokenOfOwnerByIndex(wallet2, 1), 1);
-    assertEq(b.tokenOfOwnerByIndex(wallet2, 2), 2);
+    assertEq(b.tokenOfOwnerByIndex(wallet2, 0), 5);
+    assertEq(b.tokenOfOwnerByIndex(wallet2, 1), 4);
+    assertEq(b.tokenOfOwnerByIndex(wallet2, 2), 3);
 
-    assertEq(b.balanceOf(wallet1), 1);
+    assertEq(b.balanceOf(wallet1), 2);
     assertEq(b.balanceOf(wallet2), 3);
   }
 
@@ -756,26 +769,26 @@ contract NftERC721Base is NftTestBase {
     _mintTokensForBatchTransferRangeTest();
 
     vm.startPrank(wallet1);
-    b.approve(wallet2, 1);
-    b.approve(wallet2, 2);
+    b.approve(wallet2, 3);
+    b.approve(wallet2, 4);
     vm.stopPrank();
 
     vm.prank(wallet2);
     b.batchTransfer(wallet1, wallet2, 2, "");
 
-    assertEq(b.ownerOf(1), wallet2);
-    assertEq(b.ownerOf(2), wallet2);
+    assertEq(b.ownerOf(3), wallet2);
+    assertEq(b.ownerOf(4), wallet2);
   }
 
   function test_SafeBatchTransferRange_IfNotAllTokensApprovedIndividually_Fails() public {
     _mintTokensForBatchTransferIdsTest();
 
     vm.startPrank(wallet1);
-    b.approve(wallet2, 1);
+    b.approve(wallet2, 3);
     vm.stopPrank();
 
     vm.prank(wallet2);
-    vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NotAuthorized.selector, wallet1, wallet2, uint(2)));
+    vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NotAuthorized.selector, wallet1, wallet2, uint(4)));
     b.batchTransfer(wallet1, wallet2, 2, "");
   }
 
@@ -788,23 +801,23 @@ contract NftERC721Base is NftTestBase {
     vm.prank(wallet2);
     b.batchTransfer(wallet1, wallet2, 2, "");
 
-    assertEq(b.ownerOf(1), wallet2);
-    assertEq(b.ownerOf(2), wallet2);
+    assertEq(b.ownerOf(3), wallet2);
+    assertEq(b.ownerOf(4), wallet2);
   }
 
   function test_SafeBatchTransferRange_CancelsSingleTokenApprovals() public {
     _mintTokensForBatchTransferRangeTest();
 
     vm.startPrank(wallet1);
-    b.approve(wallet2, 1);
-    b.approve(wallet2, 2);
+    b.approve(wallet2, 3);
+    b.approve(wallet2, 4);
     vm.stopPrank();
 
     vm.prank(wallet2);
     b.batchTransfer(wallet1, wallet2, 2, "");
 
-    assertEq(b.getApproved(1), address(0));
-    assertEq(b.getApproved(2), address(0));
+    assertEq(b.getApproved(3), address(0));
+    assertEq(b.getApproved(4), address(0));
   }
 
   function test_SafeBatchTransferRange_FiresTransferEvents() public {
@@ -843,8 +856,8 @@ contract NftERC721Base is NftTestBase {
     _mintTokensForBatchTransferRangeTest();
 
     vm.prank(wallet1);
-    vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721InsufficientBalance.selector, wallet1, uint(4), uint(3)));
-    b.batchTransfer(wallet1, wallet2, 4, "");
+    vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721InsufficientBalance.selector, wallet1, uint(5), uint(4)));
+    b.batchTransfer(wallet1, wallet2, 5, "");
   }
 
   function test_SafeBatchTransferRange_InvokesReceiver_Good() public {
@@ -855,19 +868,19 @@ contract NftERC721Base is NftTestBase {
     vm.prank(wallet1);
     b.batchTransfer(wallet1, good, 2, "test");
 
-    assertEq(b.ownerOf(1), good);
-    assertEq(b.ownerOf(2), good);
+    assertEq(b.ownerOf(3), good);
+    assertEq(b.ownerOf(4), good);
 
     GoodERC721Receiver.Received memory r = GoodERC721Receiver(good).getReceived(0);
     assertEq(r.operator, wallet1);
     assertEq(r.from, wallet1);
-    assertEq(r.tokenId, 1);
+    assertEq(r.tokenId, 4);
     assertEq(r.data, "test");
 
     r = GoodERC721Receiver(good).getReceived(1);
     assertEq(r.operator, wallet1);
     assertEq(r.from, wallet1);
-    assertEq(r.tokenId, 2);
+    assertEq(r.tokenId, 3);
     assertEq(r.data, "test");
   }
 
@@ -877,7 +890,7 @@ contract NftERC721Base is NftTestBase {
     address bad = address(new BadERC721Receiver());
 
     vm.prank(wallet1);
-    vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721UnsafeTokenReceiver.selector, bad, uint(1)));
+    vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721UnsafeTokenReceiver.selector, bad, uint(4)));
     b.batchTransfer(wallet1, bad, 2, "test");
   }
 
