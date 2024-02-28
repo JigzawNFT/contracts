@@ -17,6 +17,11 @@ contract NftTransferAuth is NftTestBase {
     t.batchMint(wallet1, 1, 2);
   }
 
+  function test_IsApprovedForAll_WithPool() public {
+    assertEq(t.isApprovedForAll(wallet1, pool1), true);
+    assertEq(t.isApprovedForAll(wallet2, pool1), true);
+  }
+
   function test_AnonTransfer_Fails() public {
     vm.prank(wallet2);
     vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NotAuthorized.selector, wallet1, wallet2, 1));

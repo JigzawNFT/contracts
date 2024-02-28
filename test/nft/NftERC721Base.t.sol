@@ -7,9 +7,8 @@ import { IERC721 } from "openzeppelin/interfaces/IERC721.sol";
 import { IERC721Metadata } from "openzeppelin/interfaces/IERC721Metadata.sol";
 import { IERC721Enumerable } from "openzeppelin/interfaces/IERC721Enumerable.sol";
 import { IERC721Errors } from "src/IERC721Errors.sol";
-import { NftTestBase } from "./NftTestBase.sol";
+import { NftTestBase, MockERC721, GoodERC721Receiver, BadERC721Receiver } from "./NftTestBase.sol";
 import { Bytes32AddressLib } from "solmate/utils/Bytes32AddressLib.sol";
-import { ERC721, IERC721TokenReceiver } from "src/ERC721.sol";
 
 
 contract NftERC721Base is NftTestBase {
@@ -948,74 +947,6 @@ contract NftERC721Base is NftTestBase {
   function test_BurnUnmintedToken_Fails() public {
     vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721TokenNotMinted.selector, uint(1)));
     b.burn(1);
-  }
-}
-
-
-contract MockERC721 is ERC721 {
-  uint lastMintedId;
-
-  constructor(string memory name_, string memory symbol_) ERC721(name_, symbol_) {}
-
-  function mint(address to, uint256 id, bytes memory data) public {
-    _safeMint(to, id, data);
-  }
-
-  function burn(uint256 id) public {
-    _burn(id);
-  }
-
-  function batchMint(address to, uint256 count, bytes memory _data) public {
-    _safeBatchMint(to, lastMintedId + 1, count, _data);
-    lastMintedId += count;
-  }
-
-  function batchTransfer(address from, address to, uint256[] calldata ids, bytes memory data) public {
-    _safeBatchTransfer(msg.sender, from, to, ids, data);
-  }
-
-  function batchTransfer(address from, address to, uint count, bytes memory data) public {
-    _safeBatchTransfer(msg.sender, from, to, count, data);
-  }
-
-  function tokenURI(uint256 /*id*/) public pure override returns (string memory) {
-    return "uri";
-  }
-}
-
-contract GoodERC721Receiver is IERC721TokenReceiver {
-  struct Received {
-    address operator;
-    address from;
-    uint256 tokenId;
-    bytes data;
-  }
-
-  Received[] internal received;
-
-  function getReceived(uint i) public view returns (Received memory) {
-    return received[i];
-  }
-
-  function onERC721Received(
-    address operator,
-    address from,
-    uint256 tokenId,
-    bytes calldata data
-  ) external override returns (bytes4) {
-    received.push(Received(operator, from, tokenId, data));
-    return IERC721TokenReceiver.onERC721Received.selector;
-  }
-}
-
-contract BadERC721Receiver is IERC721TokenReceiver {
-  function onERC721Received(
-    address /*operator*/,
-    address /*from*/,
-    uint256 /*tokenId*/,
-    bytes calldata /*data*/
-  ) public override returns (bytes4) {
-    return 0x0;
   }
 }
 
