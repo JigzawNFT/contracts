@@ -105,6 +105,156 @@ abstract contract ERC721 is IERC721, IERC721Metadata, IERC721Enumerable, IERC721
 
   // single transfers
 
+  function transferFrom(address from, address to, uint256 id) public virtual {
+    if (from != _ownerOf[id]) {
+      revert ERC721InvalidOwner(from, id);
+    }
+
+    if (to == address(0)) {
+      revert ERC721ZeroAddress();
+    }
+
+    _transfer(msg.sender, from, to, id);
+  }
+
+  function safeTransferFrom(
+    address from,
+    address to,
+    uint256 id
+  ) public virtual {
+    transferFrom(from, to, id);
+    _informRecipient(msg.sender, from, to, id, "");
+  }
+
+  function safeTransferFrom(
+    address from,
+    address to,
+    uint256 id,
+    bytes calldata data
+  ) public virtual {
+    transferFrom(from, to, id);
+    _informRecipient(msg.sender, from, to, id, data);
+  }
+
+  // batch transfers
+
+  /**
+   * @dev Batch transfer tokens to an address.
+   *
+   * This iterates through the given list of IDs, transferring tokens one at a time. 
+   * The `tokenOfOwnerByIndex` is updated with each transfer to maintain correctness.
+   *
+   * Due to how the algorithm works, the order of tokens IDs in the `tokenOfOwnerByIndex` 
+   * enumeration list may be different after a call to this method.
+   *
+   * @param _caller The address making this call (usually ms.sender).
+   * @param _from The address to transfer from.
+   * @param _to The address to transfer to.
+   * @param _tokenIds The IDs of tokens to transfer.
+   * @param _data Additional data to send to IERC721TokenReceiver contract.
+   */
+  function _safeBatchTransfer(address _caller, address _from, address _to, uint[] memory _tokenIds, bytes memory _data) internal virtual {
+    if (_to == address(0)) {
+      revert ERC721ZeroAddress();
+    }
+
+    for (uint i = 0; i < _tokenIds.length; i++) {
+      uint256 id = _tokenIds[i];
+
+      if (_from != _ownerOf[id]) {
+        revert ERC721InvalidOwner(_from, id);
+      }
+
+      _transfer(_caller, _from, _to, id);
+      _informRecipient(_caller, _from, _to, id, _data);
+    }
+  }
+
+  /**
+    * @dev Batch transfer tokens to an address.
+    *
+    * This iterates through the `tokenOfOwnerByIndex` list in reverse order, i.e. 
+    * transferring the newest IDs in the list first.
+    *
+    * The order of any remaining tokens IDs in the `tokenOfOwnerByIndex` 
+    * enumeration list will be preserved.
+    *
+    * @param _caller The address making this call (usually ms.sender).
+    * @param _from The address to transfer from.
+    * @param _to The address to transfer to.
+    * @param _count The number of tokens to transfer.
+    * @param _data Additional data to send to IERC721TokenReceiver contract.
+    */
+  function _safeBatchTransfer(address _caller, address _from, address _to, uint _count, bytes memory _data) internal virtual {
+    if (_to == address(0)) {
+      revert ERC721ZeroAddress();
+    }
+
+    if (_balanceOf[_from] < _count) {
+      revert ERC721InsufficientBalance(_from, _count, _balanceOf[_from]);
+    }
+
+    /**
+    Batch transfer range counts tokens from the end of the list backwards so that the 
+    list order is preserved, i.e. it transfers the most recently received tokens first.
+    */
+    uint startIndex = _balanceOf[_from] - 1;
+    uint endIndex = _balanceOf[_from] - _count;
+    for (uint i = startIndex; i >= endIndex; i--) {
+      uint256 id = tokenOfOwnerByIndex[_from][i];
+
+      _transfer(_caller, _from, _to, id);
+      _informRecipient(_caller, _from, _to, id, _data);
+    }
+  }
+
+  // mint/burn
+
+  /**
+   * @dev Batch mint a range of tokens to the address.
+   * @param _to The address to mint to.
+   * @param _startId The ID of the first token to mint.
+   * @param _count The number of tokens to mint.
+   * @param _data Additional data to send to IERC721TokenReceiver contract.
+   */
+  function _safeBatchMint(address _to, uint256 _startId, uint256 _count, bytes memory _data) internal virtual {
+    if (_to == address(0)) {
+      revert ERC721ZeroAddress();
+    }
+
+    if (_count == 0) {
+      revert ERC721InvalidBatchSize(0);
+    }
+
+    while (_count > 0) {
+      _mint(_to, _startId);
+      _informRecipient(msg.sender, address(0), _to, _startId, _data);
+      _startId++;
+      _count--;
+    }
+  }
+
+  /**
+   * @dev Mint a token.
+   * @param _to The address to mint to.
+   * @param _id The ID of the token to mint.
+   * @param _data Additional data to send to IERC721TokenReceiver contract.
+   */
+  function _safeMint(
+    address _to,
+    uint256 _id,
+    bytes memory _data
+  ) internal virtual {
+    if (_to == address(0)) {
+      revert ERC721ZeroAddress();
+    }
+
+    _mint(_to, _id);
+    _informRecipient(msg.sender, address(0), _to, _id, _data);
+  }
+
+  // Low-level methods
+
   function _transfer(address caller, address from, address to, uint256 id) internal virtual {
     bool approved = (
       caller == from ||
@@ -148,114 +298,6 @@ abstract contract ERC721 is IERC721, IERC721Metadata, IERC721Enumerable, IERC721
     delete getApproved[id];
 
     emit Transfer(from, to, id);
-  }
-
-  function transferFrom(address from, address to, uint256 id) public virtual {
-    if (from != _ownerOf[id]) {
-      revert ERC721InvalidOwner(from, id);
-    }
-
-    if (to == address(0)) {
-      revert ERC721ZeroAddress();
-    }
-
-    _transfer(msg.sender, from, to, id);
-  }
-
-  function safeTransferFrom(
-    address from,
-    address to,
-    uint256 id
-  ) public virtual {
-    transferFrom(from, to, id);
-    _informRecipient(msg.sender, from, to, id, "");
-  }
-
-  function safeTransferFrom(
-    address from,
-    address to,
-    uint256 id,
-    bytes calldata data
-  ) public virtual {
-    transferFrom(from, to, id);
-    _informRecipient(msg.sender, from, to, id, data);
-  }
-
-  // batch transfers
-
-  function _safeBatchTransfer(address _caller, address _from, address _to, uint[] memory _tokenIds, bytes memory _data) internal virtual {
-    if (_to == address(0)) {
-      revert ERC721ZeroAddress();
-    }
-
-    for (uint i = 0; i < _tokenIds.length; i++) {
-      uint256 id = _tokenIds[i];
-
-      if (_from != _ownerOf[id]) {
-        revert ERC721InvalidOwner(_from, id);
-      }
-
-      _transfer(_caller, _from, _to, id);
-      _informRecipient(_caller, _from, _to, id, _data);
-    }
-  }
-
-  function _safeBatchTransfer(address _caller, address _from, address _to, uint _count, bytes memory _data) internal virtual {
-    if (_to == address(0)) {
-      revert ERC721ZeroAddress();
-    }
-
-    if (_balanceOf[_from] < _count) {
-      revert ERC721InsufficientBalance(_from, _count, _balanceOf[_from]);
-    }
-
-    /**
-    Batch transfer range counts tokens from the end of the list backwards so that the 
-    list order is preserved, i.e. it transfers the most recently received tokens first.
-    */
-    uint startIndex = _balanceOf[_from] - 1;
-    uint endIndex = _balanceOf[_from] - _count;
-    for (uint i = startIndex; i >= endIndex; i--) {
-      uint256 id = tokenOfOwnerByIndex[_from][i];
-
-      _transfer(_caller, _from, _to, id);
-      _informRecipient(_caller, _from, _to, id, _data);
-    }
-  }
-
-  // mint/burn
-
-  /**
-    * @dev Batch mint a range of tokens to the address.
-    */
-  function _safeBatchMint(address _to, uint256 _startId, uint256 _count, bytes memory _data) internal virtual {
-    if (_to == address(0)) {
-      revert ERC721ZeroAddress();
-    }
-
-    if (_count == 0) {
-      revert ERC721InvalidBatchSize(0);
-    }
-
-    while (_count > 0) {
-      _mint(_to, _startId);
-      _informRecipient(msg.sender, address(0), _to, _startId, _data);
-      _startId++;
-      _count--;
-    }
-  }
-
-  function _safeMint(
-    address to,
-    uint256 id,
-    bytes memory data
-  ) internal virtual {
-    if (to == address(0)) {
-      revert ERC721ZeroAddress();
-    }
-
-    _mint(to, id);
-    _informRecipient(msg.sender, address(0), to, id, data);
   }
 
   function _mint(address to, uint256 id) internal virtual {
@@ -331,8 +373,6 @@ abstract contract ERC721 is IERC721, IERC721Metadata, IERC721Enumerable, IERC721
 
     emit Transfer(owner, address(0), id);
   }
-
-  // recipient notification
 
   function _informRecipient(
     address sender,
