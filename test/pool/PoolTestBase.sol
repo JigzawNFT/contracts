@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPLv3
 pragma solidity ^0.8.24;
 
+import { Auth } from "src/Auth.sol";
 import { TestBase01 } from "test/utils/TestBase01.sol";
 import { JigzawPool } from "src/JigzawPool.sol";
 import { JigzawNFT } from "src/JigzawNFT.sol";
@@ -17,19 +18,31 @@ abstract contract PoolTestBase is TestBase01 {
   uint revealer1_key = 0x12345;
   address public revealer1 = vm.addr(revealer1_key);
 
+  address wallet1 = address(0x1234567890);
+  address wallet2 = address(0x1234567890123);
 
   JigzawNFT public nft;
   JigzawPool public p;
 
+  address nft_addr;
+  address p_addr;
+
   function setUp() virtual public {
     nft = new JigzawNFT(_getDefaultNftConfig());
+    nft_addr = address(nft);
+
     p = new JigzawPool(_getDefaultPoolConfig());
+    p_addr = address(p);
     
     vm.prank(owner1);
     nft.setPool(address(p));
   }
 
   // Helper methods
+
+  function _computeMinterSig(bytes memory _data, uint _deadline) internal view returns (Auth.Signature memory) {
+    return _computeSig(minter1_key, _data, _deadline);
+  }
 
   function _getDefaultNftConfig() internal view returns (JigzawNFT.Config memory) {
     return JigzawNFT.Config({
