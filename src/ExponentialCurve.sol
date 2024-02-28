@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.24;
 
-import { QuoteError } from "./Common.sol";
+import { QuoteError, BuyQuote, SellQuote } from "./Common.sol";
 import { FixedPointMathLib } from "solmate/utils/FixedPointMathLib.sol";
 
 /*
@@ -16,20 +16,6 @@ contract ExponentialCurve {
 
     // minimum price to prevent numerical issues
     uint256 public constant MIN_PRICE = 1 gwei;
-
-    struct BuyQuote {
-        QuoteError error;
-        uint128 newSpotPrice;
-        uint256 inputValue;
-        uint256 fee;
-    }
-
-    struct SellQuote {
-        QuoteError error;
-        uint128 newSpotPrice;
-        uint256 outputValue;
-        uint256 fee;
-    }
 
     function validateSpotPrice(uint128 newSpotPrice)
         internal

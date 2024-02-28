@@ -21,7 +21,7 @@ contract PoolNftReceiver is PoolTestBase {
   function test_MintedNfts_OutOfCurveRange_AreRejected_Fuzz(uint id) public {
     vm.assume(id < 10 || id > 20);
 
-    vm.expectRevert(abi.encodeWithSelector(Li=bErrors.TokenIdOutOfRange.selector, address(this), id));
+    vm.expectRevert(abi.encodeWithSelector(LibErrors.TokenIdOutOfRange.selector, address(this), id));
     nft.mint(p_addr, id, "", _computeMinterSig(
       abi.encodePacked(p_addr, uint256(id), ""), 
       block.timestamp + 10 seconds

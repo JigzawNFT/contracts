@@ -50,7 +50,7 @@ abstract contract PoolTestBase is TestBase01 {
       minter: minter1,
       revealer: revealer1,
       pool: address(0),
-      royaltyFeeBips: 1000, /* 1000 bips = 10% */
+      royaltyFeeBips: 1000, /* 1000 bips = 10% fee */
       defaultImage: "img"
     });
   }

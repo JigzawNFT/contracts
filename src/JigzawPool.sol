@@ -3,7 +3,7 @@ pragma solidity ^0.8.24;
 
 import { IPoolNFT } from "./IPoolNFT.sol";
 import { LibErrors } from "./LibErrors.sol";
-import { PoolCurve, PoolStatus, QuoteError } from "./Common.sol";
+import { PoolCurve, PoolStatus, QuoteError, BuyQuote, SellQuote } from "./Common.sol";
 import { ExponentialCurve } from "./ExponentialCurve.sol";
 import { IERC721TokenReceiver } from "./ERC721.sol";
 

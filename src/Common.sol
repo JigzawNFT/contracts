@@ -14,6 +14,20 @@ enum QuoteError {
   INSUFFICIENT_FUNDS
 }
 
+struct BuyQuote {
+    QuoteError error;
+    uint128 newSpotPrice;
+    uint256 inputValue;
+    uint256 fee;
+}
+
+struct SellQuote {
+    QuoteError error;
+    uint128 newSpotPrice;
+    uint256 outputValue;
+    uint256 fee;
+}
+
 struct PoolStatus {
   /** Id of last token minted. */
   uint256 lastMintId;
