@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.24;
 
-import { CurveQuoteError } from "./Common.sol";
+import { QuoteError } from "./Common.sol";
 import { FixedPointMathLib } from "solmate/utils/FixedPointMathLib.sol";
 
 /*
@@ -18,14 +18,14 @@ contract ExponentialCurve {
     uint256 public constant MIN_PRICE = 1 gwei;
 
     struct BuyQuote {
-        CurveQuoteError error;
+        QuoteError error;
         uint128 newSpotPrice;
         uint256 inputValue;
         uint256 fee;
     }
 
     struct SellQuote {
-        CurveQuoteError error;
+        QuoteError error;
         uint128 newSpotPrice;
         uint256 outputValue;
         uint256 fee;
@@ -36,7 +36,7 @@ contract ExponentialCurve {
         pure
         returns (bool)
     {
-        return newSpotPrice >= MIN_PRICE;
+        return newSpotPrice >= MIN_PRICE && newSpotPrice <= type(uint128).max;
     }
 
     function getBuyInfo(
@@ -54,7 +54,7 @@ contract ExponentialCurve {
         // NOTE: we assume delta is > 1, as checked by validateDelta()
         // We only calculate changes for buying 1 or more NFTs
         if (numItems == 0) {
-            quote.error = CurveQuoteError.INVALID_NUMITEMS;
+            quote.error = QuoteError.INVALID_NUMITEMS;
             return quote;
         }
 
@@ -69,7 +69,7 @@ contract ExponentialCurve {
             FixedPointMathLib.WAD
         );
         if (newSpotPrice_ > type(uint128).max) {
-            quote.error = CurveQuoteError.SPOT_PRICE_OVERFLOW;
+            quote.error = QuoteError.SPOT_PRICE_OVERFLOW;
             return quote;
         }
         quote.newSpotPrice = uint128(newSpotPrice_);
@@ -106,7 +106,7 @@ contract ExponentialCurve {
         quote.inputValue += quote.fee;
 
         // If we got all the way here, no error happened
-        quote.error = CurveQuoteError.NONE;
+        quote.error = QuoteError.NONE;
     }
 
     /**
@@ -130,7 +130,7 @@ contract ExponentialCurve {
 
         // We only calculate changes for selling 1 or more NFTs
         if (numItems == 0) {
-            quote.error = CurveQuoteError.INVALID_NUMITEMS;
+            quote.error = QuoteError.INVALID_NUMITEMS;
             return quote;
         }
 
@@ -171,6 +171,6 @@ contract ExponentialCurve {
         quote.outputValue -= quote.fee;
 
         // If we got all the way here, no math error happened
-        quote.error = CurveQuoteError.NONE;
+        quote.error = QuoteError.NONE;
     }
 }

@@ -28,18 +28,18 @@ library LibErrors {
   error SignatureAlreadyUsed(address caller);
 
   /**
-  * @dev The caller has insufficient balance.
+  * @dev The sender provided insufficient funds.
   */
-  error InsufficientBalance(address caller, uint balanceRequired, uint balanceAvailable);
+  error InsufficientSenderFunds(address sender, uint fundsRequired, uint fundsProvided);
 
   /**
-  * @dev The caller provided insufficient funds.
+  * @dev The sender has an insufficient NFT balance.
   */
-  error InsufficientFunds(address caller, uint fundsRequired, uint fundsProvided);
+  error InsufficientSenderNfts(address sender, uint balanceRequired, uint balanceAvailable);
 
- /**
+  /**
   * @dev The token id is out of range.
-  */
+   */
   error TokenIdOutOfRange(address caller, uint tokenId);
 
   /**
@@ -51,4 +51,19 @@ library LibErrors {
    * @dev Invalid token input list.
    */
   error InvalidTokenList();
+
+  /**
+  * @dev Invalid mint starting price.
+  */
+  error InvalidStartPrice(uint price);
+
+  /**
+  * @dev Invalid mint start id.
+  */
+  error InvalidMintStartId(uint id);
+
+  /**
+  * @dev Invalid mint end id.
+  */
+  error InvalidMintEndId(uint id);
 }

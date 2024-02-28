@@ -26,7 +26,7 @@ abstract contract NftTestBase is TestBase01 {
   JigzawNFT public t;
 
   function setUp() virtual public {
-    t = new JigzawNFT(_getDefaultConfig());
+    t = new JigzawNFT(_getDefaultNftConfig());
   }
 
   // Helper methods
@@ -43,7 +43,7 @@ abstract contract NftTestBase is TestBase01 {
     return _computeSig(owner1_key, _data, _deadline);
   }
 
-  function _getDefaultConfig() internal view returns (JigzawNFT.Config memory) {
+  function _getDefaultNftConfig() internal view returns (JigzawNFT.Config memory) {
     return JigzawNFT.Config({
       owner: owner1,
       minter: minter1,

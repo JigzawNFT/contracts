@@ -1,10 +1,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.24;
 
-enum CurveQuoteError {
+enum QuoteError {
+  // no error
   NONE,
+  // invalid no. of items being bought/sold
   INVALID_NUMITEMS,
-  SPOT_PRICE_OVERFLOW
+  // new spot price would overflow
+  SPOT_PRICE_OVERFLOW,
+  // not enough NFTs available in pool
+  INSUFFICIENT_NFTS,
+  // not enough funds in pool
+  INSUFFICIENT_FUNDS
 }
 
 struct PoolStatus {

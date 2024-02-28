@@ -3,8 +3,9 @@ pragma solidity ^0.8.24;
 
 import { IPoolNFT } from "./IPoolNFT.sol";
 import { LibErrors } from "./LibErrors.sol";
-import { PoolCurve, PoolStatus, CurveQuoteError } from "./Common.sol";
+import { PoolCurve, PoolStatus, QuoteError } from "./Common.sol";
 import { ExponentialCurve } from "./ExponentialCurve.sol";
+import { IERC721TokenReceiver } from "./ERC721.sol";
 
 /**
  * @dev Jigzaw NFT liquidity pool.
@@ -22,11 +23,10 @@ import { ExponentialCurve } from "./ExponentialCurve.sol";
  * Different ranges of NFTs (e.g token ids 1 to 20 could be one "range") can have different bonding curves. Each curve only 
  * has access to its own liquidity.
  */
-contract JigzawPool is ExponentialCurve {
+contract JigzawPool is IERC721TokenReceiver, ExponentialCurve {
   IPoolNFT public nft;
   PoolCurve public curve;
   PoolStatus public status;
-
 
   // Constructor
 
@@ -41,10 +41,24 @@ contract JigzawPool is ExponentialCurve {
   }
 
   constructor(Config memory _config) {
+    if (!validateSpotPrice(_config.curve.startPriceWei)) {
+      revert LibErrors.InvalidStartPrice(_config.curve.startPriceWei);
+    }
+
+    if (_config.curve.mintStartId < 1) {
+      revert LibErrors.InvalidMintStartId(_config.curve.mintStartId);
+    }
+
+    if (_config.curve.mintEndId < _config.curve.mintStartId) {
+      revert LibErrors.InvalidMintEndId(_config.curve.mintEndId);
+    }
+
     nft = IPoolNFT(_config.nft);
+    
     curve = _config.curve;
+    
     status = PoolStatus({
-      lastMintId: curve.mintStartId - 1,
+      lastMintId: _config.curve.mintStartId - 1,
       priceWei: curve.startPriceWei
     });
   }
@@ -63,16 +77,10 @@ contract JigzawPool is ExponentialCurve {
     address sender = payable(msg.sender);
     (BuyQuote memory quote, address feeReceiver) = getBuyQuote(numItems);
 
-    if (quote.error == CurveQuoteError.NONE) {
-      // check input
+    if (quote.error == QuoteError.NONE) {
+      // check sender funds
       if (quote.inputValue > msg.value) {
-        revert LibErrors.InsufficientFunds(sender, quote.inputValue, msg.value);
-      }
-
-      // check balance
-      uint nftsAvailable = getTotalNftsForSale(); 
-      if (numItems > nftsAvailable) {
-        revert LibErrors.InsufficientBalance(address(this), numItems, nftsAvailable);
+        revert LibErrors.InsufficientSenderFunds(sender, quote.inputValue, msg.value);
       }
 
       // transfer from balance first
@@ -114,8 +122,16 @@ contract JigzawPool is ExponentialCurve {
    */
   function getBuyQuote(uint numItems) public view returns (BuyQuote memory quote, address feeReceiver) {
     uint feeBips;
+    
     (feeReceiver, feeBips) = nft.getRoyaltyInfo();
+    
     quote = getBuyInfo(status.priceWei, curve.delta, numItems, feeBips);
+    
+    // check NFTs available
+    uint nftsAvailable = getTotalNftsForSale(); 
+    if (numItems > nftsAvailable) {
+      quote.error = QuoteError.INSUFFICIENT_NFTS;
+    }
   }
 
   // ---------------------------------------------------------------
@@ -127,17 +143,11 @@ contract JigzawPool is ExponentialCurve {
     address sender = payable(msg.sender);
     (SellQuote memory quote, address feeReceiver) = getSellQuote(tokenIds.length);
 
-    if (quote.error == CurveQuoteError.NONE) {
+    if (quote.error == QuoteError.NONE) {
       // check balance
       uint tokenBal = nft.balanceOf(sender);
       if (tokenIds.length > tokenBal) {
-        revert LibErrors.InsufficientBalance(sender, tokenIds.length, tokenBal);
-      }
-
-      // check that pool has enough balance to pay
-      uint totalToPay = quote.outputValue + quote.fee;
-      if (totalToPay > address(this).balance) {
-        revert LibErrors.InsufficientFunds(address(this), totalToPay, address(this).balance);
+        revert LibErrors.InsufficientSenderNfts(sender, tokenIds.length, tokenBal);
       }
 
       // for each token
@@ -166,7 +176,33 @@ contract JigzawPool is ExponentialCurve {
    */
   function getSellQuote(uint numItems) public view returns (SellQuote memory quote, address feeReceiver) {
     uint feeBips;
+
     (feeReceiver, feeBips) = nft.getRoyaltyInfo();
+
     quote = getSellInfo(status.priceWei, curve.delta, numItems, feeBips);
+
+    // check that pool has enough balance to pay
+    uint totalToPay = quote.outputValue + quote.fee;
+    if (totalToPay > address(this).balance) {
+      quote.error = QuoteError.INSUFFICIENT_FUNDS;
+    }
+  }
+
+  // ---------------------------------------------------------------
+  // IERC721TokenReceiver
+  // ---------------------------------------------------------------
+
+  function onERC721Received(
+    address operator,
+    address /*from*/,
+    uint256 tokenId,
+    bytes calldata /*data*/
+  ) public view override returns (bytes4) {
+    // check that the token id is within curve range
+    if (tokenId < curve.mintStartId || tokenId > curve.mintEndId) {
+      revert LibErrors.TokenIdOutOfRange(operator, tokenId);
+    } else {
+      return IERC721TokenReceiver.onERC721Received.selector;
+    }
   }
 }

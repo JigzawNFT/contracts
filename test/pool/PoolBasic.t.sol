@@ -11,9 +11,10 @@ contract PoolBasic is PoolTestBase {
     (PoolCurve memory c, PoolStatus memory s) = p.getCurveStatus();
     assertEq(c.mintStartId, 10);
     assertEq(c.mintEndId, 20);
-    assertEq(c.startPriceWei, 100);
+    assertEq(c.startPriceWei, 1 gwei);
     assertEq(c.delta, 2 * 1e18);
+
     assertEq(s.lastMintId, 9);
-    assertEq(s.priceWei, 100);
+    assertEq(s.priceWei, 1 gwei);
   }
 }
