@@ -53,9 +53,9 @@ library LibErrors {
   error InvalidTokenList();
 
   /**
-  * @dev Invalid mint starting price.
+  * @dev Invalid mint price.
   */
-  error InvalidStartPrice(uint price);
+  error InvalidMintPrice(uint price);
 
   /**
   * @dev Invalid mint start id.

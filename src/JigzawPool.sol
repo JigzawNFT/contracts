@@ -42,7 +42,7 @@ contract JigzawPool is IERC721TokenReceiver, ExponentialCurve {
 
   constructor(Config memory _config) {
     if (!validateSpotPrice(_config.curve.startPriceWei)) {
-      revert LibErrors.InvalidStartPrice(_config.curve.startPriceWei);
+      revert LibErrors.InvalidMintPrice(_config.curve.startPriceWei);
     }
 
     if (_config.curve.mintStartId < 1) {
