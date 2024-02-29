@@ -62,6 +62,12 @@ contract PoolTrading is PoolTestBase {
     assertEq(uint(q.error), uint(QuoteError.INVALID_NUMITEMS));
   }
 
+  function test_GetBuyQuote_Initial_NewSpotPriceOverflow() public {
+    // 2^63    
+    BuyQuote memory q = p.getBuyQuote(100);
+    assertEq(uint(q.error), uint(QuoteError.SPOT_PRICE_OVERFLOW));
+  }
+
   // buy - initial
 
   function test_Buy_Initial_BuyOne() public {
@@ -153,6 +159,12 @@ contract PoolTrading is PoolTestBase {
     vm.prank(wallet1);
     vm.expectRevert(abi.encodeWithSelector(LibErrors.BadQuote.selector, wallet1, QuoteError.INVALID_NUMITEMS));
     p.buy{value: wallet1.balance}(0);
+  }
+
+  function test_Buy_Initial_BuyCrazy_SpotPriceOverflow() public {
+    vm.prank(wallet1);
+    vm.expectRevert(abi.encodeWithSelector(LibErrors.BadQuote.selector, wallet1, QuoteError.SPOT_PRICE_OVERFLOW));
+    p.buy{value: wallet1.balance}(100);
   }
 
   // getSellQuote

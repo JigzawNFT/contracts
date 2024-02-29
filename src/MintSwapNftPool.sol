@@ -131,11 +131,13 @@ contract MintSwapNftPool is IERC721TokenReceiver, ExponentialCurve {
     
     quote = getBuyInfo(status.priceWei, curve.delta, numItems, feeBips);
     quote.feeReceiver = feeReceiver;
-    
-    // check NFTs available
-    uint nftsAvailable = getTotalNftsForSale(); 
-    if (numItems > nftsAvailable) {
-      quote.error = QuoteError.INSUFFICIENT_NFTS;
+
+    if (quote.error == QuoteError.NONE) {
+      // check NFTs available
+      uint nftsAvailable = getTotalNftsForSale(); 
+      if (numItems > nftsAvailable) {
+        quote.error = QuoteError.INSUFFICIENT_NFTS;
+      }
     }
   }
 
@@ -191,10 +193,12 @@ contract MintSwapNftPool is IERC721TokenReceiver, ExponentialCurve {
     quote = getSellInfo(status.priceWei, curve.delta, numItems, feeBips);
     quote.feeReceiver = feeReceiver;
 
-    // check that pool has enough balance to pay
-    uint totalToPay = quote.outputValue + quote.fee;
-    if (totalToPay > address(this).balance) {
-      quote.error = QuoteError.INSUFFICIENT_FUNDS;
+    if (quote.error == QuoteError.NONE) {
+      // check that pool has enough balance to pay
+      uint totalToPay = quote.outputValue + quote.fee;
+      if (totalToPay > address(this).balance) {
+        quote.error = QuoteError.INSUFFICIENT_FUNDS;
+      }
     }
   }
 
