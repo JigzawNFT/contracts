@@ -3,7 +3,7 @@ pragma solidity ^0.8.24;
 
 import { Auth } from "src/Auth.sol";
 import { TestBase01 } from "test/utils/TestBase01.sol";
-import { JigzawPool } from "src/JigzawPool.sol";
+import { MintSwapNftPool } from "src/MintSwapNftPool.sol";
 import { JigzawNFT } from "src/JigzawNFT.sol";
 import { PoolCurve, PoolStatus } from "src/Common.sol";
 
@@ -22,7 +22,7 @@ abstract contract PoolTestBase is TestBase01 {
   address payable wallet2 = payable(address(0x1234567890123));
 
   JigzawNFT public nft;
-  JigzawPool public p;
+  MintSwapNftPool public p;
 
   address nft_addr;
   address p_addr;
@@ -31,7 +31,7 @@ abstract contract PoolTestBase is TestBase01 {
     nft = new JigzawNFT(_getDefaultNftConfig());
     nft_addr = address(nft);
 
-    p = new JigzawPool(_getDefaultPoolConfig());
+    p = new MintSwapNftPool(_getDefaultPoolConfig());
     p_addr = address(p);
     
     vm.prank(owner1);
@@ -55,8 +55,8 @@ abstract contract PoolTestBase is TestBase01 {
     });
   }
 
-  function _getDefaultPoolConfig() internal view returns (JigzawPool.Config memory) {
-    return JigzawPool.Config({
+  function _getDefaultPoolConfig() internal view returns (MintSwapNftPool.Config memory) {
+    return MintSwapNftPool.Config({
       nft: address(nft),
       curve: PoolCurve({
         mintStartId: 10,

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPLv3
 pragma solidity ^0.8.24;
 
-import { JigzawPool } from "src/JigzawPool.sol";
+import { MintSwapNftPool } from "src/MintSwapNftPool.sol";
 import { LibErrors } from "src/LibErrors.sol";
 import { PoolTestBase } from "./PoolTestBase.sol";
 import { PoolCurve, PoolStatus } from "src/Common.sol";

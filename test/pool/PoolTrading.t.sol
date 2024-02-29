@@ -58,7 +58,7 @@ contract PoolTrading is PoolTestBase {
 
   // buy - initial
 
-  function test_Buy_Initial_BuyOne_ExactFunds() public {
+  function test_Buy_Initial_BuyOne() public {
     BuyQuote memory q = p.getBuyQuote(1);
 
     wallet1.transfer(q.inputValue); // exact funds
@@ -82,26 +82,6 @@ contract PoolTrading is PoolTestBase {
     
     // check fee receiver funds
     assertEq(owner1.balance, q.fee);
-  }
-
-  function test_Buy_Initial_BuyOne_InsufficientFunds() public {
-    BuyQuote memory q = p.getBuyQuote(1);
-
-    wallet1.transfer(q.inputValue - 1);
-    vm.prank(wallet1);
-    vm.expectRevert(abi.encodeWithSelector(LibErrors.InsufficientSenderFunds.selector, wallet1, q.inputValue, wallet1.balance));
-    p.buy{value: wallet1.balance}(1);
-  }
-
-  function test_Buy_Initial_BuyOne_TooMuchFunds() public {
-    BuyQuote memory q = p.getBuyQuote(1);
-
-    wallet1.transfer(q.inputValue + 1);
-    vm.prank(wallet1);
-    p.buy{value: wallet1.balance}(1);
-
-    // check caller funds to ensure extra got returned
-    assertEq(wallet1.balance, 1);
   }
 
   function test_Buy_Initial_BuyAll() public {
@@ -134,5 +114,32 @@ contract PoolTrading is PoolTestBase {
     assertEq(owner1.balance, q.fee);
   }
 
+
+  function test_Buy_Initial_BuyOne_InsufficientFunds() public {
+    BuyQuote memory q = p.getBuyQuote(1);
+
+    wallet1.transfer(q.inputValue - 1);
+    vm.prank(wallet1);
+    vm.expectRevert(abi.encodeWithSelector(LibErrors.InsufficientSenderFunds.selector, wallet1, q.inputValue, wallet1.balance));
+    p.buy{value: wallet1.balance}(1);
+  }
+
+  function test_Buy_Initial_BuyOne_TooMuchFunds() public {
+    BuyQuote memory q = p.getBuyQuote(1);
+
+    wallet1.transfer(q.inputValue + 1);
+    vm.prank(wallet1);
+    p.buy{value: wallet1.balance}(1);
+
+    // check caller funds to ensure extra got returned
+    assertEq(wallet1.balance, 1);
+  }
+
+  function test_Buy_Initial_BuyTooMuch() public {
+    wallet1.transfer(1 ether);
+    vm.prank(wallet1);
+    vm.expectRevert(abi.encodeWithSelector(LibErrors.BadQuote.selector, QuoteError.INSUFFICIENT_NFTS));
+    p.buy{value: wallet1.balance}(12);
+  }
 }
 

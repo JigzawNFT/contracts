@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPLv3
 pragma solidity ^0.8.24;
 
+import { QuoteError } from "./Common.sol";
+
 library LibErrors {
   /**
   * @dev Only pool is allowed to call this.
@@ -51,6 +53,11 @@ library LibErrors {
    * @dev Invalid token input list.
    */
   error InvalidTokenList();
+
+  /**
+   * @dev Invalid buy/sell quote.
+   */
+  error BadQuote(QuoteError quoteError);
 
   /**
   * @dev Invalid mint price.

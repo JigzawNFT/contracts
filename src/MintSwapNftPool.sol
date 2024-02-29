@@ -8,22 +8,25 @@ import { ExponentialCurve } from "./ExponentialCurve.sol";
 import { IERC721TokenReceiver } from "./ERC721.sol";
 
 /**
- * @dev Jigzaw NFT liquidity pool.
+ * @dev NFT liquidity pool that both mints and swaps.
  *
  * Inspired by ERC404 and SudoSwap, this provides a way for users to mint, buy and sell NFTs easily from/to a self-managed 
- * liquidity pool. To be fair, this has probably been done before somewhere else!
+ * liquidity pool. 
  *
  * Initially no NFTs are minted. The first purchase mints an NFT. The price of an NFT increases with each mint. A minted 
  * NFT can be sold back into the pool at the current mint price to get back liquidity. The price of an NFT decreases with 
  * every sale back to the pool. Subsequent buyers will then first recieve existing NFTs already held by the pool before a new 
  * ones are minted.
  *
+ * Note that subsequent buyers receive the most recently added NFTs first, i.e. FIFO order. For example, if seller A sells NFT #1 and then #2
+ * to the pool, then the next buyer will first receive NFT #2, followed by NFT #1.
+ *
  * Mint price follows an exponential bonding curve, meaning price increases by a fixed percentage with each purchase.
  *
  * Different ranges of NFTs (e.g token ids 1 to 20 could be one "range") can have different bonding curves. Each curve only 
  * has access to its own liquidity.
  */
-contract JigzawPool is IERC721TokenReceiver, ExponentialCurve {
+contract MintSwapNftPool is IERC721TokenReceiver, ExponentialCurve {
   IPoolNFT public nft;
   PoolCurve public curve;
   PoolStatus public status;
@@ -75,39 +78,42 @@ contract JigzawPool is IERC721TokenReceiver, ExponentialCurve {
 
   function buy(uint numItems) external payable returns (BuyQuote memory quote) {
     address sender = payable(msg.sender);
+
     quote = getBuyQuote(numItems);
 
-    if (quote.error == QuoteError.NONE) {
-      // check sender funds
-      if (quote.inputValue > msg.value) {
-        revert LibErrors.InsufficientSenderFunds(sender, quote.inputValue, msg.value);
-      }
-
-      // transfer from balance first
-      uint balance = nft.balanceOf(address(this));
-      if (balance > 0) {
-        uint toTransfer = balance < numItems ? balance : numItems;
-        nft.batchTransferRange(address(this), sender, toTransfer);
-        numItems -= toTransfer;
-      }
-
-      // mint remaining
-      if (numItems > 0) {
-        nft.batchMint(sender, status.lastMintId + 1, numItems);
-        status.lastMintId += numItems;
-      }
-
-      // pay fee
-      payable(quote.feeReceiver).transfer(quote.fee);
-
-      // return excess payment to caller
-      if (quote.inputValue < msg.value) {
-        payable(sender).transfer(msg.value - quote.inputValue);
-      }
-
-      // update status
-      status.priceWei = quote.newSpotPrice;
+    if (quote.error != QuoteError.NONE) {
+      revert LibErrors.BadQuote(quote.error);
     }
+
+    // check sender funds
+    if (quote.inputValue > msg.value) {
+      revert LibErrors.InsufficientSenderFunds(sender, quote.inputValue, msg.value);
+    }
+
+    // transfer from balance first
+    uint balance = nft.balanceOf(address(this));
+    if (balance > 0) {
+      uint toTransfer = balance < numItems ? balance : numItems;
+      nft.batchTransferRange(address(this), sender, toTransfer);
+      numItems -= toTransfer;
+    }
+
+    // mint remaining
+    if (numItems > 0) {
+      nft.batchMint(sender, status.lastMintId + 1, numItems);
+      status.lastMintId += numItems;
+    }
+
+    // pay fee
+    payable(quote.feeReceiver).transfer(quote.fee);
+
+    // return excess payment to caller
+    if (quote.inputValue < msg.value) {
+      payable(sender).transfer(msg.value - quote.inputValue);
+    }
+
+    // update status
+    status.priceWei = quote.newSpotPrice;
   }
 
   /**
@@ -140,34 +146,37 @@ contract JigzawPool is IERC721TokenReceiver, ExponentialCurve {
 
   function sell(uint[] calldata tokenIds) external returns (SellQuote memory quote) {
     address sender = payable(msg.sender);
+
     quote = getSellQuote(tokenIds.length);
 
-    if (quote.error == QuoteError.NONE) {
-      // check balance
-      uint tokenBal = nft.balanceOf(sender);
-      if (tokenIds.length > tokenBal) {
-        revert LibErrors.InsufficientSenderNfts(sender, tokenIds.length, tokenBal);
-      }
-
-      // for each token
-      for (uint i = 0; i < tokenIds.length; i++) {
-        uint id = tokenIds[i];
-        
-        // must be within supported range
-        if (id < curve.mintStartId || id > curve.mintEndId) {
-          revert LibErrors.TokenIdOutOfRange(sender, id);
-        }
-      }
-
-      // transfer NFTs to pool
-      nft.batchTransferIds(sender, address(this), tokenIds);
-
-      // pay caller
-      payable(sender).transfer(quote.outputValue);
-
-      // pay fee
-      payable(quote.feeReceiver).transfer(quote.fee);
+    if (quote.error != QuoteError.NONE) {
+      revert LibErrors.BadQuote(quote.error);
     }
+
+    // check balance
+    uint tokenBal = nft.balanceOf(sender);
+    if (tokenIds.length > tokenBal) {
+      revert LibErrors.InsufficientSenderNfts(sender, tokenIds.length, tokenBal);
+    }
+
+    // for each token
+    for (uint i = 0; i < tokenIds.length; i++) {
+      uint id = tokenIds[i];
+      
+      // must be within supported range
+      if (id < curve.mintStartId || id > curve.mintEndId) {
+        revert LibErrors.TokenIdOutOfRange(sender, id);
+      }
+    }
+
+    // transfer NFTs to pool
+    nft.batchTransferIds(sender, address(this), tokenIds);
+
+    // pay caller
+    payable(sender).transfer(quote.outputValue);
+
+    // pay fee
+    payable(quote.feeReceiver).transfer(quote.fee);
   }
 
   /**
