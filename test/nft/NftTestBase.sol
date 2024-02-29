@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPLv3
+// SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.24;
 
 import { Base64 } from "openzeppelin/utils/Base64.sol";
