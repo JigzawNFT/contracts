@@ -8,15 +8,17 @@ Smart contracts for [JigzawNFT](https://jigzaw.xyz).
 Features:
 
 * **Fully on-chain metadata (including images)!**
-* Minter, owner and revealer roles
+* DEX pool inspired by SudoSwap/ERC404.
+* Extensive test suite and [coverage](https://coveralls.io/github/JigzawNFT/contracts).
 
 Technicals:
 
-* Built with Foundry
-* OpenZepellin ERC721 + Enumerability + Storage
-* ERC2981 royalty standard
-* ERC4906 metadata updates
-* ECDSA signature verification to allow for anyone to mint/reveal with authorisation
+* Built with Foundry.
+* ERC721 (based on [Solmate](https://github.com/transmissions11/solmate/blob/main/src/tokens/ERC721.sol)) + Enumerability + Custom token URI.
+* Batch transfers and mints.
+* ERC2981 royalty standard.
+* ERC4906 metadata updates.
+* ECDSA signature verification to allow for anyone to mint/reveal with authorisation.
 
 ## On-chain addresses
 
