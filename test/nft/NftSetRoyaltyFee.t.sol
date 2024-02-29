@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: GPLv3
 pragma solidity ^0.8.24;
 
-import {console2 as c} from "forge-std/Test.sol";
-import { TestBaseTop } from "./utils/TestBaseTop.sol";
+import { console2 as c } from "forge-std/Test.sol";
+import { NftTestBase } from "./NftTestBase.sol";
 import { Ownable } from "openzeppelin/access/Ownable.sol";
-import { Config, Signature } from "../src/Structs.sol";
 
 
-contract SetRoyaltyFee is TestBaseTop {
+contract NftSetRoyaltyFee is NftTestBase {
   function test_SetRoyaltyFeeWhenOwner_Succeeds() public {
     vm.prank(t.owner());
     t.setRoyaltyFee(address(0x789), 200 /* 2% */);

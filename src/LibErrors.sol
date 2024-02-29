@@ -1,16 +1,13 @@
 // SPDX-License-Identifier: GPLv3
 pragma solidity ^0.8.24;
 
+import { QuoteError } from "./Common.sol";
+
 library LibErrors {
   /**
-  * @dev The caller tried to mint an already minted token.
+  * @dev Only pool is allowed to call this.
   */
-  error AlreadyMinted(address caller, uint tokenId);
-
-  /**
-  * @dev The caller tried to mint nothing.
-  */
-  error MintEmpty(address caller);
+  error UnauthorizedMustBePool(address caller);
 
   /**
    * @dev The token has already been revealed.
@@ -31,4 +28,49 @@ library LibErrors {
    * @dev The caller supplied an already used signature.
    */
   error SignatureAlreadyUsed(address caller);
+
+  /**
+  * @dev The sender provided insufficient funds.
+  */
+  error InsufficientSenderFunds(address sender, uint fundsRequired, uint fundsProvided);
+
+  /**
+  * @dev The sender has an insufficient NFT balance.
+  */
+  error InsufficientSenderNfts(address sender, uint balanceRequired, uint balanceAvailable);
+
+  /**
+  * @dev The token id is out of range.
+   */
+  error TokenIdOutOfRange(address caller, uint tokenId);
+
+  /**
+   * @dev Invalid batch operation array lengths.
+   */
+  error InvalidBatchLengths(uint length1, uint length2);
+
+  /**
+   * @dev Invalid token input list.
+   */
+  error InvalidTokenList();
+
+  /**
+   * @dev Invalid buy/sell quote.
+   */
+  error BadQuote(address sender, QuoteError quoteError);
+
+  /**
+  * @dev Invalid mint price.
+  */
+  error InvalidMintPrice(uint price);
+
+  /**
+  * @dev Invalid mint start id.
+  */
+  error InvalidMintStartId(uint id);
+
+  /**
+  * @dev Invalid mint end id.
+  */
+  error InvalidMintEndId(uint id);
 }
