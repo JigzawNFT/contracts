@@ -82,7 +82,7 @@ contract MintSwapNftPool is IERC721TokenReceiver, ExponentialCurve {
     quote = getBuyQuote(numItems);
 
     if (quote.error != QuoteError.NONE) {
-      revert LibErrors.BadQuote(quote.error);
+      revert LibErrors.BadQuote(sender, quote.error);
     }
 
     // check sender funds
@@ -150,7 +150,7 @@ contract MintSwapNftPool is IERC721TokenReceiver, ExponentialCurve {
     quote = getSellQuote(tokenIds.length);
 
     if (quote.error != QuoteError.NONE) {
-      revert LibErrors.BadQuote(quote.error);
+      revert LibErrors.BadQuote(sender, quote.error);
     }
 
     // check balance

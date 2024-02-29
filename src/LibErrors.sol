@@ -57,7 +57,7 @@ library LibErrors {
   /**
    * @dev Invalid buy/sell quote.
    */
-  error BadQuote(QuoteError quoteError);
+  error BadQuote(address sender, QuoteError quoteError);
 
   /**
   * @dev Invalid mint price.
