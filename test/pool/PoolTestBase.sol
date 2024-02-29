@@ -18,8 +18,8 @@ abstract contract PoolTestBase is TestBase01 {
   uint revealer1_key = 0x12345;
   address public revealer1 = vm.addr(revealer1_key);
 
-  address wallet1 = address(0x1234567890);
-  address wallet2 = address(0x1234567890123);
+  address payable wallet1 = payable(address(0x1234567890));
+  address payable wallet2 = payable(address(0x1234567890123));
 
   JigzawNFT public nft;
   JigzawPool public p;

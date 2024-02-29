@@ -15,17 +15,19 @@ enum QuoteError {
 }
 
 struct BuyQuote {
-    QuoteError error;
-    uint128 newSpotPrice;
-    uint256 inputValue;
-    uint256 fee;
+  QuoteError error;
+  uint128 newSpotPrice;
+  uint256 inputValue;
+  uint256 fee;
+  address feeReceiver;
 }
 
 struct SellQuote {
-    QuoteError error;
-    uint128 newSpotPrice;
-    uint256 outputValue;
-    uint256 fee;
+  QuoteError error;
+  uint128 newSpotPrice;
+  uint256 outputValue;
+  uint256 fee;
+  address feeReceiver;
 }
 
 struct PoolStatus {

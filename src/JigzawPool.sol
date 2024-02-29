@@ -73,9 +73,9 @@ contract JigzawPool is IERC721TokenReceiver, ExponentialCurve {
   // Buying
   // ---------------------------------------------------------------
 
-  function buy(uint numItems) external payable {
+  function buy(uint numItems) external payable returns (BuyQuote memory quote) {
     address sender = payable(msg.sender);
-    (BuyQuote memory quote, address feeReceiver) = getBuyQuote(numItems);
+    quote = getBuyQuote(numItems);
 
     if (quote.error == QuoteError.NONE) {
       // check sender funds
@@ -98,7 +98,7 @@ contract JigzawPool is IERC721TokenReceiver, ExponentialCurve {
       }
 
       // pay fee
-      payable(feeReceiver).transfer(quote.fee);
+      payable(quote.feeReceiver).transfer(quote.fee);
 
       // return excess payment to caller
       if (quote.inputValue < msg.value) {
@@ -120,12 +120,11 @@ contract JigzawPool is IERC721TokenReceiver, ExponentialCurve {
   /**
    * inputValue is the amount of wei the buyer will pay, including the fee.
    */
-  function getBuyQuote(uint numItems) public view returns (BuyQuote memory quote, address feeReceiver) {
-    uint feeBips;
-    
-    (feeReceiver, feeBips) = nft.getRoyaltyInfo();
+  function getBuyQuote(uint numItems) public view returns (BuyQuote memory quote) {
+    (address feeReceiver, uint feeBips) = nft.getRoyaltyInfo();
     
     quote = getBuyInfo(status.priceWei, curve.delta, numItems, feeBips);
+    quote.feeReceiver = feeReceiver;
     
     // check NFTs available
     uint nftsAvailable = getTotalNftsForSale(); 
@@ -139,9 +138,9 @@ contract JigzawPool is IERC721TokenReceiver, ExponentialCurve {
   // ---------------------------------------------------------------
 
 
-  function sell(uint[] calldata tokenIds) external {
+  function sell(uint[] calldata tokenIds) external returns (SellQuote memory quote) {
     address sender = payable(msg.sender);
-    (SellQuote memory quote, address feeReceiver) = getSellQuote(tokenIds.length);
+    quote = getSellQuote(tokenIds.length);
 
     if (quote.error == QuoteError.NONE) {
       // check balance
@@ -167,19 +166,18 @@ contract JigzawPool is IERC721TokenReceiver, ExponentialCurve {
       payable(sender).transfer(quote.outputValue);
 
       // pay fee
-      payable(feeReceiver).transfer(quote.fee);
+      payable(quote.feeReceiver).transfer(quote.fee);
     }
   }
 
   /**
    * outputValue is the amount of wei the seller will receive, excluding the fee.
    */
-  function getSellQuote(uint numItems) public view returns (SellQuote memory quote, address feeReceiver) {
-    uint feeBips;
-
-    (feeReceiver, feeBips) = nft.getRoyaltyInfo();
+  function getSellQuote(uint numItems) public view returns (SellQuote memory quote) {
+    (address feeReceiver, uint feeBips) = nft.getRoyaltyInfo();
 
     quote = getSellInfo(status.priceWei, curve.delta, numItems, feeBips);
+    quote.feeReceiver = feeReceiver;
 
     // check that pool has enough balance to pay
     uint totalToPay = quote.outputValue + quote.fee;
