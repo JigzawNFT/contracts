@@ -90,6 +90,9 @@ contract MintSwapNftPool is IERC721TokenReceiver, ExponentialCurve {
       revert LibErrors.InsufficientSenderFunds(sender, quote.inputValue, msg.value);
     }
 
+    // update status
+    status.priceWei = quote.newSpotPrice;
+
     // transfer from balance first
     uint balance = nft.balanceOf(address(this));
     if (balance > 0) {
@@ -111,9 +114,6 @@ contract MintSwapNftPool is IERC721TokenReceiver, ExponentialCurve {
     if (quote.inputValue < msg.value) {
       payable(sender).transfer(msg.value - quote.inputValue);
     }
-
-    // update status
-    status.priceWei = quote.newSpotPrice;
   }
 
   /**
@@ -168,6 +168,9 @@ contract MintSwapNftPool is IERC721TokenReceiver, ExponentialCurve {
         revert LibErrors.TokenIdOutOfRange(sender, id);
       }
     }
+
+    // update status
+    status.priceWei = quote.newSpotPrice;
 
     // transfer NFTs to pool
     nft.batchTransferIds(sender, address(this), tokenIds);

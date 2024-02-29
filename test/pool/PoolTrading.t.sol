@@ -302,6 +302,51 @@ contract PoolTrading is PoolTestBase {
     p.sell(ids);
   }
 
+  // mint-on-demand
+
+  function test_MintOnDemand() public {
+    _buySomeNfts(2, 4 gwei);
+
+    uint[] memory ids = _getTokenIdArray(2, 10);
+    _sellSomeNfts(ids, 1 gwei);
+
+    // check NFTs minted
+    assertEq(nft.totalSupply(), 2, "nft supply");
+    assertEq(nft.tokenByIndex(0), 10, "token at index 0");
+    assertEq(nft.tokenByIndex(1), 11, "token at index 1");
+
+    // check caller nfts
+    assertEq(nft.balanceOf(wallet1), 0);
+
+    // check pool NFTs
+    assertEq(nft.balanceOf(p_addr), 2);
+    assertEq(p.getTotalNftsForSale(), 11);
+    assertEq(nft.tokenOfOwnerByIndex(p_addr, 0), 10, "token of pool owner at index 0");
+    assertEq(nft.tokenOfOwnerByIndex(p_addr, 1), 11, "token of pool owner at index 0");
+
+    // buy some more
+    _buySomeNfts(4, 16 gwei);
+
+    // check NFTs minted
+    assertEq(nft.totalSupply(), 4, "nft supply");
+    assertEq(nft.tokenByIndex(0), 10, "token at index 0");
+    assertEq(nft.tokenByIndex(1), 11, "token at index 1");
+    assertEq(nft.tokenByIndex(2), 12, "token at index 2");
+    assertEq(nft.tokenByIndex(3), 13, "token at index 3");
+
+    // check caller nfts
+    assertEq(nft.balanceOf(wallet1), 4);
+    // reverse order here because it's FIFO
+    assertEq(nft.tokenOfOwnerByIndex(wallet1, 0), 11, "token of owner at index 0");
+    assertEq(nft.tokenOfOwnerByIndex(wallet1, 1), 10, "token of owner at index 1");
+    assertEq(nft.tokenOfOwnerByIndex(wallet1, 2), 12, "token of owner at index 2");
+    assertEq(nft.tokenOfOwnerByIndex(wallet1, 3), 13, "token of owner at index 3");
+
+    // check pool NFTs
+    assertEq(nft.balanceOf(p_addr), 0);
+    assertEq(p.getTotalNftsForSale(), 7 /* 11 - 4 */);
+  }
+
   // helper methods
 
   function _buySomeNfts(uint numItems, uint expectedNewSpotPrice) private {
@@ -318,6 +363,22 @@ contract PoolTrading is PoolTestBase {
     // nullify received fees (to make test assertions easier later on)
     vm.prank(owner1);
     payable(address(0)).transfer(owner1.balance);
+  }
+
+  function _sellSomeNfts(uint[] memory ids, uint expectedNewSpotPrice) private {
+    vm.prank(wallet1);
+    p.sell(ids);
+
+    (, PoolStatus memory s) = p.getCurveStatus();
+    assertEq(s.priceWei, expectedNewSpotPrice, "expected spot price");
+
+    // nullify received fees (to make test assertions easier later on)
+    vm.prank(owner1);
+    payable(address(0)).transfer(owner1.balance);
+
+    // nullify received funds (to make test assertions easier later on)
+    vm.prank(wallet1);
+    payable(address(0)).transfer(wallet1.balance);
   }
 
   function _getTokenIdArray(uint count, uint startId) private pure returns (uint[] memory) {
