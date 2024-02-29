@@ -57,6 +57,11 @@ contract PoolTrading is PoolTestBase {
     assertEq(uint(q.error), uint(QuoteError.INSUFFICIENT_NFTS));
   }
 
+  function test_GetBuyQuote_Initial_BuyNone() public {
+    BuyQuote memory q = p.getBuyQuote(0);
+    assertEq(uint(q.error), uint(QuoteError.INVALID_NUMITEMS));
+  }
+
   // buy - initial
 
   function test_Buy_Initial_BuyOne() public {
@@ -144,6 +149,12 @@ contract PoolTrading is PoolTestBase {
     p.buy{value: wallet1.balance}(12);
   }
 
+  function test_Buy_Initial_BuyNone() public {
+    vm.prank(wallet1);
+    vm.expectRevert(abi.encodeWithSelector(LibErrors.BadQuote.selector, wallet1, QuoteError.INVALID_NUMITEMS));
+    p.buy{value: wallet1.balance}(0);
+  }
+
   // getSellQuote
 
   function test_GetSellQuote_SellOne() public {
@@ -190,6 +201,13 @@ contract PoolTrading is PoolTestBase {
 
     SellQuote memory q = p.getSellQuote(2);
     assertEq(uint(q.error), uint(QuoteError.INSUFFICIENT_FUNDS), "error code");
+  }
+
+  function test_GetSellQuote_SellNone() public {
+    _buySomeNfts(1, 2 gwei);
+
+    SellQuote memory q = p.getSellQuote(0);
+    assertEq(uint(q.error), uint(QuoteError.INVALID_NUMITEMS), "error code");
   }
 
   // sell
@@ -272,6 +290,16 @@ contract PoolTrading is PoolTestBase {
     uint[] memory ids = _getTokenIdArray(3, 10);
     vm.prank(wallet1);
     vm.expectRevert(abi.encodeWithSelector(LibErrors.BadQuote.selector, wallet1, QuoteError.INSUFFICIENT_FUNDS));
+    p.sell(ids);
+  }
+
+  function test_Sell_None() public {
+    _buySomeNfts(2, 4 gwei);
+
+    // try to sell 2
+    uint[] memory ids = new uint[](0);
+    vm.prank(wallet1);
+    vm.expectRevert(abi.encodeWithSelector(LibErrors.BadQuote.selector, wallet1, QuoteError.INVALID_NUMITEMS));
     p.sell(ids);
   }
 
