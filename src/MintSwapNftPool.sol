@@ -124,6 +124,13 @@ contract MintSwapNftPool is IERC721TokenReceiver, ExponentialCurve {
   }
 
   /**
+   * @dev Get total funds in the pool.
+   */
+  function getFunds() public view returns (uint) {
+    return address(this).balance;
+  }
+
+  /**
    * inputValue is the amount of wei the buyer will pay, including the fee.
    */
   function getBuyQuote(uint numItems) public view returns (BuyQuote memory quote) {

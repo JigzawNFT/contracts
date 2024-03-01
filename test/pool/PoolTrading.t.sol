@@ -92,6 +92,7 @@ contract PoolTrading is PoolTestBase {
     assertEq(p.getTotalNftsForSale(), 10);
     // check pool funds
     assertEq(p_addr.balance, q.inputValue - q.fee);
+    assertEq(p.getFunds(), q.inputValue - q.fee);
     
     // check fee receiver funds
     assertEq(owner1.balance, q.fee);
@@ -123,7 +124,8 @@ contract PoolTrading is PoolTestBase {
     assertEq(p.getTotalNftsForSale(), 0);
     // check pool funds
     assertEq(p_addr.balance, q.inputValue - q.fee);
-    
+    assertEq(p.getFunds(), q.inputValue - q.fee);
+
     // check fee receiver funds
     assertEq(owner1.balance, q.fee);
   }
@@ -247,7 +249,8 @@ contract PoolTrading is PoolTestBase {
     assertEq(nft.tokenOfOwnerByIndex(p_addr, 0), 10, "token of pool owner at index 0");
     // check pool funds
     assertEq(p_addr.balance, 0, "pool funds");
-    
+    assertEq(p.getFunds(), 0);
+
     // check fee receiver funds
     assertEq(owner1.balance, q.fee, "received fee");
   }
@@ -275,6 +278,7 @@ contract PoolTrading is PoolTestBase {
     assertEq(nft.tokenOfOwnerByIndex(p_addr, 10), 20, "token of pool owner at index 10");
     // check pool funds
     assertEq(p_addr.balance, 0, "pool funds");
+    assertEq(p.getFunds(), 0);
     
     // check fee receiver funds
     assertEq(owner1.balance, q.fee, "received fee");
