@@ -4,7 +4,7 @@ pragma solidity ^0.8.24;
 import { Script, console2 as c } from "forge-std/Script.sol";
 import { Strings } from "openzeppelin/utils/Strings.sol";
 import { JigzawNFT } from "src/JigzawNFT.sol";
-import { MintSwapNftPool } from "src/MintSwapNftPool.sol";
+import { MintSwapPool } from "src/MintSwapPool.sol";
 import { PoolCurve } from "src/Common.sol";
 
 contract Deploy is Script {
@@ -48,9 +48,9 @@ contract Deploy is Script {
     JigzawNFT nft = new JigzawNFT{salt: CREATE2_SALT}(nftConfig);
     c.log("JigzawNFT:", address(nft));
     
-    c.log("Deploying MintSwapNftPool...");
+    c.log("Deploying MintSwapPool...");
 
-    MintSwapNftPool.Config memory poolConfig = MintSwapNftPool.Config({
+    MintSwapPool.Config memory poolConfig = MintSwapPool.Config({
       nft: address(nft),
       curve: PoolCurve({
         mintStartId: 1,
@@ -64,10 +64,10 @@ contract Deploy is Script {
       })
     });
 
-    _assertDeployedAddressIsEmpty(type(MintSwapNftPool).creationCode, abi.encode(poolConfig));
+    _assertDeployedAddressIsEmpty(type(MintSwapPool).creationCode, abi.encode(poolConfig));
 
-    MintSwapNftPool pool = new MintSwapNftPool{salt: CREATE2_SALT}(poolConfig);
-    c.log("MintSwapNftPool:", address(pool));
+    MintSwapPool pool = new MintSwapPool{salt: CREATE2_SALT}(poolConfig);
+    c.log("MintSwapPool:", address(pool));
 
     vm.stopBroadcast();        
   }

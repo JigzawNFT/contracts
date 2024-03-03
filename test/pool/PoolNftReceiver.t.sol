@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.24;
 
-import { MintSwapNftPool } from "src/MintSwapNftPool.sol";
+import { MintSwapPool } from "src/MintSwapPool.sol";
 import { LibErrors } from "src/LibErrors.sol";
 import { PoolTestBase } from "./PoolTestBase.sol";
 import { PoolCurve, PoolStatus } from "src/Common.sol";

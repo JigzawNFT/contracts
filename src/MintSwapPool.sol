@@ -26,7 +26,7 @@ import { IERC721TokenReceiver } from "./ERC721.sol";
  * Different ranges of NFTs (e.g token ids 1 to 20 could be one "range") can have different bonding curves. Each curve only 
  * has access to its own liquidity.
  */
-contract MintSwapNftPool is IERC721TokenReceiver, ExponentialCurve {
+contract MintSwapPool is IERC721TokenReceiver, ExponentialCurve {
   IPoolNFT public nft;
   PoolCurve public curve;
   PoolStatus public status;
