@@ -69,6 +69,11 @@ contract Deploy is Script {
     MintSwapPool pool = new MintSwapPool{salt: CREATE2_SALT}(poolConfig);
     c.log("MintSwapPool:", address(pool));
 
+    c.log("Enable pool on NFT contract...");
+    nft.setPool(address(pool));
+
+    c.log("All done");
+
     vm.stopBroadcast();        
   }
 }
