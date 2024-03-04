@@ -37,9 +37,14 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, Ownable, IPoolNFT {
   string public defaultImage;
 
   /**
+   * @dev Mapping of revealed tokens.
+   */
+  mapping(uint256 => bool) public revealed;
+
+  /**
    * @dev Per-token metadata.
    */
-  mapping(uint256 => string) tokenMetadata;
+  mapping(uint256 => string) public tokenMetadata;
 
   // Constructor
 
@@ -142,6 +147,8 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, Ownable, IPoolNFT {
     if (bytes(tokenMetadata[_id]).length > 0) {
       revert LibErrors.AlreadyRevealed(_id);
     }
+
+    revealed[_id] = true;
 
     _setTokenMetadata(_id, _uri);
   }

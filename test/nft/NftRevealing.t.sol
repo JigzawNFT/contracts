@@ -34,6 +34,7 @@ contract NftRevealing is NftTestBase {
     t.reveal(1, "uri1", sig);
 
     assertEq(t.tokenURI(1), "uri1");
+    assertEq(t.revealed(1), true);
   }
 
   function test_RevealWithRevealerAuthorisation_EmitsEvent() public {
