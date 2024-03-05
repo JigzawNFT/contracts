@@ -30,6 +30,12 @@ contract NftOwnersOf is NftTestBase {
     assertEq(owners_1[2], wallet2);
   }
 
+  function test_OwnersOf_Empty_Succeeds() public {
+    uint[] memory ids_1 = new uint[](0);
+    address[] memory owners_1 = t.ownersOf(ids_1);
+    assertEq(owners_1.length, 0);
+  }
+
   function test_OwnersOf_InvalidIds_DoesNotThrow() public {
     uint[] memory ids_1 = new uint[](3);
     ids_1[0] = 1;
