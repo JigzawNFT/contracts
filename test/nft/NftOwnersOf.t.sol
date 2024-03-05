@@ -30,13 +30,16 @@ contract NftOwnersOf is NftTestBase {
     assertEq(owners_1[2], wallet2);
   }
 
-  function test_OwnersOf_InvalidIds_Fails() public {
+  function test_OwnersOf_InvalidIds_DoesNotThrow() public {
     uint[] memory ids_1 = new uint[](3);
     ids_1[0] = 1;
     ids_1[1] = 2;
     ids_1[2] = 6;
 
-    vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721TokenNotMinted.selector, ids_1[2]));
-    t.ownersOf(ids_1);
+    address[] memory owners_1 = t.ownersOf(ids_1);
+
+    assertEq(owners_1[0], wallet1);
+    assertEq(owners_1[1], wallet1);
+    assertEq(owners_1[2], address(0));
   }
 }
