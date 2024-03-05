@@ -80,23 +80,6 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, Ownable, IPoolNFT {
     _setDefaultRoyalty(_config.owner, _config.royaltyFeeBips);
   }
 
-  // Owners
-
-  /**
-   * @dev Get owners of given tiles.
-   *
-   * Note that unlike {IERC721-ownerOf}, this does not throw an error if the token id has not been minted.
-   *
-   * @param tokenIds The token ids.
-   */
-  function ownersOf(uint256[] calldata tokenIds) external view returns (address[] memory) {
-    address[] memory owners = new address[](tokenIds.length);
-    for (uint i = 0; i < tokenIds.length; i++) {
-      owners[i] = _ownerOf[tokenIds[i]];
-    }
-    return owners;
-  }
-
   // Approvals
 
   /**
