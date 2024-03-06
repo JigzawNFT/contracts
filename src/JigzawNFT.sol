@@ -112,7 +112,7 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, Ownable, IPoolNFT {
         abi.encodePacked(
           '{',
               '"name": "Unrevealed tile",',
-              '"description": "Jigzaw unrevealed tile - see https://jigsaw.xyz for instructions.",',
+              '"description": "An unrevealed Jigzaw tile - visit jigzaw.xyz for more info",',
               '"image": "', defaultImage, '"',
           '}'
         ) 
