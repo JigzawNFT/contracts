@@ -2,6 +2,7 @@
 pragma solidity ^0.8.24;
 
 import { SignatureChecker } from "lib/openzeppelin-contracts/contracts/utils/cryptography/SignatureChecker.sol";
+import { MessageHashUtils } from "lib/openzeppelin-contracts/contracts/utils/cryptography/MessageHashUtils.sol";
 import { LibErrors } from "./LibErrors.sol";
 
 /**
@@ -30,15 +31,15 @@ abstract contract Auth {
       revert LibErrors.SignatureExpired(_caller); 
     }
 
-    bytes32 sigHash = keccak256(abi.encodePacked(_data, _sig.deadline));
-    if (!SignatureChecker.isValidSignatureNow(_signer, sigHash, _sig.signature)) {
+    bytes32 digest = MessageHashUtils.toEthSignedMessageHash(abi.encodePacked(_data, _sig.deadline));
+    if (!SignatureChecker.isValidSignatureNow(_signer, digest, _sig.signature)) {
       revert LibErrors.SignatureInvalid(_caller);
     }
 
-    if(usedSignatures[sigHash]) {
+    if(usedSignatures[digest]) {
       revert LibErrors.SignatureAlreadyUsed(_caller);
     }
 
-    usedSignatures[sigHash] = true;
+    usedSignatures[digest] = true;
   }
 }
