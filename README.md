@@ -5,10 +5,15 @@
 
 Smart contracts for [JigzawNFT](https://jigzaw.xyz).
 
+**NOTE: These contract are still a work-in-progress and subject to change.**
+
 Features:
 
 * **Fully on-chain metadata (including images)!**
 * DEX pool inspired by SudoSwap/ERC404.
+  * Exponential price curve.
+  * Pool mints NFTs on-demand until no more left to mint. Initial buyers thus recieve minted freshly NFTs.
+  * Sellers sell NFTs into pool, and subsequent buyers recieve these NFTs until they run out, after which the pool again mints new NFTs.
 * Extensive test suite and [coverage](https://coveralls.io/github/JigzawNFT/contracts).
 
 Technicals:
