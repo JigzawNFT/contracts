@@ -3,23 +3,20 @@ pragma solidity ^0.8.24;
 
 import {console2 as c} from "forge-std/Test.sol";
 import { IERC721Errors } from "openzeppelin/interfaces/draft-IERC6093.sol";
-import { NftTestBase } from "./NftTestBase.sol";
+import { JigzawNftTestBase } from "./JigzawNftTestBase.sol";
 import { Auth } from "src/Auth.sol";
 import { LibErrors } from "src/LibErrors.sol";
 
-contract NftTokenUri is NftTestBase {
-  address caller = address(0x999);
-  address wallet = address(0x888);
-
+contract JigzawNftTokenUri is JigzawNftTestBase {
   function setUp() virtual override public {
     super.setUp();
 
     uint id = 1;
     string memory uri = "";
 
-    vm.prank(caller);
-    t.mint(wallet, id, uri, _computeMinterSig(
-      abi.encodePacked(wallet, id, uri), 
+    vm.prank(wallet1);
+    t.mint(id, uri, _computeMinterSig(
+      abi.encodePacked(wallet1, id, uri), 
       block.timestamp + 10 seconds
     ));
   }
@@ -34,7 +31,7 @@ contract NftTokenUri is NftTestBase {
       block.timestamp + 10 seconds
     );
 
-    vm.prank(caller);
+    vm.prank(wallet1);
     t.reveal(uint(1), "uri", sig);
 
     assertEq(t.tokenURI(1), "uri");

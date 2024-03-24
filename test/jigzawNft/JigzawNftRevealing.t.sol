@@ -3,23 +3,20 @@ pragma solidity ^0.8.24;
 
 import { Vm } from "forge-std/Vm.sol";
 import { IERC721Errors } from "src/IERC721Errors.sol";
-import { NftTestBase } from "./NftTestBase.sol";
+import { JigzawNftTestBase } from "./JigzawNftTestBase.sol";
 import { Auth } from "src/Auth.sol";
 import { LibErrors } from "src/LibErrors.sol";
 
-contract NftRevealing is NftTestBase {
-  address caller = address(0x999);
-  address wallet = address(0x888);
-
+contract JigzawNftRevealing is JigzawNftTestBase {
   function setUp() virtual override public {
     super.setUp();
 
     uint id = 1;
     string memory uri = "";
 
-    vm.prank(caller);
-    t.mint(wallet, id, uri, _computeMinterSig(
-      abi.encodePacked(wallet, id, uri), 
+    vm.prank(wallet1);
+    t.mint(id, uri, _computeMinterSig(
+      abi.encodePacked(wallet1, id, uri), 
       block.timestamp + 10 seconds
     ));
   }
@@ -30,7 +27,7 @@ contract NftRevealing is NftTestBase {
       block.timestamp + 10 seconds
     );
 
-    vm.prank(caller);
+    vm.prank(wallet1);
     t.reveal(1, "uri1", sig);
 
     assertEq(t.tokenURI(1), "uri1");
@@ -40,7 +37,7 @@ contract NftRevealing is NftTestBase {
   function test_RevealWithRevealerAuthorisation_EmitsEvent() public {
     vm.recordLogs();
 
-    vm.prank(caller);
+    vm.prank(wallet1);
     t.reveal(1, "uri1", _computeRevealerSig(
       abi.encodePacked(uint(1), "uri1"),
       block.timestamp + 10 seconds
@@ -64,8 +61,8 @@ contract NftRevealing is NftTestBase {
       block.timestamp + 10 seconds
     );
 
-    vm.prank(caller);
-    vm.expectRevert(abi.encodeWithSelector(LibErrors.SignatureInvalid.selector, caller));
+    vm.prank(wallet1);
+    vm.expectRevert(abi.encodeWithSelector(LibErrors.SignatureInvalid.selector, wallet1));
     t.reveal(1, "uri1", sigOwner);
 
     Auth.Signature memory sigMinter = _computeMinterSig(
@@ -73,8 +70,8 @@ contract NftRevealing is NftTestBase {
       block.timestamp + 10 seconds
     );
 
-    vm.prank(caller);
-    vm.expectRevert(abi.encodeWithSelector(LibErrors.SignatureInvalid.selector, caller));
+    vm.prank(wallet1);
+    vm.expectRevert(abi.encodeWithSelector(LibErrors.SignatureInvalid.selector, wallet1));
     t.reveal(1, "uri1", sigMinter);
   }
 
@@ -84,8 +81,8 @@ contract NftRevealing is NftTestBase {
       block.timestamp - 1 seconds
     );
 
-    vm.prank(caller);
-    vm.expectRevert(abi.encodeWithSelector(LibErrors.SignatureExpired.selector, caller));
+    vm.prank(wallet1);
+    vm.expectRevert(abi.encodeWithSelector(LibErrors.SignatureExpired.selector, wallet1));
     t.reveal(uint(1), "uri", sig);
   }
 
@@ -95,22 +92,22 @@ contract NftRevealing is NftTestBase {
       block.timestamp + 10 seconds
     );
 
-    vm.prank(caller);
+    vm.prank(wallet1);
     t.reveal(uint(1), "uri", sig);
 
-    vm.prank(caller);
-    vm.expectRevert(abi.encodeWithSelector(LibErrors.SignatureAlreadyUsed.selector, caller));
+    vm.prank(wallet1);
+    vm.expectRevert(abi.encodeWithSelector(LibErrors.SignatureAlreadyUsed.selector, wallet1));
     t.reveal(uint(1), "uri", sig);
   }
 
   function test_RevealWhenAlreadyRevealed_Fails() public {
-    vm.prank(caller);
+    vm.prank(wallet1);
     t.reveal(uint(1), "uri", _computeRevealerSig(
       abi.encodePacked(uint(1), "uri"),
       block.timestamp + 10 seconds
     ));
 
-    vm.prank(caller);
+    vm.prank(wallet1);
     vm.expectRevert(abi.encodeWithSelector(LibErrors.AlreadyRevealed.selector, 1));
     t.reveal(uint(1), "uri", _computeRevealerSig(
       abi.encodePacked(uint(1), "uri"),
@@ -119,7 +116,7 @@ contract NftRevealing is NftTestBase {
   }
 
   function test_RevealNonMintedToken_Fails() public {
-    vm.prank(caller);
+    vm.prank(wallet1);
     vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721TokenNotMinted.selector, 2));
     t.reveal(uint(2), "uri", _computeRevealerSig(
       abi.encodePacked(uint(2), "uri"),

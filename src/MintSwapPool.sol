@@ -214,16 +214,11 @@ contract MintSwapPool is IERC721TokenReceiver, ExponentialCurve {
   // ---------------------------------------------------------------
 
   function onERC721Received(
-    address operator,
+    address /*operator*/,
     address /*from*/,
-    uint256 tokenId,
+    uint256 /*tokenId*/,
     bytes calldata /*data*/
-  ) public view override returns (bytes4) {
-    // check that the token id is within curve range
-    if (tokenId < curve.mintStartId || tokenId > curve.mintEndId) {
-      revert LibErrors.TokenIdOutOfRange(operator, tokenId);
-    } else {
-      return IERC721TokenReceiver.onERC721Received.selector;
-    }
+  ) public pure override returns (bytes4) {
+    return IERC721TokenReceiver.onERC721Received.selector;
   }
 }

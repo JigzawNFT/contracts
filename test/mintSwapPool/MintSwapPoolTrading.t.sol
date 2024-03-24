@@ -2,12 +2,12 @@
 pragma solidity ^0.8.24;
 
 import { console2 as c } from "forge-std/Test.sol";
-import { PoolTestBase } from "./PoolTestBase.sol";
+import { MintSwapPoolTestBase } from "./MintSwapPoolTestBase.sol";
 import { LibErrors } from "src/LibErrors.sol";
 import { IERC721Errors } from "src/IERC721Errors.sol";
 import { PoolCurve, PoolStatus, QuoteError, BuyQuote, SellQuote } from "src/Common.sol";
 
-contract PoolTrading is PoolTestBase {
+contract MintSwapPoolTrading is MintSwapPoolTestBase {
 
   // getTotalNftsForSale - initial
 

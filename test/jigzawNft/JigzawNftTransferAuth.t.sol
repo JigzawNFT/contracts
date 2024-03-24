@@ -1,15 +1,12 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.24;
 
-import { NftTestBase } from "./NftTestBase.sol";
+import { JigzawNftTestBase } from "./JigzawNftTestBase.sol";
 import { Auth } from "src/Auth.sol";
 import { LibErrors } from "src/LibErrors.sol";
 import { IERC721Errors } from "src/IERC721Errors.sol";
 
-contract NftTransferAuth is NftTestBase {
-  address wallet1 = address(0x8888);
-  address wallet2 = address(0x9999);
-
+contract JigzawNftTransferAuth is JigzawNftTestBase {
   function setUp() public override {
     super.setUp();
 

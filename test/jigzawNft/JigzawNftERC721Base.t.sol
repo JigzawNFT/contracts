@@ -7,14 +7,12 @@ import { IERC721 } from "openzeppelin/interfaces/IERC721.sol";
 import { IERC721Metadata } from "openzeppelin/interfaces/IERC721Metadata.sol";
 import { IERC721Enumerable } from "openzeppelin/interfaces/IERC721Enumerable.sol";
 import { IERC721Errors } from "src/IERC721Errors.sol";
-import { NftTestBase, MockERC721, GoodERC721Receiver, BadERC721Receiver } from "./NftTestBase.sol";
+import { JigzawNftTestBase, MockERC721, GoodERC721Receiver, BadERC721Receiver } from "./JigzawNftTestBase.sol";
 import { Bytes32AddressLib } from "solmate/utils/Bytes32AddressLib.sol";
 
 
-contract NftERC721Base is NftTestBase {
+contract JigzawNftERC721Base is JigzawNftTestBase {
   MockERC721 b;
-  address public wallet1 = vm.addr(0x56565656);
-  address public wallet2 = vm.addr(0x12121212);
 
   function setUp() public override {
     super.setUp();

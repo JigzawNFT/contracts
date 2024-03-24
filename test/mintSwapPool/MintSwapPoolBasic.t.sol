@@ -3,10 +3,10 @@ pragma solidity ^0.8.24;
 
 import { MintSwapPool } from "src/MintSwapPool.sol";
 import { LibErrors } from "src/LibErrors.sol";
-import { PoolTestBase } from "./PoolTestBase.sol";
+import { MintSwapPoolTestBase } from "./MintSwapPoolTestBase.sol";
 import { PoolCurve, PoolStatus } from "src/Common.sol";
 
-contract PoolBasic is PoolTestBase {
+contract MintSwapPoolBasic is MintSwapPoolTestBase {
   function test_DefaultConfig() public {
     assertEq(address(p.nft()), address(nft));
     

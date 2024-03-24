@@ -1,15 +1,12 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.24;
 
-import { NftTestBase, GoodERC721Receiver } from "./NftTestBase.sol";
+import { JigzawNftTestBase, GoodERC721Receiver } from "./JigzawNftTestBase.sol";
 import { Auth } from "src/Auth.sol";
 import { LibErrors } from "src/LibErrors.sol";
 import { IERC721Errors } from "src/IERC721Errors.sol";
 
-contract NftBatchTransferIds is NftTestBase {
-  address wallet1 = address(0x888);
-  address wallet2 = address(0x888111);
-
+contract JigzawNftBatchTransferIds is JigzawNftTestBase {
   function setUp() public override {
     super.setUp();
 
@@ -26,7 +23,7 @@ contract NftBatchTransferIds is NftTestBase {
     return ids;
   }
 
-  function test_NftBatchTransferIds_ByOwner_Succeeds() public {
+  function test_JigzawNftBatchTransferIds_ByOwner_Succeeds() public {
     uint[] memory ids = _getIdsToTransfer();
 
     vm.prank(wallet1);
@@ -46,7 +43,7 @@ contract NftBatchTransferIds is NftTestBase {
     assertEq(t.tokenOfOwnerByIndex(wallet2, 2), 2);
   }
 
-  function test_NftBatchTransferIds_ByPool_Succeeds() public {
+  function test_JigzawNftBatchTransferIds_ByPool_Succeeds() public {
     uint[] memory ids = _getIdsToTransfer();
 
     vm.prank(pool1);
@@ -56,7 +53,7 @@ contract NftBatchTransferIds is NftTestBase {
     assertEq(t.ownerOf(2), wallet2);
   }
 
-  function test_NftBatchTransferIdsIfNotAuthorised_Fails() public {
+  function test_JigzawNftBatchTransferIdsIfNotAuthorised_Fails() public {
     uint[] memory ids = _getIdsToTransfer();
 
     vm.prank(wallet2);
@@ -64,7 +61,7 @@ contract NftBatchTransferIds is NftTestBase {
     t.batchTransferIds(wallet1, wallet2, ids);
   }
 
-  function test_NftBatchTransferIds_IfAllAuthorised_Succeeds() public {
+  function test_JigzawNftBatchTransferIds_IfAllAuthorised_Succeeds() public {
     uint[] memory ids = _getIdsToTransfer();
 
     vm.startPrank(wallet1);
@@ -79,7 +76,7 @@ contract NftBatchTransferIds is NftTestBase {
     assertEq(t.ownerOf(2), wallet2);
   }
 
-  function test_NftBatchTransferIds_IfNotAllAuthorised_Succeeds() public {
+  function test_JigzawNftBatchTransferIds_IfNotAllAuthorised_Succeeds() public {
     uint[] memory ids = _getIdsToTransfer();
 
     vm.startPrank(wallet1);
@@ -91,7 +88,7 @@ contract NftBatchTransferIds is NftTestBase {
     t.batchTransferIds(wallet1, wallet2, ids);
   }
 
-  function test_NftBatchTransferIds_ToZeroAddress_Fails() public {
+  function test_JigzawNftBatchTransferIds_ToZeroAddress_Fails() public {
     uint[] memory ids = _getIdsToTransfer();
 
     vm.prank(wallet1);
@@ -99,7 +96,7 @@ contract NftBatchTransferIds is NftTestBase {
     t.batchTransferIds(wallet1, address(0), ids);
   }
 
-  function test_NftBatchTransfer_InvokesReceiver() public {
+  function test_JigzawNftBatchTransfer_InvokesReceiver() public {
     GoodERC721Receiver good = new GoodERC721Receiver();
 
     uint[] memory ids = _getIdsToTransfer();

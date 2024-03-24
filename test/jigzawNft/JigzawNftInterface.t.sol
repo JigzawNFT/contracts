@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.24;
 
-import { NftTestBase } from "./NftTestBase.sol";
+import { JigzawNftTestBase } from "./JigzawNftTestBase.sol";
 import { IERC165 } from "openzeppelin/interfaces/IERC165.sol";
 import { IERC721 } from "openzeppelin/interfaces/IERC721.sol";
 import { IERC721Metadata } from "openzeppelin/interfaces/IERC721Metadata.sol";
@@ -9,7 +9,7 @@ import { IERC721Enumerable } from "openzeppelin/interfaces/IERC721Enumerable.sol
 import { IERC2981 } from "openzeppelin/interfaces/IERC2981.sol";
 import { IERC4906 } from "openzeppelin/interfaces/IERC4906.sol";
 
-contract NftInterface is NftTestBase {
+contract JigzawNftInterface is JigzawNftTestBase {
   function test_SupportsInterfaces() public {
     // Test that the contract supports the ERC165 interface
     assertEq(t.supportsInterface(type(IERC165).interfaceId), true, "erc165");

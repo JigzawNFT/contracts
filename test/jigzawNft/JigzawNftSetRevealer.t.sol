@@ -2,11 +2,11 @@
 pragma solidity ^0.8.24;
 
 import {console2 as c} from "forge-std/Test.sol";
-import { NftTestBase } from "./NftTestBase.sol";
+import { JigzawNftTestBase } from "./JigzawNftTestBase.sol";
 import { Ownable } from "openzeppelin/access/Ownable.sol";
 
 
-contract NftSetRevealer is NftTestBase {
+contract JigzawNftSetRevealer is JigzawNftTestBase {
   function test_SetRevealerWhenOwner_Succeeds() public {
     vm.prank(owner1);
     t.setRevealer(address(0x789));
