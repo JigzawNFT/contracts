@@ -92,10 +92,10 @@ library LibErrors {
   /**
    * @dev The lottery ticket NFT has already been set.
    */
-  error LotteryTicketNFTAlreadySet();
+  error LotteryNFTAlreadySet();
 
   /**
    * @dev The lottery ticket NFT is invalid.
    */
-  error LotteryTicketNFTInvalid();
+  error LotteryNFTInvalid();
 }

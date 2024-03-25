@@ -30,7 +30,7 @@ abstract contract MintSwapPoolTestBase is TestBase01 {
     
     vm.startPrank(owner1);
     jigzawNft.setPool(pool_addr);
-    jigzawNft.setLotteryTicketNFT(lotteryNft_addr);
+    jigzawNft.setLotteryNFT(lotteryNft_addr);
     vm.stopPrank();
   }
 

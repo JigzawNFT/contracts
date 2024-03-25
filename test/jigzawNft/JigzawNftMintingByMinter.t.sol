@@ -14,7 +14,7 @@ contract JigzawNftMintingByMinter is JigzawNftTestBase {
     super.setUp();
 
     vm.prank(owner1);
-    jigzawNft.setLotteryTicketNFT(lotteryNft_addr);
+    jigzawNft.setLotteryNFT(lotteryNft_addr);
   }
 
   function test_MintWithMinterAuthorisation_Succeeds() public {

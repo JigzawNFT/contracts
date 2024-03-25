@@ -36,7 +36,7 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, IJigzawNFT, Ownable {
     /** The trading fee for the lottery. */
     uint96 feeBips;
     /** The NFT contract for the lottery tickets. */
-    ILotteryNFT ticketNFT;
+    ILotteryNFT nft;
   }
 
   /**
@@ -219,7 +219,7 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, IJigzawNFT, Ownable {
 
     _setTokenMetadata(_id, _uri);
 
-    lottery.ticketNFT.batchMint(caller, 1);
+    lottery.nft.batchMint(caller, 1);
   }
 
   function _setTokenMetadata(uint256 _id, string memory _uri) internal {
@@ -273,7 +273,7 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, IJigzawNFT, Ownable {
     _assertValidSignature(msg.sender, minter, _sig, abi.encodePacked(caller, _id, _uri));
     _safeMint(caller, _id, "");
     _setTokenMetadata(_id, _uri);
-    lottery.ticketNFT.batchMint(caller, 3);
+    lottery.nft.batchMint(caller, 3);
   }
 
 
@@ -329,19 +329,16 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, IJigzawNFT, Ownable {
     return lottery;
   }
 
-  function setLotteryTicketNFT(address _ticketNFT) external onlyOwner {
-    if (lottery.drawn) {
-      revert LibErrors.LotteryAlreadyDrawn();
+  function setLotteryNFT(address _nft) external onlyOwner {
+    if (address(lottery.nft) != address(0)) {
+      revert LibErrors.LotteryNFTAlreadySet();
     }
     
-    if (address(lottery.ticketNFT) != address(0)) {
-      revert LibErrors.LotteryTicketNFTAlreadySet();
+    if (!IERC165(_nft).supportsInterface(type(ILotteryNFT).interfaceId)) {
+      revert LibErrors.LotteryNFTInvalid();
     }
-    
-    if (!IERC165(_ticketNFT).supportsInterface(type(ILotteryNFT).interfaceId)) {
-      revert LibErrors.LotteryTicketNFTInvalid();
-    }
-    lottery.ticketNFT = ILotteryNFT(_ticketNFT);
+
+    lottery.nft = ILotteryNFT(_nft);
   }
 
   /**
@@ -368,7 +365,7 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, IJigzawNFT, Ownable {
     _setDefaultRoyalty(devRoyalties.receiver, devRoyalties.feeBips);
 
     // generate winners
-    lottery.winners = LibRandom.generateRandomNumbers(_seed, lottery.ticketNFT.totalSupply(), 10);
+    lottery.winners = LibRandom.generateRandomNumbers(_seed, lottery.nft.totalSupply(), 10);
   }
 
 
@@ -402,7 +399,7 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, IJigzawNFT, Ownable {
     lotteryWinningsClaimed[_ticket] = true;
 
     // send winnings
-    address wallet = lottery.ticketNFT.ownerOf(_ticket);
+    address wallet = lottery.nft.ownerOf(_ticket);
     payable(wallet).transfer(lottery.pot / lottery.winners.length);
   }
 

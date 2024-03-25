@@ -12,7 +12,7 @@ contract JigzawNftRevealing is JigzawNftTestBase {
     super.setUp();
 
     vm.prank(owner1);
-    jigzawNft.setLotteryTicketNFT(address(lotteryNft_addr));
+    jigzawNft.setLotteryNFT(address(lotteryNft_addr));
 
     uint id = 1;
     string memory uri = "";

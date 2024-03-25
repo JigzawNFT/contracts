@@ -11,7 +11,7 @@ contract JigzawNftSetDefaultImage is JigzawNftTestBase {
     super.setUp();
 
     vm.prank(owner1);
-    jigzawNft.setLotteryTicketNFT(address(lotteryNft_addr));
+    jigzawNft.setLotteryNFT(address(lotteryNft_addr));
   }
 
   function test_SetDefaultImageWhenOwner_Succeeds() public {

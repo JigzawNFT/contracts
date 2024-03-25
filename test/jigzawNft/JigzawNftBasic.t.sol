@@ -25,7 +25,7 @@ contract JigzawNftBasic is JigzawNftTestBase {
     assertEq(lottery.tileRevealThreshold, 10, "lottery.tileRevealThreshold");
     assertEq(lottery.drawn, false, "lottery.drawn");
     assertEq(lottery.pot, 0, "lottery.pot");
-    assertEq(address(lottery.ticketNFT), address(0), "lottery.ticketNFT");
+    assertEq(address(lottery.nft), address(0), "lottery.ticketNFT");
 
     assertEq(jigzawNft.totalSupply(), 0, "totalSupply");
     (address r1, uint r2) = jigzawNft.royaltyInfo(0, 100);
