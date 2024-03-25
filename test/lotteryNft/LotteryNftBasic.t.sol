@@ -7,7 +7,7 @@ contract LotteryNftBasic is LotteryNftTestBase {
   function test_DefaultConfig() public {
     assertEq(lotteryNft.name(), "Jigzaw Lottery", "name");
     assertEq(lotteryNft.symbol(), "JIGZAW_LOTTERY", "symbol");
-    assertEq(lotteryNft.minter(), jigzawNft_addr, "minter");
+    assertEq(lotteryNft.minter(), minter1, "minter");
     assertEq(lotteryNft.defaultImage(), "img", "defaultImg");
 
     assertEq(lotteryNft.totalSupply(), 0, "totalSupply");

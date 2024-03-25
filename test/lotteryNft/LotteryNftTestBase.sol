@@ -15,10 +15,8 @@ abstract contract LotteryNftTestBase is TestBase01 {
   LotteryNFT public lotteryNft;
   address lotteryNft_addr;
 
-  address payable jigzawNft_addr = payable(vm.addr(0x123456));
-
   function setUp() virtual public {
-    lotteryNft = new LotteryNFT(_getDefaultLotteryNftConfig(JigzawNFT(jigzawNft_addr)));
+    lotteryNft = new LotteryNFT(_getDefaultLotteryNftConfig(JigzawNFT(minter1)));
     lotteryNft_addr = address(lotteryNft);
   }
 
