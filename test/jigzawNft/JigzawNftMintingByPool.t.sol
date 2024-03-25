@@ -16,7 +16,7 @@ contract JigzawNftMintingByPool is JigzawNftTestBase {
 
   function test_MintByPool_Succeeds() public {
     vm.prank(pool1);
-    t.batchMint(wallet1, 2);
+    t.batchMint(wallet1, 1, 2);
 
     assertEq(t.ownerOf(1), wallet1);
     assertEq(t.ownerOf(2), wallet1);
@@ -35,7 +35,7 @@ contract JigzawNftMintingByPool is JigzawNftTestBase {
     GoodERC721Receiver good = new GoodERC721Receiver();
 
     vm.prank(pool1);
-    t.batchMint(address(good), 2);
+    t.batchMint(address(good), 1, 2);
 
     GoodERC721Receiver.Received memory r = GoodERC721Receiver(good).getReceived(0);
     assertEq(r.operator, pool1);
@@ -53,26 +53,35 @@ contract JigzawNftMintingByPool is JigzawNftTestBase {
   function test_MintByNotPool_Fails() public {
     vm.prank(owner1);
     vm.expectRevert(abi.encodeWithSelector(LibErrors.Unauthorized.selector, owner1));
-    t.batchMint(wallet1, 2);
+    t.batchMint(wallet1, 1, 2);
 
     vm.prank(minter1);
     vm.expectRevert(abi.encodeWithSelector(LibErrors.Unauthorized.selector, minter1));
-    t.batchMint(wallet1, 2);
+    t.batchMint(wallet1, 1, 2);
 
     vm.prank(revealer1);
     vm.expectRevert(abi.encodeWithSelector(LibErrors.Unauthorized.selector, revealer1));
-    t.batchMint(wallet1, 2);
+    t.batchMint(wallet1, 1, 2);
   }
 
   function test_MintEmpty_Fails() public {
     vm.prank(pool1);
     vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721InvalidBatchSize.selector, uint(0)));
-    t.batchMint(wallet1, 0);
+    t.batchMint(wallet1, 1, 0);
   }
 
   function test_MintToZeroAddress_Fails() public {
     vm.prank(pool1);
     vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721ZeroAddress.selector));
-    t.batchMint(address(0), 1);
+    t.batchMint(address(0), 1, 1);
   }
+
+  function test_MintAlreadyMintedToken_Fails() public {
+    vm.prank(pool1);
+    t.batchMint(wallet1, 1, 3);
+
+    vm.prank(pool1);
+    vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721TokenAlreadyMinted.selector, uint(3)));
+    t.batchMint(wallet1, 3, 1);
+  }  
 }

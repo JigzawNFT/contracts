@@ -57,8 +57,8 @@ contract MockERC721 is ERC721 {
     _burn(id);
   }
 
-  function batchMint(address to, uint256 count, bytes memory _data) public {
-    _safeBatchMint(to, count, _data);
+  function batchMint(address to, uint256 startId, uint256 count, bytes memory _data) public {
+    _safeBatchMint(to, startId, count, _data);
     lastMintedId += count;
   }
 

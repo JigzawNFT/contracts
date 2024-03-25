@@ -13,9 +13,10 @@ interface IJigzawNFT is IERC721 {
    * @dev Batch mint tokens to the address.
    *
    * @param _to The address which will own the minted tokens.
+    * @param _startId The token id to start minting from.
    * @param _count No. of tokens to mint.
    */
-  function batchMint(address _to, uint _count) external;
+  function batchMint(address _to, uint _startId, uint _count) external;
 
   /**
    * @dev Batch transfer specific tokens to given address.

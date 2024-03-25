@@ -6,8 +6,10 @@ import { MintSwapPoolTestBase } from "./MintSwapPoolTestBase.sol";
 import { LibErrors } from "src/LibErrors.sol";
 import { IERC721Errors } from "src/IERC721Errors.sol";
 import { PoolCurve, PoolStatus, QuoteError, BuyQuote, SellQuote } from "src/Common.sol";
+import { FixedPointMathLib } from "solmate/utils/FixedPointMathLib.sol";
 
 contract MintSwapPoolTrading is MintSwapPoolTestBase {
+  using FixedPointMathLib for uint256;
 
   // getTotalNftsForSale - initial
 
@@ -23,16 +25,16 @@ contract MintSwapPoolTrading is MintSwapPoolTestBase {
     assertEq(q.newSpotPrice, 2 gwei);
 
     uint inputValue = 2 gwei;
+    uint fee = inputValue / 5; // 20%
 
-    uint fee = inputValue / 10;
     assertEq(q.fee, fee);
     assertEq(q.inputValue, inputValue + fee);
   }
 
   function test_GetBuyQuote_Initial_BuyAll() public {
     BuyQuote memory q = p.getBuyQuote(11);
-    assertEq(uint(q.error), uint(QuoteError.NONE));
-    assertEq(q.newSpotPrice, 2048 gwei /* 2^11 */);
+    assertEq(uint(q.error), uint(QuoteError.NONE), "error code");
+    assertEq(q.newSpotPrice, 2048 gwei /* 2^11 */, "new spot price");
 
     uint inputValue = 
       2 gwei +
@@ -47,7 +49,8 @@ contract MintSwapPoolTrading is MintSwapPoolTestBase {
       1024 gwei +
       2048 gwei; // 4094 gwei
 
-    uint fee = inputValue / 10;
+    uint fee = inputValue / 5; // 20%
+
     assertEq(q.fee, fee, "fee");
     assertEq(q.inputValue, inputValue + fee, "total");
   }
@@ -82,20 +85,20 @@ contract MintSwapPoolTrading is MintSwapPoolTestBase {
     assertEq(nft.tokenByIndex(0), 10, "token at index 0");
 
     // check caller funds
-    assertEq(wallet1.balance, 0);
+    assertEq(wallet1.balance, 0, "caller funds");
     // check caller nfts
-    assertEq(nft.balanceOf(wallet1), 1);
+    assertEq(nft.balanceOf(wallet1), 1, "nft balance");
     assertEq(nft.tokenOfOwnerByIndex(wallet1, 0), 10, "token of owner at index 0");
 
     // check pool NFTs
-    assertEq(nft.balanceOf(p_addr), 0);
-    assertEq(p.getTotalNftsForSale(), 10);
+    assertEq(nft.balanceOf(p_addr), 0, "pool nfts");
+    assertEq(p.getTotalNftsForSale(), 10, "pool nfts for sale");
     // check pool funds
-    assertEq(p_addr.balance, q.inputValue - q.fee);
-    assertEq(p.getFunds(), q.inputValue - q.fee);
+    assertEq(p_addr.balance, q.inputValue - q.fee, "pool funds");
+    assertEq(p.getFunds(), q.inputValue - q.fee, "pool.getFunds");
     
     // check fee receiver funds
-    assertEq(owner1.balance, q.fee);
+    assertEq(nft_addr.balance, q.fee, "received fee");
   }
 
   function test_Buy_Initial_BuyAll() public {
@@ -120,14 +123,14 @@ contract MintSwapPoolTrading is MintSwapPoolTestBase {
     assertEq(nft.tokenOfOwnerByIndex(wallet1, 10), 20, "token of owner at index 10");
 
     // check pool NFTs
-    assertEq(nft.balanceOf(p_addr), 0);
-    assertEq(p.getTotalNftsForSale(), 0);
+    assertEq(nft.balanceOf(p_addr), 0, "post: pool NFTs");
+    assertEq(p.getTotalNftsForSale(), 0, "post: pool nfts for sale");
     // check pool funds
-    assertEq(p_addr.balance, q.inputValue - q.fee);
-    assertEq(p.getFunds(), q.inputValue - q.fee);
+    assertEq(p_addr.balance, q.inputValue - q.fee, "post: pool funds");
+    assertEq(p.getFunds(), q.inputValue - q.fee, "post: pool.getFunds");
 
     // check fee receiver funds
-    assertEq(nft_addr.balance, q.fee);
+    assertEq(nft_addr.balance, q.fee, "post: received fee");
   }
 
   function test_Buy_Initial_BuyOne_InsufficientFunds() public {
@@ -179,8 +182,8 @@ contract MintSwapPoolTrading is MintSwapPoolTestBase {
     assertEq(q.newSpotPrice, 1 gwei, "new spot price");
 
     uint outputValue = 2 gwei;
+    uint fee = outputValue / 5; // 20%
 
-    uint fee = outputValue / 10;
     assertEq(q.fee, fee, "fee");
     assertEq(q.outputValue, outputValue - fee, "output value");
   }
@@ -205,7 +208,8 @@ contract MintSwapPoolTrading is MintSwapPoolTestBase {
       1024 gwei +
       2048 gwei; // 4094 gwei
 
-    uint fee = outputValue / 10;
+    uint fee = outputValue / 5; // 20%
+
     assertEq(q.fee, fee, "fee");
     assertEq(q.outputValue, outputValue - fee, "output value");
   }
@@ -406,7 +410,7 @@ contract MintSwapPoolTrading is MintSwapPoolTestBase {
 
     // nullify received fees (to make test assertions easier later on)
     vm.prank(nft_addr);
-    payable(address(0)).transfer(owner1.balance);
+    payable(address(0)).transfer(nft_addr.balance);
   }
 
   function _sellSomeNfts(uint[] memory ids, uint expectedNewSpotPrice) private {
@@ -418,7 +422,7 @@ contract MintSwapPoolTrading is MintSwapPoolTestBase {
 
     // nullify received fees (to make test assertions easier later on)
     vm.prank(nft_addr);
-    payable(address(0)).transfer(owner1.balance);
+    payable(address(0)).transfer(nft_addr.balance);
 
     // nullify received funds (to make test assertions easier later on)
     vm.prank(wallet1);

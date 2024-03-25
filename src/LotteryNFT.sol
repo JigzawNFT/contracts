@@ -71,7 +71,7 @@ contract LotteryNFT is ERC721, ERC2981, ILotteryNFT {
    * See {ILotteryNFT-batchMint}.
    */
   function batchMint(address _to, uint256 _count) external override onlyMinter {
-    _safeBatchMint(_to, _count, "");
+    _safeBatchMint(_to, totalSupply + 1 ,_count, "");
   }  
 
   // Modifiers

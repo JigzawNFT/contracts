@@ -122,8 +122,8 @@ contract JigzawNftERC721Base is JigzawNftTestBase {
   // Batch mint
 
   function test_BatchMint_UpdatesEnumeration() public {
-    b.batchMint(wallet1, 2, "");
-    b.batchMint(wallet2, 1, "");
+    b.batchMint(wallet1, 1, 2, "");
+    b.batchMint(wallet2, 3, 1, "");
 
     assertEq(b.totalSupply(), 3);
     assertEq(b.tokenByIndex(0), 1);
@@ -142,7 +142,7 @@ contract JigzawNftERC721Base is JigzawNftTestBase {
   function test_BatchMint_FiresTransferEvent() public {
     vm.recordLogs();
 
-    b.batchMint(wallet1, 2, "");
+    b.batchMint(wallet1, 1, 2, "");
 
     Vm.Log[] memory entries = vm.getRecordedLogs();
     assertEq(entries.length, 2, "Invalid entry count");
@@ -164,7 +164,7 @@ contract JigzawNftERC721Base is JigzawNftTestBase {
     address good = address(new GoodERC721Receiver());
 
     vm.prank(wallet1);
-    b.batchMint(good, 2, "test");
+    b.batchMint(good, 1, 2, "test");
 
     assertEq(b.ownerOf(1), good);
     assertEq(b.ownerOf(2), good);
@@ -191,12 +191,12 @@ contract JigzawNftERC721Base is JigzawNftTestBase {
 
   function test_BatchMint_ToZeroAddress_Fails() public {
     vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721ZeroAddress.selector));
-    b.batchMint(address(0), 2, "");
+    b.batchMint(address(0), 1, 2, "");
   }
 
   function test_BatchMint_EmptyBatch_Fails() public {
     vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721InvalidBatchSize.selector, uint(0)));
-    b.batchMint(wallet1, 0, "");
+    b.batchMint(wallet1, 1, 0, "");
   }
 
   // Single token Approval

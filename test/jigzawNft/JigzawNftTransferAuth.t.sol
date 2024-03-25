@@ -14,7 +14,7 @@ contract JigzawNftTransferAuth is JigzawNftTestBase {
     t.setPool(pool1);
 
     vm.prank(pool1);
-    t.batchMint(wallet1, 2);
+    t.batchMint(wallet1, 1, 2);
   }
 
   function test_IsApprovedForAll_WithPool() public {

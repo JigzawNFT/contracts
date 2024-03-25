@@ -14,8 +14,8 @@ contract JigzawNftBatchTransferIds is JigzawNftTestBase {
     t.setPool(pool1);
 
     vm.startPrank(pool1);
-    t.batchMint(wallet1, 2);
-    t.batchMint(wallet2, 1);
+    t.batchMint(wallet1, 1, 2);
+    t.batchMint(wallet2, 3, 1);
     vm.stopPrank();
   }
 
