@@ -105,9 +105,6 @@ contract MintSwapPool is IERC721TokenReceiver, ExponentialCurve {
     if (numItems > 0) {
       nft.batchMint(sender, status.lastMintId + 1, numItems);
       status.lastMintId += numItems;
-      if (status.lastMintId > curve.mintEndId) {
-        revert LibErrors.TokenIdOutOfRange(sender, status.lastMintId);
-      }
     }
 
     // pay fee
