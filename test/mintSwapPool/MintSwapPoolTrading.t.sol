@@ -127,7 +127,7 @@ contract MintSwapPoolTrading is MintSwapPoolTestBase {
     assertEq(p.getFunds(), q.inputValue - q.fee);
 
     // check fee receiver funds
-    assertEq(owner1.balance, q.fee);
+    assertEq(nft_addr.balance, q.fee);
   }
 
   function test_Buy_Initial_BuyOne_InsufficientFunds() public {
@@ -252,7 +252,7 @@ contract MintSwapPoolTrading is MintSwapPoolTestBase {
     assertEq(p.getFunds(), 0);
 
     // check fee receiver funds
-    assertEq(owner1.balance, q.fee, "received fee");
+    assertEq(nft_addr.balance, q.fee, "received fee");
   }
 
   function test_Sell_SellAll() public {
@@ -281,7 +281,7 @@ contract MintSwapPoolTrading is MintSwapPoolTestBase {
     assertEq(p.getFunds(), 0);
     
     // check fee receiver funds
-    assertEq(owner1.balance, q.fee, "received fee");
+    assertEq(nft_addr.balance, q.fee, "received fee");
   }
 
   function test_Sell_InsufficientNfts() public {
@@ -405,7 +405,7 @@ contract MintSwapPoolTrading is MintSwapPoolTestBase {
     assertEq(s.priceWei, expectedNewSpotPrice, "expected spot price");
 
     // nullify received fees (to make test assertions easier later on)
-    vm.prank(owner1);
+    vm.prank(nft_addr);
     payable(address(0)).transfer(owner1.balance);
   }
 
@@ -417,7 +417,7 @@ contract MintSwapPoolTrading is MintSwapPoolTestBase {
     assertEq(s.priceWei, expectedNewSpotPrice, "expected spot price");
 
     // nullify received fees (to make test assertions easier later on)
-    vm.prank(owner1);
+    vm.prank(nft_addr);
     payable(address(0)).transfer(owner1.balance);
 
     // nullify received funds (to make test assertions easier later on)

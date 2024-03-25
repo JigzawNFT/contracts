@@ -30,7 +30,7 @@ abstract contract JigzawNftTestBase is TestBase01 {
       abi.encodePacked(
         '{',
             '"name": "Unrevealed tile",',
-            '"description": "Jigzaw unrevealed tile - see https://jigsaw.xyz for instructions.",',
+            '"description": "An unrevealed Jigzaw tile - see https://jigzaw.xyz for more info.",',
             '"image": "', t.defaultImage(), '"',
         '}'
       ) 

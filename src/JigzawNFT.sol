@@ -177,7 +177,7 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, IJigzawNFT, Ownable {
         abi.encodePacked(
           '{',
               '"name": "Unrevealed tile",',
-              '"description": "An unrevealed Jigzaw tile - visit jigzaw.xyz for more info",',
+              '"description": "An unrevealed Jigzaw tile - see https://jigzaw.xyz for more info.",',
               '"image": "', defaultImage, '"',
           '}'
         ) 
@@ -207,7 +207,7 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, IJigzawNFT, Ownable {
   function reveal(uint256 _id, string calldata _uri, Auth.Signature calldata _sig) external {
     address caller = msg.sender;
 
-    _assertValidSignature(caller, revealer, _sig, abi.encodePacked(_id, _uri));
+    _assertValidSignature(caller, revealer, _sig, abi.encodePacked(caller, _id, _uri));
 
     _requireOwned(_id);
 

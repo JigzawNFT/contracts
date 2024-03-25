@@ -26,7 +26,7 @@ contract JigzawNftRevealing is JigzawNftTestBase {
 
   function test_RevealWithRevealerAuthorisation_Succeeds() public {
     Auth.Signature memory sig = _computeRevealerSig(
-      abi.encodePacked(uint(1), "uri1"),
+      abi.encodePacked(wallet1, uint(1), "uri1"),
       block.timestamp + 10 seconds
     );
 
@@ -42,12 +42,12 @@ contract JigzawNftRevealing is JigzawNftTestBase {
 
     vm.prank(wallet1);
     t.reveal(1, "uri1", _computeRevealerSig(
-      abi.encodePacked(uint(1), "uri1"),
+      abi.encodePacked(wallet1, uint(1), "uri1"),
       block.timestamp + 10 seconds
     ));
 
     Vm.Log[] memory entries = vm.getRecordedLogs();
-    assertEq(entries.length, 1, "Invalid entry count");
+    assertEq(entries.length, 2, "Invalid entry count");
     assertEq(entries[0].topics.length, 1, "Invalid event count");
     assertEq(
         entries[0].topics[0],
@@ -80,7 +80,7 @@ contract JigzawNftRevealing is JigzawNftTestBase {
 
   function test_RevealWithExpiredSignature_Fails() public {
     Auth.Signature memory sig = _computeRevealerSig(
-      abi.encodePacked(uint(1), "uri"),
+      abi.encodePacked(wallet1, uint(1), "uri"),
       block.timestamp - 1 seconds
     );
 
@@ -91,7 +91,7 @@ contract JigzawNftRevealing is JigzawNftTestBase {
 
   function test_RevealWhenSignatureAlreadyUsed_Fails() public {
     Auth.Signature memory sig = _computeRevealerSig(
-      abi.encodePacked(uint(1), "uri"),
+      abi.encodePacked(wallet1, uint(1), "uri"),
       block.timestamp + 10 seconds
     );
 
@@ -106,14 +106,14 @@ contract JigzawNftRevealing is JigzawNftTestBase {
   function test_RevealWhenAlreadyRevealed_Fails() public {
     vm.prank(wallet1);
     t.reveal(uint(1), "uri", _computeRevealerSig(
-      abi.encodePacked(uint(1), "uri"),
+      abi.encodePacked(wallet1, uint(1), "uri"),
       block.timestamp + 10 seconds
     ));
 
     vm.prank(wallet1);
     vm.expectRevert(abi.encodeWithSelector(LibErrors.AlreadyRevealed.selector, 1));
     t.reveal(uint(1), "uri", _computeRevealerSig(
-      abi.encodePacked(uint(1), "uri"),
+      abi.encodePacked(wallet1, uint(1), "uri"),
       block.timestamp + 20 seconds
     ));
   }
@@ -122,7 +122,7 @@ contract JigzawNftRevealing is JigzawNftTestBase {
     vm.prank(wallet1);
     vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721TokenNotMinted.selector, 2));
     t.reveal(uint(2), "uri", _computeRevealerSig(
-      abi.encodePacked(uint(2), "uri"),
+      abi.encodePacked(wallet1, uint(2), "uri"),
       block.timestamp + 10 seconds
     ));
   }

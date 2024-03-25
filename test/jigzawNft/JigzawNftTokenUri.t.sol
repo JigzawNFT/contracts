@@ -30,7 +30,7 @@ contract JigzawNftTokenUri is JigzawNftTestBase {
 
   function test_TokenUriReturnsRevealedUri() public {
     Auth.Signature memory sig = _computeRevealerSig(
-      abi.encodePacked(uint(1), "uri"),
+      abi.encodePacked(wallet1, uint(1), "uri"),
       block.timestamp + 10 seconds
     );
 

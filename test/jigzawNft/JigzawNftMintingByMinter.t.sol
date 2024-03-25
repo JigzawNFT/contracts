@@ -65,7 +65,7 @@ contract JigzawNftMintingByMinter is JigzawNftTestBase {
     ));
 
     Vm.Log[] memory entries = vm.getRecordedLogs();
-    assertEq(entries.length, 2, "Invalid entry count");
+    assertEq(entries.length, 5, "Invalid entry count");
     assertEq(entries[1].topics.length, 1, "Invalid event count");
     assertEq(
         entries[1].topics[0],
