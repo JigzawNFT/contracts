@@ -17,7 +17,6 @@ contract JigzawNftBasic is JigzawNftTestBase {
     JigzawNFT.DevRoyalties memory devRoyalties = jigzawNft.getDevRoyalties();
     assertEq(devRoyalties.feeBips, 1000, "devRoyalties.feeBips");
     assertEq(devRoyalties.receiver, owner1, "devRoyalties.receiver");
-    assertEq(devRoyalties.pot, 0, "devRoyalties.pot");
 
     JigzawNFT.Lottery memory lottery = jigzawNft.getLottery();
     assertEq(lottery.feeBips, 1000, "lottery.feeBips");

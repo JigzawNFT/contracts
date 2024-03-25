@@ -72,7 +72,7 @@ contract JigzawNftLottery is JigzawNftTestBase {
     jigzawNft.drawLottery(winners);
   }
 
-  function test_DrawLottery_SetsUpPots() public {
+  function test_DrawLottery_SetsUpLotteryPot() public {
     _mintAndRevealTiles();
 
     uint[] memory winners = new uint[](0);
@@ -82,9 +82,6 @@ contract JigzawNftLottery is JigzawNftTestBase {
 
     vm.prank(owner1);
     jigzawNft.drawLottery(winners);
-
-    JigzawNFT.DevRoyalties memory devRoyalties = jigzawNft.getDevRoyalties();
-    assertEq(devRoyalties.pot, 0.00025 ether, "devRoyalties.pot");
 
     JigzawNFT.Lottery memory lottery = jigzawNft.getLottery();
     assertEq(lottery.pot, 0.00025 ether, "lottery.pot");
@@ -121,6 +118,11 @@ contract JigzawNftLottery is JigzawNftTestBase {
     assertEq(lottery.winners[0], 4, "winners[0]");
     assertEq(lottery.winners[1], 5, "winners[1]");
     assertEq(lottery.winners[2], 6, "winners[2]");
+  }
+
+  function test_DrawLottery_WithdrawsDevRoyalties() public {
+    _drawLotteryWinners();
+    assertEq(owner1.balance, 0.0009 ether);
   }
 
   function test_IsWinner_WhenNotYetDrawn() public {
@@ -175,6 +177,8 @@ contract JigzawNftLottery is JigzawNftTestBase {
   function test_claimWinnings_WhenDrawn_AndWinningTicket_Succeeds() public {
     _drawLotteryWinners();
     
+    assertEq(jigzawNft_addr.balance, 0.0018 ether - 0.0009 ether /* dev royalties */);
+
     vm.prank(wallet1);
     jigzawNft.claimLotteryWinnings(4);
 
@@ -184,12 +188,14 @@ contract JigzawNftLottery is JigzawNftTestBase {
 
     // check balances have been updated
     assertEq(wallet1.balance, 0.0003 ether);
-    assertEq(jigzawNft_addr.balance, 0.0015 ether);
+    assertEq(jigzawNft_addr.balance, 0.0018 ether - 0.0009 ether - 0.0003 ether);
   }
 
   function test_claimWinnings_WhenDrawn_AndAnyoneCanClaimForWinningTicket() public {
     _drawLotteryWinners();
     
+    assertEq(jigzawNft_addr.balance, 0.0018 ether - 0.0009 ether /* dev royalties */);
+
     vm.prank(wallet2); // not the ticket owner but still works
     jigzawNft.claimLotteryWinnings(4);
 
@@ -199,7 +205,7 @@ contract JigzawNftLottery is JigzawNftTestBase {
 
     // check balances have been updated
     assertEq(wallet1.balance, 0.0003 ether);
-    assertEq(jigzawNft_addr.balance, 0.0015 ether);
+    assertEq(jigzawNft_addr.balance, 0.0018 ether - 0.0009 ether - 0.0003 ether);
   }
 
   function test_claimWinnings_WhenDrawn_AndCannotClaimTwice() public {

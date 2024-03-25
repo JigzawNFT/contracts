@@ -42,8 +42,6 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, IJigzawNFT, Ownable {
    * @dev Dev royalties info.
    */
   struct DevRoyalties {
-    /** The pot. */
-    uint pot;
     /** The receiver of the dev royalties. */
     address receiver;
     /** The trading fee for the dev royalties. */
@@ -314,15 +312,6 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, IJigzawNFT, Ownable {
     return devRoyalties;
   }
 
-  /**
-   * @dev Withdraw dev royalties.
-   */
-  function withdrawDevRoyalties() external {
-    uint val = devRoyalties.pot;
-    devRoyalties.pot = 0;
-    payable(devRoyalties.receiver).transfer(val);
-  }
-
   // lottery
 
   /**
@@ -373,8 +362,8 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, IJigzawNFT, Ownable {
 
     // calculate pots
     uint totalBips = devRoyalties.feeBips + lottery.feeBips;
-    devRoyalties.pot = address(this).balance * devRoyalties.feeBips / totalBips;
-    lottery.pot = address(this).balance - devRoyalties.pot;
+    uint devRoyaltiesPot = address(this).balance * devRoyalties.feeBips / totalBips;
+    lottery.pot = address(this).balance - devRoyaltiesPot;
 
     // update royalty fee to just be the dev fee and also send all money to the dev receiver
     _setDefaultRoyalty(devRoyalties.receiver, devRoyalties.feeBips);
@@ -382,6 +371,8 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, IJigzawNFT, Ownable {
     // generate winners
     lottery.winners = _winners;
 
+    // withdraw dev royalties so far
+    payable(devRoyalties.receiver).transfer(devRoyaltiesPot);
   }
 
   /**
