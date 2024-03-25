@@ -3,9 +3,9 @@
 
 # JigzawNFT contracts
 
-Smart contracts for [JigzawNFT](https://jigzaw.xyz).
-
 **NOTE: These contract are still a work-in-progress and subject to change.**
+
+Smart contracts for [JigzawNFT](https://jigzaw.xyz).
 
 Features:
 
@@ -14,9 +14,17 @@ Features:
   * Exponential price curve.
   * Pool mints NFTs on-demand until no more left to mint. Initial buyers thus recieve minted freshly NFTs.
   * Sellers sell NFTs into pool, and subsequent buyers recieve these NFTs until they run out, after which the pool again mints new NFTs.
-* Extensive test suite and [coverage](https://coveralls.io/github/JigzawNFT/contracts).
+* To encourage holders to mint and reveal NFTs a lottery ticket system is implemented:
+  * _x_% of every NFT trade goes into a lottery pot, accumulating over time.
+  * Every permissioned mint will award 3 lottery tickets to the caller.
+  * Every permissioned reveal will award 1 lottery ticket to the caller.
+  * After all tiles have been minted and revealed the lottery will be drawn and _y_ random tickets will be selected as winners.
+    * These winning tickets will then be able to withdraw their share of the lottery pot.
+  * Notes:
+    * Lottery tickets themselves are a separate ERC721 collection.
+    * The lottery has a deadline _(TBD)_, after which the lottery can be drawn even if not all tiles have been minted and revealed. This is to handle the case where for some reason the puzzle can't be finished.
 
-Technicals:
+Technicals details:
 
 * Built with Foundry.
 * ERC721 (based on [Solmate](https://github.com/transmissions11/solmate/blob/main/src/tokens/ERC721.sol)) + Enumerability + Custom token URI.
@@ -24,6 +32,7 @@ Technicals:
 * ERC2981 royalty standard.
 * ERC4906 metadata updates.
 * ECDSA signature verification to allow for anyone to mint/reveal with authorisation.
+* Extensive [test suite](./test/) and [excellent code coverage](https://coveralls.io/github/JigzawNFT/contracts).
 
 ## On-chain addresses
 
