@@ -10,13 +10,13 @@ import { IERC4906 } from "openzeppelin/interfaces/IERC4906.sol";
 import { Base64 } from "openzeppelin/utils/Base64.sol";
 import { Strings } from "openzeppelin/utils/Strings.sol";
 import { LibErrors } from "./LibErrors.sol";
-import { IPoolNFT } from "./IPoolNFT.sol";
+import { IJigzawNFT } from "./IJigzawNFT.sol";
 import { ILotteryNFT } from "./ILotteryNFT.sol";
 import { LibRandom } from "./LibRandom.sol";
 import { Ownable } from "openzeppelin/access/Ownable.sol";
 
 
-contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, IPoolNFT, Ownable {
+contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, IJigzawNFT, Ownable {
   using Strings for uint256;
 
   /**
@@ -290,8 +290,8 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, IPoolNFT, Ownable {
   /**
    * @dev See {IPoolNFT-batchMint}.
    */
-  function batchMint(address _to, uint _startId, uint _count) external override onlyPool {
-    _safeBatchMint(_to, _startId, _count, "");
+  function batchMint(address _to, uint _count) external override onlyPool {
+    _safeBatchMint(_to, _count, "");
   }
 
   /**

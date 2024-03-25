@@ -7,6 +7,13 @@ import { JigzawNftTestBase } from "./JigzawNftTestBase.sol";
 import { Ownable } from "openzeppelin/access/Ownable.sol";
 
 contract JigzawNftSetDefaultImage is JigzawNftTestBase {
+  function setUp() public override {
+    super.setUp();
+
+    vm.prank(owner1);
+    t.setLotteryTicketNFT(address(l));
+  }
+
   function test_SetDefaultImageWhenOwner_Succeeds() public {
     vm.prank(owner1);
     t.setDefaultImage("newImage");

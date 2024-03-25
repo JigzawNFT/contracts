@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.24;
 
+
+import {console2 as c} from "forge-std/Test.sol";
 import { Vm } from "forge-std/Vm.sol";
 import { JigzawNftTestBase } from "./JigzawNftTestBase.sol";
 import { Auth } from "src/Auth.sol";
@@ -8,6 +10,13 @@ import { LibErrors } from "src/LibErrors.sol";
 import { IERC721Errors } from "src/IERC721Errors.sol";
 
 contract JigzawNftMintingByMinter is JigzawNftTestBase {
+  function setUp() public override {
+    super.setUp();
+
+    vm.prank(owner1);
+    t.setLotteryTicketNFT(address(l));
+  }
+
   function test_MintWithMinterAuthorisation_Succeeds() public {
     uint id = 2;
     string memory uri = "uri2";

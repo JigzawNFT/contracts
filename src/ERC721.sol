@@ -217,11 +217,10 @@ abstract contract ERC721 is IERC721, IERC721Metadata, IERC721Enumerable, IERC721
   /**
    * @dev Batch mint a range of tokens to the address.
    * @param _to The address to mint to.
-   * @param _startId The ID of the first token to mint.
    * @param _count The number of tokens to mint.
    * @param _data Additional data to send to IERC721TokenReceiver contract.
    */
-  function _safeBatchMint(address _to, uint256 _startId, uint256 _count, bytes memory _data) internal virtual {
+  function _safeBatchMint(address _to, uint256 _count, bytes memory _data) internal virtual {
     if (_to == address(0)) {
       revert ERC721ZeroAddress();
     }
@@ -231,9 +230,8 @@ abstract contract ERC721 is IERC721, IERC721Metadata, IERC721Enumerable, IERC721
     }
 
     while (_count > 0) {
-      _mint(_to, _startId);
-      _informRecipient(msg.sender, address(0), _to, _startId, _data);
-      _startId++;
+      _mint(_to, totalSupply + 1);
+      _informRecipient(msg.sender, address(0), _to, totalSupply, _data);
       _count--;
     }
   }

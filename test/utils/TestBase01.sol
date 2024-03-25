@@ -23,7 +23,6 @@ abstract contract TestBase01 is Test {
   address payable wallet2 = payable(address(0x1234567890123));
 
   constructor() payable {
-    c.log("\n Test SETUP:");
     c.log("Test contract address", address(this));
     c.log("msg.sender", msg.sender);
   }

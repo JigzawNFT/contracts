@@ -11,6 +11,9 @@ contract JigzawNftRevealing is JigzawNftTestBase {
   function setUp() virtual override public {
     super.setUp();
 
+    vm.prank(owner1);
+    t.setLotteryTicketNFT(address(l));
+
     uint id = 1;
     string memory uri = "";
 

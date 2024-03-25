@@ -4,19 +4,18 @@ pragma solidity ^0.8.24;
 import { IERC721 } from "openzeppelin/token/ERC721/IERC721.sol";
 
 /**
- * @dev Pool NFT.
+ * @dev Jigzaw NFT.
  *
  * All mutations should be protected such that only the pool can call them.
  */
-interface IPoolNFT is IERC721 {
+interface IJigzawNFT is IERC721 {
   /**
    * @dev Batch mint tokens to the address.
    *
    * @param _to The address which will own the minted tokens.
-   * @param _startId The id to start mint from.
    * @param _count No. of tokens to mint.
    */
-  function batchMint(address _to, uint _startId, uint _count) external;
+  function batchMint(address _to, uint _count) external;
 
   /**
    * @dev Batch transfer specific tokens to given address.

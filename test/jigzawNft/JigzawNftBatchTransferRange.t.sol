@@ -10,9 +10,12 @@ contract JigzawNftBatchTransferRange is JigzawNftTestBase {
   function setUp() public override {
     super.setUp();
 
+    vm.prank(owner1);
+    t.setPool(pool1);
+
     vm.startPrank(pool1);
-    t.batchMint(wallet1, 1, 4);
-    t.batchMint(wallet2, 5, 1);
+    t.batchMint(wallet1, 4);
+    t.batchMint(wallet2, 1);
     vm.stopPrank();
   }
 
