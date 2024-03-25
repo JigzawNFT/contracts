@@ -21,7 +21,7 @@ contract JigzawNftBasic is JigzawNftTestBase {
 
     JigzawNFT.Lottery memory lottery = jigzawNft.getLottery();
     assertEq(lottery.feeBips, 1000, "lottery.feeBips");
-    assertEq(lottery.deadline, block.timestamp, "lottery.deadline");
+    assertEq(lottery.deadline, block.timestamp + 10, "lottery.deadline");
     assertEq(lottery.tileRevealThreshold, 10, "lottery.tileRevealThreshold");
     assertEq(lottery.drawn, false, "lottery.drawn");
     assertEq(lottery.pot, 0, "lottery.pot");

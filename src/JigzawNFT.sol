@@ -12,7 +12,6 @@ import { Strings } from "openzeppelin/utils/Strings.sol";
 import { LibErrors } from "./LibErrors.sol";
 import { IJigzawNFT } from "./IJigzawNFT.sol";
 import { ILotteryNFT } from "./ILotteryNFT.sol";
-import { LibRandom } from "./LibRandom.sol";
 import { Ownable } from "openzeppelin/access/Ownable.sol";
 
 
@@ -89,7 +88,7 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, IJigzawNFT, Ownable {
   /**
    * @dev The number of tokens that have been revealed.
    */
-  uint numRevealed;
+  uint public numRevealed;
 
   /**
    * @dev Mapping of revealed tokens.
@@ -211,11 +210,12 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, IJigzawNFT, Ownable {
 
     _requireOwned(_id);
 
-    if (bytes(tokenMetadata[_id]).length > 0) {
+    if (revealed[_id]) {
       revert LibErrors.AlreadyRevealed(_id);
     }
 
     revealed[_id] = true;
+    numRevealed++;
 
     _setTokenMetadata(_id, _uri);
 
@@ -358,9 +358,9 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, IJigzawNFT, Ownable {
   /**
    * @dev Draw the lottery.
    *
-   * @param _seed The randomness seed.
+   * @param _winners The winning ticket numbers.
    */
-  function drawLottery(uint _seed) external {
+  function drawLottery(uint[] calldata _winners) external onlyOwner {
     if (lottery.drawn) {
       revert LibErrors.LotteryAlreadyDrawn();
     }
@@ -372,14 +372,16 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, IJigzawNFT, Ownable {
     lottery.drawn = true;
 
     // calculate pots
-    devRoyalties.pot = address(this).balance * devRoyalties.feeBips / _feeDenominator();
+    uint totalBips = devRoyalties.feeBips + lottery.feeBips;
+    devRoyalties.pot = address(this).balance * devRoyalties.feeBips / totalBips;
     lottery.pot = address(this).balance - devRoyalties.pot;
 
     // update royalty fee to just be the dev fee and also send all money to the dev receiver
     _setDefaultRoyalty(devRoyalties.receiver, devRoyalties.feeBips);
 
     // generate winners
-    lottery.winners = LibRandom.generateRandomNumbers(_seed, lottery.nft.totalSupply(), 10);
+    lottery.winners = _winners;
+
   }
 
   /**

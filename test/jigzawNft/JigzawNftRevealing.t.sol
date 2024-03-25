@@ -14,27 +14,43 @@ contract JigzawNftRevealing is JigzawNftTestBase {
     vm.prank(owner1);
     jigzawNft.setLotteryNFT(address(lotteryNft_addr));
 
-    uint id = 1;
     string memory uri = "";
 
-    vm.prank(wallet1);
-    jigzawNft.mint(id, uri, _computeMinterSig(
-      abi.encodePacked(wallet1, id, uri), 
+    vm.startPrank(wallet1);
+    
+    jigzawNft.mint(1, uri, _computeMinterSig(
+      abi.encodePacked(wallet1, uint(1), uri), 
       block.timestamp + 10 seconds
     ));
+
+    jigzawNft.mint(2, uri, _computeMinterSig(
+      abi.encodePacked(wallet1, uint(2), uri), 
+      block.timestamp + 10 seconds
+    ));
+
+    vm.stopPrank();
   }
 
   function test_RevealWithRevealerAuthorisation_Succeeds() public {
-    Auth.Signature memory sig = _computeRevealerSig(
+    vm.prank(wallet1);
+    jigzawNft.reveal(1, "uri1", _computeRevealerSig(
       abi.encodePacked(wallet1, uint(1), "uri1"),
       block.timestamp + 10 seconds
-    );
+    ));
+
+    assertEq(jigzawNft.tokenURI(1), "uri1", "post 1: token uri");
+    assertEq(jigzawNft.revealed(1), true, "post 1: revealed state");
+    assertEq(jigzawNft.numRevealed(), 1, "post 1: revealed count");
 
     vm.prank(wallet1);
-    jigzawNft.reveal(1, "uri1", sig);
+    jigzawNft.reveal(2, "uri2", _computeRevealerSig(
+      abi.encodePacked(wallet1, uint(2), "uri2"),
+      block.timestamp + 10 seconds
+    ));
 
-    assertEq(jigzawNft.tokenURI(1), "uri1");
-    assertEq(jigzawNft.revealed(1), true);
+    assertEq(jigzawNft.tokenURI(2), "uri2", "post 2: token uri");
+    assertEq(jigzawNft.revealed(2), true, "post 2: revealed state");
+    assertEq(jigzawNft.numRevealed(), 2, "post 2: revealed count");
   }
 
   function test_RevealWithRevealerAuthorisation_EmitsEvent() public {
@@ -133,9 +149,9 @@ contract JigzawNftRevealing is JigzawNftTestBase {
 
   function test_RevealNonMintedToken_Fails() public {
     vm.prank(wallet1);
-    vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721TokenNotMinted.selector, 2));
-    jigzawNft.reveal(uint(2), "uri", _computeRevealerSig(
-      abi.encodePacked(wallet1, uint(2), "uri"),
+    vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721TokenNotMinted.selector, 3));
+    jigzawNft.reveal(3, "uri", _computeRevealerSig(
+      abi.encodePacked(wallet1, uint(3), "uri"),
       block.timestamp + 10 seconds
     ));
   }

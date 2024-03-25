@@ -39,7 +39,7 @@ abstract contract TestBase01 is Test {
       defaultImage: "img",
       devRoyaltyReceiver: owner1,
       lotteryPotFeeBips: 1000, /* 1000 bips = 10% */
-      lotteryDeadline: block.timestamp,
+      lotteryDeadline: block.timestamp + 10,
       lotteryRevealThreshold: 10
     });
   }  

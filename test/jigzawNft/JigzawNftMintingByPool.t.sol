@@ -84,5 +84,5 @@ contract JigzawNftMintingByPool is JigzawNftTestBase {
     vm.prank(pool1);
     vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721TokenAlreadyMinted.selector, uint(3)));
     jigzawNft.batchMint(wallet1, 3, 1);
-  }  
+  }
 }
