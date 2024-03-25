@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.24;
 
-import { IPoolNFT } from "./IPoolNFT.sol";
+import { IJigzawNFT } from "./IJigzawNFT.sol";
 import { LibErrors } from "./LibErrors.sol";
 import { PoolCurve, PoolStatus, QuoteError, BuyQuote, SellQuote } from "./Common.sol";
 import { ExponentialCurve } from "./ExponentialCurve.sol";
@@ -27,7 +27,7 @@ import { IERC721TokenReceiver } from "./ERC721.sol";
  * has access to its own liquidity.
  */
 contract MintSwapPool is IERC721TokenReceiver, ExponentialCurve {
-  IPoolNFT public nft;
+  IJigzawNFT public nft;
   PoolCurve public curve;
   PoolStatus public status;
 
@@ -56,7 +56,7 @@ contract MintSwapPool is IERC721TokenReceiver, ExponentialCurve {
       revert LibErrors.InvalidMintEndId(_config.curve.mintEndId);
     }
 
-    nft = IPoolNFT(_config.nft);
+    nft = IJigzawNFT(_config.nft);
     
     curve = _config.curve;
     
@@ -214,16 +214,11 @@ contract MintSwapPool is IERC721TokenReceiver, ExponentialCurve {
   // ---------------------------------------------------------------
 
   function onERC721Received(
-    address operator,
+    address /*operator*/,
     address /*from*/,
-    uint256 tokenId,
+    uint256 /*tokenId*/,
     bytes calldata /*data*/
-  ) public view override returns (bytes4) {
-    // check that the token id is within curve range
-    if (tokenId < curve.mintStartId || tokenId > curve.mintEndId) {
-      revert LibErrors.TokenIdOutOfRange(operator, tokenId);
-    } else {
-      return IERC721TokenReceiver.onERC721Received.selector;
-    }
+  ) public pure override returns (bytes4) {
+    return IERC721TokenReceiver.onERC721Received.selector;
   }
 }

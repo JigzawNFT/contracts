@@ -9,12 +9,59 @@ import { ERC2981 } from "openzeppelin/token/common/ERC2981.sol";
 import { IERC4906 } from "openzeppelin/interfaces/IERC4906.sol";
 import { Base64 } from "openzeppelin/utils/Base64.sol";
 import { Strings } from "openzeppelin/utils/Strings.sol";
-import { Ownable } from "openzeppelin/access/Ownable.sol";
 import { LibErrors } from "./LibErrors.sol";
-import { IPoolNFT } from "./IPoolNFT.sol";
+import { IJigzawNFT } from "./IJigzawNFT.sol";
+import { ILotteryNFT } from "./ILotteryNFT.sol";
+import { Ownable } from "openzeppelin/access/Ownable.sol";
 
-contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, Ownable, IPoolNFT {
+
+contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, IJigzawNFT, Ownable {
   using Strings for uint256;
+
+  /**
+   * @dev Lottery info.
+   */
+  struct Lottery {
+    /** The winners of the lottery. */
+    uint[] winners;
+    /** The pot. */
+    uint pot;
+    /** Whether the lottery has been drawn. */
+    bool drawn;
+    /** The deadline for the lottery. */
+    uint deadline;
+    /** The number of tiles that need to be revealed before the lottery can be drawn. */
+    uint tileRevealThreshold;
+    /** The trading fee for the lottery. */
+    uint96 feeBips;
+    /** The NFT contract for the lottery tickets. */
+    ILotteryNFT nft;
+  }
+
+  /**
+   * @dev Dev royalties info.
+   */
+  struct DevRoyalties {
+    /** The receiver of the dev royalties. */
+    address receiver;
+    /** The trading fee for the dev royalties. */
+    uint96 feeBips;
+  }
+
+  /**
+   * @dev Lottery info.
+   */
+  Lottery private lottery;
+
+  /** 
+   * @dev Mapping of lottery winnings claimed (ticket => claimed or not).
+   */
+  mapping(uint => bool) public lotteryWinningsClaimed;
+
+  /**
+   * @dev Dev royalties info.
+   */
+  DevRoyalties private devRoyalties;
 
   /**
    * @dev The pool contract.
@@ -35,6 +82,11 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, Ownable, IPoolNFT {
    * @dev Default token image as a data URI.
    */
   string public defaultImage;
+  
+  /**
+   * @dev The number of tokens that have been revealed.
+   */
+  uint public numRevealed;
 
   /**
    * @dev Mapping of revealed tokens.
@@ -54,30 +106,40 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, Ownable, IPoolNFT {
   struct Config {
     /** Owner. */
     address owner;
-    /** Pool. */
-    address pool;
     /** Minter. */
     address minter;
     /** Revealer. */
     address revealer;
-    /** Royalty fee */
-    uint96 royaltyFeeBips;
+    /** Dev royalty receiver  */
+    address devRoyaltyReceiver;
+    /** Dev royalty fee */
+    uint96 devRoyaltyFeeBips;
     /** Default token image as a data URI. */
     string defaultImage;
+    /** Lottery trading fee. */
+    uint96 lotteryPotFeeBips;
+    /** Lottery deadline. */
+    uint lotteryDeadline;
+    /** Lottery reveal threshold - the lottery can be drawn once given on. of tiles have been revealed.*/
+    uint lotteryRevealThreshold;
   }
   
   /**
    * @dev Constructor.
    */
-  constructor(Config memory _config)
-    ERC721("Jigzaw", "JIGZAW") 
-    Ownable(_config.owner)
-  {
+  constructor(Config memory _config) ERC721("Jigzaw", "JIGZAW") Ownable(_config.owner) {
     minter = _config.minter;
     revealer = _config.revealer;
-    pool = _config.pool;
     defaultImage = _config.defaultImage;
-    _setDefaultRoyalty(_config.owner, _config.royaltyFeeBips);
+
+    lottery.feeBips = _config.lotteryPotFeeBips;
+    lottery.deadline = _config.lotteryDeadline;
+    lottery.tileRevealThreshold = _config.lotteryRevealThreshold;
+
+    devRoyalties.receiver = _config.devRoyaltyReceiver;
+    devRoyalties.feeBips = _config.devRoyaltyFeeBips;
+
+    _setDefaultRoyalty(address(this), devRoyalties.feeBips + lottery.feeBips);
   }
 
   // Approvals
@@ -112,7 +174,7 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, Ownable, IPoolNFT {
         abi.encodePacked(
           '{',
               '"name": "Unrevealed tile",',
-              '"description": "An unrevealed Jigzaw tile - visit jigzaw.xyz for more info",',
+              '"description": "An unrevealed Jigzaw tile - see https://jigzaw.xyz for more info.",',
               '"image": "', defaultImage, '"',
           '}'
         ) 
@@ -140,17 +202,22 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, Ownable, IPoolNFT {
    * @param _sig The revealer authorisation signature.
    */
   function reveal(uint256 _id, string calldata _uri, Auth.Signature calldata _sig) external {
-    _assertValidSignature(msg.sender, revealer, _sig, abi.encodePacked(_id, _uri));
+    address caller = msg.sender;
+
+    _assertValidSignature(caller, revealer, _sig, abi.encodePacked(caller, _id, _uri));
 
     _requireOwned(_id);
 
-    if (bytes(tokenMetadata[_id]).length > 0) {
+    if (revealed[_id]) {
       revert LibErrors.AlreadyRevealed(_id);
     }
 
     revealed[_id] = true;
+    numRevealed++;
 
     _setTokenMetadata(_id, _uri);
+
+    lottery.nft.batchMint(caller, 1);
   }
 
   function _setTokenMetadata(uint256 _id, string memory _uri) internal {
@@ -182,17 +249,6 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, Ownable, IPoolNFT {
     pool = _pool;
   }
 
-  // Set royalty
-
-  /**
-   * @dev Set the royalty receiver and fee.
-   * @param _receiver The address of the new receiver.
-   * @param _feeBips The fee in bips.
-   */
-  function setRoyaltyFee(address _receiver, uint96 _feeBips) external onlyOwner {
-    _setDefaultRoyalty(_receiver, _feeBips);
-  }
-
   // Minting
 
   /**
@@ -204,17 +260,18 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, Ownable, IPoolNFT {
   }
 
   /**
-   * @dev Mint a token, callable by anyone but authorized by the minter.
+   * @dev Mint a token, authorized by the minter.
    *
-   * @param _to The address which will own the minted token.
    * @param _id token id to mint.
    * @param _uri token uri.
    * @param _sig minter authorisation signature.
    */
-  function mint(address _to, uint256 _id, string calldata _uri, Signature calldata _sig) external {
-    _assertValidSignature(msg.sender, minter, _sig, abi.encodePacked(_to, _id, _uri));
-    _safeMint(_to, _id, "");
+  function mint(uint256 _id, string calldata _uri, Signature calldata _sig) external {
+    address caller = msg.sender;
+    _assertValidSignature(msg.sender, minter, _sig, abi.encodePacked(caller, _id, _uri));
+    _safeMint(caller, _id, "");
     _setTokenMetadata(_id, _uri);
+    lottery.nft.batchMint(caller, 3);
   }
 
 
@@ -249,6 +306,125 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, Ownable, IPoolNFT {
     _safeBatchTransfer(msg.sender, _from, _to, _numTokens, "");
   }
 
+  // dev royalties
+
+  function getDevRoyalties() external view returns (DevRoyalties memory) {
+    return devRoyalties;
+  }
+
+  // lottery
+
+  /**
+   * @dev Get the lottery info.
+   */
+  function getLottery() external view returns (Lottery memory) {
+    return lottery;
+  }
+
+
+  /**
+   * @dev Set the lottery NFT contract.
+   * 
+   * Requirements:
+   * - The caller must be the owner.
+   * - The lottery NFT contract must not have been set yet.
+   * - The lottery NFT contract must support the ILotteryNFT interface.
+   * 
+   * @param _nft The address of the new lottery NFT contract.
+   */
+  function setLotteryNFT(address _nft) external onlyOwner {
+    if (address(lottery.nft) != address(0)) {
+      revert LibErrors.LotteryNFTAlreadySet();
+    }
+    
+    if (!IERC165(_nft).supportsInterface(type(ILotteryNFT).interfaceId)) {
+      revert LibErrors.LotteryNFTInvalid();
+    }
+
+    lottery.nft = ILotteryNFT(_nft);
+  }
+
+  /**
+   * @dev Draw the lottery.
+   *
+   * @param _winners The winning ticket numbers.
+   */
+  function drawLottery(uint[] calldata _winners) external onlyOwner {
+    if (lottery.drawn) {
+      revert LibErrors.LotteryAlreadyDrawn();
+    }
+
+    if (block.timestamp < lottery.deadline && numRevealed < lottery.tileRevealThreshold) {
+      revert LibErrors.LotteryCannotBeDrawnYet();
+    }
+
+    lottery.drawn = true;
+
+    // calculate pots
+    uint totalBips = devRoyalties.feeBips + lottery.feeBips;
+    uint devRoyaltiesPot = address(this).balance * devRoyalties.feeBips / totalBips;
+    lottery.pot = address(this).balance - devRoyaltiesPot;
+
+    // update royalty fee to just be the dev fee and also send all money to the dev receiver
+    _setDefaultRoyalty(devRoyalties.receiver, devRoyalties.feeBips);
+
+    // generate winners
+    lottery.winners = _winners;
+
+    // withdraw dev royalties so far
+    payable(devRoyalties.receiver).transfer(devRoyaltiesPot);
+  }
+
+  /**
+   * @dev Check if a given ticket is a lottery winner.
+   *
+   * @param _ticket The ticket number to check.
+   */
+  function isLotteryWinner(uint _ticket) public view returns (bool) {
+    // check that the lottery has been drawn
+    if (!lottery.drawn) {
+      return false;
+    }
+
+    for (uint i = 0; i < lottery.winners.length; i++) {
+      if (lottery.winners[i] == _ticket) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * @dev Check if a given ticket can claim lottery winnings.
+   *
+   * @param _ticket The ticket number to check.
+   */
+  function canClaimLotteryWinnings(uint _ticket) public view returns (bool) {
+    if (!isLotteryWinner(_ticket)) {
+      return false;
+    }
+    return !lotteryWinningsClaimed[_ticket];
+  }
+
+
+  /**
+   * @dev Claim lottery winnings for a given ticket.
+   *
+   * @param _ticket The ticket number to claim winnings for.
+   */
+  function claimLotteryWinnings(uint _ticket) external {
+    if (!canClaimLotteryWinnings(_ticket)) {
+      revert LibErrors.LotteryCannotClaimWinnings(_ticket);
+    }
+
+    lotteryWinningsClaimed[_ticket] = true;
+
+    // send winnings
+    address wallet = lottery.nft.ownerOf(_ticket);
+    payable(wallet).transfer(lottery.pot / lottery.winners.length);
+  }
+
   // Modifiers
 
   /**
@@ -256,8 +432,13 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, Ownable, IPoolNFT {
    */
   modifier onlyPool() {
     if (_msgSender() != pool) {
-      revert LibErrors.UnauthorizedMustBePool(_msgSender());
+      revert LibErrors.Unauthorized(_msgSender());
     }
     _;
   }
+
+  /**
+   * @dev Enable this contract to receive ether.
+   */
+  receive() external payable {}  
 }

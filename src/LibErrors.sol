@@ -5,9 +5,9 @@ import { QuoteError } from "./Common.sol";
 
 library LibErrors {
   /**
-  * @dev Only pool is allowed to call this.
+  * @dev Unauthorized access.
   */
-  error UnauthorizedMustBePool(address caller);
+  error Unauthorized(address caller);
 
   /**
    * @dev The token has already been revealed.
@@ -73,4 +73,29 @@ library LibErrors {
   * @dev Invalid mint end id.
   */
   error InvalidMintEndId(uint id);
+
+  /**
+   * @dev The lottery has already been drawn.
+   */
+  error LotteryAlreadyDrawn();
+
+  /**
+   * @dev The given ticket cannot claim winnings.
+   */
+  error LotteryCannotClaimWinnings(uint ticket);
+
+  /**
+   * @dev The lottery cannot be drawn yet.
+   */
+  error LotteryCannotBeDrawnYet();
+
+  /**
+   * @dev The lottery ticket NFT has already been set.
+   */
+  error LotteryNFTAlreadySet();
+
+  /**
+   * @dev The lottery ticket NFT is invalid.
+   */
+  error LotteryNFTInvalid();
 }

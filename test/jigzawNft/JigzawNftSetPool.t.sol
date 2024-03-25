@@ -2,29 +2,29 @@
 pragma solidity ^0.8.24;
 
 import {console2 as c} from "forge-std/Test.sol";
-import { NftTestBase } from "./NftTestBase.sol";
+import { JigzawNftTestBase } from "./JigzawNftTestBase.sol";
 import { Ownable } from "openzeppelin/access/Ownable.sol";
 
 
-contract NftSetPool is NftTestBase {
+contract JigzawNftSetPool is JigzawNftTestBase {
   function test_SetPoolWhenOwner_Succeeds() public {
     vm.prank(owner1);
-    t.setPool(address(0x789));
-    assertEq(t.pool(), address(0x789));
+    jigzawNft.setPool(address(0x789));
+    assertEq(jigzawNft.pool(), address(0x789));
   }
 
   function test_SetPoolWhenNotOwner_Fails() public {
     vm.prank(minter1);
     vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, minter1));
-    t.setPool(address(0x789));
+    jigzawNft.setPool(address(0x789));
 
     vm.prank(revealer1);
     vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, revealer1));
-    t.setPool(address(0x789));
+    jigzawNft.setPool(address(0x789));
 
     address random = address(0x8876);
     vm.prank(random);
     vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, random));
-    t.setPool(address(0x789));
+    jigzawNft.setPool(address(0x789));
   }
 }

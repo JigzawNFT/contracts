@@ -217,7 +217,7 @@ abstract contract ERC721 is IERC721, IERC721Metadata, IERC721Enumerable, IERC721
   /**
    * @dev Batch mint a range of tokens to the address.
    * @param _to The address to mint to.
-   * @param _startId The ID of the first token to mint.
+    * @param _startId The token id to start minting from.
    * @param _count The number of tokens to mint.
    * @param _data Additional data to send to IERC721TokenReceiver contract.
    */

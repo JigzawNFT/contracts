@@ -7,17 +7,14 @@ import { IERC721 } from "openzeppelin/interfaces/IERC721.sol";
 import { IERC721Metadata } from "openzeppelin/interfaces/IERC721Metadata.sol";
 import { IERC721Enumerable } from "openzeppelin/interfaces/IERC721Enumerable.sol";
 import { IERC721Errors } from "src/IERC721Errors.sol";
-import { NftTestBase, MockERC721, GoodERC721Receiver, BadERC721Receiver } from "./NftTestBase.sol";
+import { TestBase01, MockERC721, GoodERC721Receiver, BadERC721Receiver} from "../utils/TestBase01.sol";
 import { Bytes32AddressLib } from "solmate/utils/Bytes32AddressLib.sol";
 
 
-contract NftERC721Base is NftTestBase {
+contract Erc721Base is TestBase01 {
   MockERC721 b;
-  address public wallet1 = vm.addr(0x56565656);
-  address public wallet2 = vm.addr(0x12121212);
 
-  function setUp() public override {
-    super.setUp();
+  function setUp() public {
     b = new MockERC721("Test", "TEST");
   }
 
@@ -124,8 +121,8 @@ contract NftERC721Base is NftTestBase {
   // Batch mint
 
   function test_BatchMint_UpdatesEnumeration() public {
-    b.batchMint(wallet1, 2, "");
-    b.batchMint(wallet2, 1, "");
+    b.batchMint(wallet1, 1, 2, "");
+    b.batchMint(wallet2, 3, 1, "");
 
     assertEq(b.totalSupply(), 3);
     assertEq(b.tokenByIndex(0), 1);
@@ -144,7 +141,7 @@ contract NftERC721Base is NftTestBase {
   function test_BatchMint_FiresTransferEvent() public {
     vm.recordLogs();
 
-    b.batchMint(wallet1, 2, "");
+    b.batchMint(wallet1, 1, 2, "");
 
     Vm.Log[] memory entries = vm.getRecordedLogs();
     assertEq(entries.length, 2, "Invalid entry count");
@@ -166,7 +163,7 @@ contract NftERC721Base is NftTestBase {
     address good = address(new GoodERC721Receiver());
 
     vm.prank(wallet1);
-    b.batchMint(good, 2, "test");
+    b.batchMint(good, 1, 2, "test");
 
     assertEq(b.ownerOf(1), good);
     assertEq(b.ownerOf(2), good);
@@ -193,12 +190,12 @@ contract NftERC721Base is NftTestBase {
 
   function test_BatchMint_ToZeroAddress_Fails() public {
     vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721ZeroAddress.selector));
-    b.batchMint(address(0), 2, "");
+    b.batchMint(address(0), 1, 2, "");
   }
 
   function test_BatchMint_EmptyBatch_Fails() public {
     vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721InvalidBatchSize.selector, uint(0)));
-    b.batchMint(wallet1, 0, "");
+    b.batchMint(wallet1, 1, 0, "");
   }
 
   // Single token Approval
@@ -584,7 +581,7 @@ contract NftERC721Base is NftTestBase {
 
     /*
     The reverse order is due to the fact that the last token is 
-    moved to the position of the token being removed from the list.
+    moved to the position of the token being removed from the lisjigzawNft.
     */
     assertEq(b.tokenOfOwnerByIndex(wallet1, 0), 4);
     assertEq(b.tokenOfOwnerByIndex(wallet1, 1), 3);
@@ -812,7 +809,7 @@ contract NftERC721Base is NftTestBase {
 
     /**
     Batch transfer range counts tokens from the end of the list backwards so that the 
-    list order is preserved, i.e. it transfers the most recently received tokens first.
+    list order is preserved, i.e. it transfers the most recently received tokens firsjigzawNft.
     */
     assertEq(b.tokenOfOwnerByIndex(wallet1, 0), 1);
     assertEq(b.tokenOfOwnerByIndex(wallet1, 1), 2);
