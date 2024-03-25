@@ -59,7 +59,7 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, IJigzawNFT, Ownable {
   /** 
    * @dev Mapping of lottery winnings claimed (ticket => claimed or not).
    */
-  mapping(uint => bool) lotteryWinningsClaimed;
+  mapping(uint => bool) public lotteryWinningsClaimed;
 
   /**
    * @dev Dev royalties info.
@@ -325,10 +325,24 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, IJigzawNFT, Ownable {
 
   // lottery
 
+  /**
+   * @dev Get the lottery info.
+   */
   function getLottery() external view returns (Lottery memory) {
     return lottery;
   }
 
+
+  /**
+   * @dev Set the lottery NFT contract.
+   * 
+   * Requirements:
+   * - The caller must be the owner.
+   * - The lottery NFT contract must not have been set yet.
+   * - The lottery NFT contract must support the ILotteryNFT interface.
+   * 
+   * @param _nft The address of the new lottery NFT contract.
+   */
   function setLotteryNFT(address _nft) external onlyOwner {
     if (address(lottery.nft) != address(0)) {
       revert LibErrors.LotteryNFTAlreadySet();
@@ -368,7 +382,11 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, IJigzawNFT, Ownable {
     lottery.winners = LibRandom.generateRandomNumbers(_seed, lottery.nft.totalSupply(), 10);
   }
 
-
+  /**
+   * @dev Check if a given ticket is a lottery winner.
+   *
+   * @param _ticket The ticket number to check.
+   */
   function isLotteryWinner(uint _ticket) public view returns (bool) {
     // check that the lottery has been drawn
     if (!lottery.drawn) {
@@ -384,6 +402,11 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, IJigzawNFT, Ownable {
     return false;
   }
 
+  /**
+   * @dev Check if a given ticket can claim lottery winnings.
+   *
+   * @param _ticket The ticket number to check.
+   */
   function canClaimLotteryWinnings(uint _ticket) public view returns (bool) {
     if (!isLotteryWinner(_ticket)) {
       return false;
@@ -391,6 +414,12 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, IJigzawNFT, Ownable {
     return !lotteryWinningsClaimed[_ticket];
   }
 
+
+  /**
+   * @dev Claim lottery winnings for a given ticket.
+   *
+   * @param _ticket The ticket number to claim winnings for.
+   */
   function claimLotteryWinnings(uint _ticket) external {
     if (!canClaimLotteryWinnings(_ticket)) {
       revert LibErrors.LotteryCannotClaimWinnings(_ticket);
