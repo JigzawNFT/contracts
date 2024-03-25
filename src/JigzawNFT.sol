@@ -417,4 +417,9 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, IJigzawNFT, Ownable {
     }
     _;
   }
+
+  /**
+   * @dev Enable this contract to receive ether.
+   */
+  receive() external payable {}  
 }
