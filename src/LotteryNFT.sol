@@ -58,7 +58,7 @@ contract LotteryNFT is ERC721, ERC2981, ILotteryNFT {
       abi.encodePacked(
         '{',
             '"name": "Lottery ticket",',
-            '"description": "A lottery ticket for the Jigzaw NFT collection - visit jigzaw.xyz for more info",',
+            '"description": "A lottery ticket for the Jigzaw NFT collection - see https://jigzaw.xyz for more info.",',
             '"image": "', defaultImage, '"',
         '}'
       ) 

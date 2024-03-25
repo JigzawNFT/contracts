@@ -10,27 +10,27 @@ import { PoolCurve, PoolStatus } from "src/Common.sol";
 
 
 abstract contract MintSwapPoolTestBase is TestBase01 {  
-  JigzawNFT public nft;
-  MintSwapPool public p;
-  LotteryNFT public l;
+  JigzawNFT public jigzawNft;
+  MintSwapPool public pool;
+  LotteryNFT public lotteryNft;
 
-  address nft_addr;
-  address p_addr;
-  address l_addr;
+  address payable jigzawNft_addr;
+  address payable pool_addr;
+  address payable lotteryNft_addr;
 
   function setUp() virtual public {
-    nft = new JigzawNFT(_getDefaultJigzawNftConfig());
-    nft_addr = address(nft);
+    jigzawNft = new JigzawNFT(_getDefaultJigzawNftConfig());
+    jigzawNft_addr = payable(address(jigzawNft));
 
-    p = new MintSwapPool(_getDefaultPoolConfig());
-    p_addr = address(p);
+    pool = new MintSwapPool(_getDefaultPoolConfig());
+    pool_addr = payable(address(pool));
 
-    l = new LotteryNFT(_getDefaultLotteryNftConfig(nft));
-    l_addr = address(l);
+    lotteryNft = new LotteryNFT(_getDefaultLotteryNftConfig(jigzawNft));
+    lotteryNft_addr = payable(address(lotteryNft));
     
     vm.startPrank(owner1);
-    nft.setPool(address(p));
-    nft.setLotteryTicketNFT(address(l));
+    jigzawNft.setPool(pool_addr);
+    jigzawNft.setLotteryTicketNFT(lotteryNft_addr);
     vm.stopPrank();
   }
 
@@ -38,7 +38,7 @@ abstract contract MintSwapPoolTestBase is TestBase01 {
 
   function _getDefaultPoolConfig() internal view returns (MintSwapPool.Config memory) {
     return MintSwapPool.Config({
-      nft: address(nft),
+      nft: jigzawNft_addr,
       curve: PoolCurve({
         mintStartId: 10,
         mintEndId: 20,

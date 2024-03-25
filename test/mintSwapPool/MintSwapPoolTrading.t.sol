@@ -14,13 +14,13 @@ contract MintSwapPoolTrading is MintSwapPoolTestBase {
   // getTotalNftsForSale - initial
 
   function test_GetTotalNftsForSale_Initial() public {
-    assertEq(p.getTotalNftsForSale(), 11);
+    assertEq(pool.getTotalNftsForSale(), 11);
   }
 
   // getBuyQuote - initial
 
   function test_GetBuyQuote_Initial_BuyOne() public {
-    BuyQuote memory q = p.getBuyQuote(1);
+    BuyQuote memory q = pool.getBuyQuote(1);
     assertEq(uint(q.error), uint(QuoteError.NONE));
     assertEq(q.newSpotPrice, 2 gwei);
 
@@ -32,7 +32,7 @@ contract MintSwapPoolTrading is MintSwapPoolTestBase {
   }
 
   function test_GetBuyQuote_Initial_BuyAll() public {
-    BuyQuote memory q = p.getBuyQuote(11);
+    BuyQuote memory q = pool.getBuyQuote(11);
     assertEq(uint(q.error), uint(QuoteError.NONE), "error code");
     assertEq(q.newSpotPrice, 2048 gwei /* 2^11 */, "new spot price");
 
@@ -56,98 +56,98 @@ contract MintSwapPoolTrading is MintSwapPoolTestBase {
   }
 
   function test_GetBuyQuote_Initial_BuyTooMuch() public {
-    BuyQuote memory q = p.getBuyQuote(12);
+    BuyQuote memory q = pool.getBuyQuote(12);
     assertEq(uint(q.error), uint(QuoteError.INSUFFICIENT_NFTS));
   }
 
   function test_GetBuyQuote_Initial_BuyNone() public {
-    BuyQuote memory q = p.getBuyQuote(0);
+    BuyQuote memory q = pool.getBuyQuote(0);
     assertEq(uint(q.error), uint(QuoteError.INVALID_NUMITEMS));
   }
 
   function test_GetBuyQuote_Initial_NewSpotPriceOverflow() public {
     // 2^63    
-    BuyQuote memory q = p.getBuyQuote(100);
+    BuyQuote memory q = pool.getBuyQuote(100);
     assertEq(uint(q.error), uint(QuoteError.SPOT_PRICE_OVERFLOW));
   }
 
   // buy - initial
 
   function test_Buy_Initial_BuyOne() public {
-    BuyQuote memory q = p.getBuyQuote(1);
+    BuyQuote memory q = pool.getBuyQuote(1);
 
     wallet1.transfer(q.inputValue); // exact funds
     vm.prank(wallet1);
-    p.buy{value: wallet1.balance}(1);
+    pool.buy{value: wallet1.balance}(1);
 
     // check NFTs minted
-    assertEq(nft.totalSupply(), 1, "nft supply");
-    assertEq(nft.tokenByIndex(0), 10, "token at index 0");
+    assertEq(jigzawNft.totalSupply(), 1, "nft supply");
+    assertEq(jigzawNft.tokenByIndex(0), 10, "token at index 0");
 
     // check caller funds
     assertEq(wallet1.balance, 0, "caller funds");
     // check caller nfts
-    assertEq(nft.balanceOf(wallet1), 1, "nft balance");
-    assertEq(nft.tokenOfOwnerByIndex(wallet1, 0), 10, "token of owner at index 0");
+    assertEq(jigzawNft.balanceOf(wallet1), 1, "nft balance");
+    assertEq(jigzawNft.tokenOfOwnerByIndex(wallet1, 0), 10, "token of owner at index 0");
 
     // check pool NFTs
-    assertEq(nft.balanceOf(p_addr), 0, "pool nfts");
-    assertEq(p.getTotalNftsForSale(), 10, "pool nfts for sale");
+    assertEq(jigzawNft.balanceOf(pool_addr), 0, "pool nfts");
+    assertEq(pool.getTotalNftsForSale(), 10, "pool nfts for sale");
     // check pool funds
-    assertEq(p_addr.balance, q.inputValue - q.fee, "pool funds");
-    assertEq(p.getFunds(), q.inputValue - q.fee, "pool.getFunds");
+    assertEq(pool_addr.balance, q.inputValue - q.fee, "pool funds");
+    assertEq(pool.getFunds(), q.inputValue - q.fee, "poolotteryNft.getFunds");
     
     // check fee receiver funds
-    assertEq(nft_addr.balance, q.fee, "received fee");
+    assertEq(jigzawNft_addr.balance, q.fee, "received fee");
   }
 
   function test_Buy_Initial_BuyAll() public {
-    BuyQuote memory q = p.getBuyQuote(11);
+    BuyQuote memory q = pool.getBuyQuote(11);
 
     wallet1.transfer(1 ether);
     vm.prank(wallet1);
-    p.buy{value: wallet1.balance}(11);
+    pool.buy{value: wallet1.balance}(11);
 
     // check NFTs minted
-    assertEq(nft.totalSupply(), 11, "nft supply");
-    assertEq(nft.tokenByIndex(0), 10, "token at index 0");
-    assertEq(nft.tokenByIndex(1), 11, "token at index 1");
-    assertEq(nft.tokenByIndex(10), 20, "token at index 10");
+    assertEq(jigzawNft.totalSupply(), 11, "nft supply");
+    assertEq(jigzawNft.tokenByIndex(0), 10, "token at index 0");
+    assertEq(jigzawNft.tokenByIndex(1), 11, "token at index 1");
+    assertEq(jigzawNft.tokenByIndex(10), 20, "token at index 10");
 
     // check caller funds
     assertEq(wallet1.balance, 1 ether - q.inputValue);
     // check caller nfts
-    assertEq(nft.balanceOf(wallet1), 11);
-    assertEq(nft.tokenOfOwnerByIndex(wallet1, 0), 10, "token of owner at index 0");
-    assertEq(nft.tokenOfOwnerByIndex(wallet1, 1), 11, "token of owner at index 1");
-    assertEq(nft.tokenOfOwnerByIndex(wallet1, 10), 20, "token of owner at index 10");
+    assertEq(jigzawNft.balanceOf(wallet1), 11);
+    assertEq(jigzawNft.tokenOfOwnerByIndex(wallet1, 0), 10, "token of owner at index 0");
+    assertEq(jigzawNft.tokenOfOwnerByIndex(wallet1, 1), 11, "token of owner at index 1");
+    assertEq(jigzawNft.tokenOfOwnerByIndex(wallet1, 10), 20, "token of owner at index 10");
 
     // check pool NFTs
-    assertEq(nft.balanceOf(p_addr), 0, "post: pool NFTs");
-    assertEq(p.getTotalNftsForSale(), 0, "post: pool nfts for sale");
+    assertEq(jigzawNft.balanceOf(pool_addr), 0, "post: pool NFTs");
+    assertEq(pool.getTotalNftsForSale(), 0, "post: pool nfts for sale");
     // check pool funds
-    assertEq(p_addr.balance, q.inputValue - q.fee, "post: pool funds");
-    assertEq(p.getFunds(), q.inputValue - q.fee, "post: pool.getFunds");
+    assertEq(pool_addr.balance, q.inputValue - q.fee, "post: pool funds");
+    assertEq(pool.getFunds(), q.inputValue - q.fee, "post: poolotteryNft.getFunds");
 
     // check fee receiver funds
-    assertEq(nft_addr.balance, q.fee, "post: received fee");
+    assertEq(jigzawNft_addr.balance, q.fee, "post: received fee");
   }
 
   function test_Buy_Initial_BuyOne_InsufficientFunds() public {
-    BuyQuote memory q = p.getBuyQuote(1);
+    BuyQuote memory q = pool.getBuyQuote(1);
 
     wallet1.transfer(q.inputValue - 1);
     vm.prank(wallet1);
     vm.expectRevert(abi.encodeWithSelector(LibErrors.InsufficientSenderFunds.selector, wallet1, q.inputValue, wallet1.balance));
-    p.buy{value: wallet1.balance}(1);
+    pool.buy{value: wallet1.balance}(1);
   }
 
   function test_Buy_Initial_BuyOne_TooMuchFunds() public {
-    BuyQuote memory q = p.getBuyQuote(1);
+    BuyQuote memory q = pool.getBuyQuote(1);
 
     wallet1.transfer(q.inputValue + 1);
     vm.prank(wallet1);
-    p.buy{value: wallet1.balance}(1);
+    pool.buy{value: wallet1.balance}(1);
 
     // check caller funds to ensure extra got returned
     assertEq(wallet1.balance, 1);
@@ -157,19 +157,19 @@ contract MintSwapPoolTrading is MintSwapPoolTestBase {
     wallet1.transfer(1 ether);
     vm.prank(wallet1);
     vm.expectRevert(abi.encodeWithSelector(LibErrors.BadQuote.selector, wallet1, QuoteError.INSUFFICIENT_NFTS));
-    p.buy{value: wallet1.balance}(12);
+    pool.buy{value: wallet1.balance}(12);
   }
 
   function test_Buy_Initial_BuyNone() public {
     vm.prank(wallet1);
     vm.expectRevert(abi.encodeWithSelector(LibErrors.BadQuote.selector, wallet1, QuoteError.INVALID_NUMITEMS));
-    p.buy{value: wallet1.balance}(0);
+    pool.buy{value: wallet1.balance}(0);
   }
 
   function test_Buy_Initial_BuyCrazy_SpotPriceOverflow() public {
     vm.prank(wallet1);
     vm.expectRevert(abi.encodeWithSelector(LibErrors.BadQuote.selector, wallet1, QuoteError.SPOT_PRICE_OVERFLOW));
-    p.buy{value: wallet1.balance}(100);
+    pool.buy{value: wallet1.balance}(100);
   }
 
   // getSellQuote
@@ -177,7 +177,7 @@ contract MintSwapPoolTrading is MintSwapPoolTestBase {
   function test_GetSellQuote_SellOne() public {
     _buySomeNfts(1, 2 gwei);
 
-    SellQuote memory q = p.getSellQuote(1);
+    SellQuote memory q = pool.getSellQuote(1);
     assertEq(uint(q.error), uint(QuoteError.NONE), "error code");
     assertEq(q.newSpotPrice, 1 gwei, "new spot price");
 
@@ -191,7 +191,7 @@ contract MintSwapPoolTrading is MintSwapPoolTestBase {
   function test_GetSellQuote_SellAll() public {
     _buySomeNfts(11, 2048 gwei);
 
-    SellQuote memory q = p.getSellQuote(11);
+    SellQuote memory q = pool.getSellQuote(11);
     assertEq(uint(q.error), uint(QuoteError.NONE), "error code");
     assertEq(q.newSpotPrice, 1 gwei, "new spot price");
 
@@ -217,14 +217,14 @@ contract MintSwapPoolTrading is MintSwapPoolTestBase {
   function test_GetSellQuote_SellTooMuch() public {
     _buySomeNfts(1, 2 gwei);
 
-    SellQuote memory q = p.getSellQuote(2);
+    SellQuote memory q = pool.getSellQuote(2);
     assertEq(uint(q.error), uint(QuoteError.INSUFFICIENT_FUNDS), "error code");
   }
 
   function test_GetSellQuote_SellNone() public {
     _buySomeNfts(1, 2 gwei);
 
-    SellQuote memory q = p.getSellQuote(0);
+    SellQuote memory q = pool.getSellQuote(0);
     assertEq(uint(q.error), uint(QuoteError.INVALID_NUMITEMS), "error code");
   }
 
@@ -233,59 +233,59 @@ contract MintSwapPoolTrading is MintSwapPoolTestBase {
   function test_Sell_SellOne() public {
     _buySomeNfts(1, 2 gwei);
 
-    SellQuote memory q = p.getSellQuote(1);
+    SellQuote memory q = pool.getSellQuote(1);
 
     uint[] memory ids = new uint[](1);
     ids[0] = 10;
 
     vm.prank(wallet1);
-    p.sell(ids);
+    pool.sell(ids);
 
     // check caller funds
     assertEq(wallet1.balance, q.outputValue, "caller funds");
     // check caller nfts
-    assertEq(nft.balanceOf(wallet1), 0, "caller nfts");
-    assertEq(nft.tokenOfOwnerByIndex(wallet1, 0), 0, "token of owner at index 0");
+    assertEq(jigzawNft.balanceOf(wallet1), 0, "caller nfts");
+    assertEq(jigzawNft.tokenOfOwnerByIndex(wallet1, 0), 0, "token of owner at index 0");
 
     // check pool NFTs
-    assertEq(p.getTotalNftsForSale(), 11, "pool nfts for sale");
-    assertEq(nft.balanceOf(p_addr), 1, "pool nft balance");
-    assertEq(nft.tokenOfOwnerByIndex(p_addr, 0), 10, "token of pool owner at index 0");
+    assertEq(pool.getTotalNftsForSale(), 11, "pool nfts for sale");
+    assertEq(jigzawNft.balanceOf(pool_addr), 1, "pool nft balance");
+    assertEq(jigzawNft.tokenOfOwnerByIndex(pool_addr, 0), 10, "token of pool owner at index 0");
     // check pool funds
-    assertEq(p_addr.balance, 0, "pool funds");
-    assertEq(p.getFunds(), 0);
+    assertEq(pool_addr.balance, 0, "pool funds");
+    assertEq(pool.getFunds(), 0);
 
     // check fee receiver funds
-    assertEq(nft_addr.balance, q.fee, "received fee");
+    assertEq(jigzawNft_addr.balance, q.fee, "received fee");
   }
 
   function test_Sell_SellAll() public {
     _buySomeNfts(11, 2048 gwei);
 
-    SellQuote memory q = p.getSellQuote(11);
+    SellQuote memory q = pool.getSellQuote(11);
 
     uint[] memory ids = _getTokenIdArray(11, 10);
     vm.prank(wallet1);
-    p.sell(ids);
+    pool.sell(ids);
 
     // check caller funds
     assertEq(wallet1.balance, q.outputValue, "caller funds");
     // check caller nfts
-    assertEq(nft.balanceOf(wallet1), 0, "caller nfts");
-    assertEq(nft.tokenOfOwnerByIndex(wallet1, 0), 0, "token of owner at index 0");
+    assertEq(jigzawNft.balanceOf(wallet1), 0, "caller nfts");
+    assertEq(jigzawNft.tokenOfOwnerByIndex(wallet1, 0), 0, "token of owner at index 0");
 
     // check pool NFTs
-    assertEq(p.getTotalNftsForSale(), 11, "pool nfts for sale");
-    assertEq(nft.balanceOf(p_addr), 11, "pool nft balance");
-    assertEq(nft.tokenOfOwnerByIndex(p_addr, 0), 10, "token of pool owner at index 0");
-    assertEq(nft.tokenOfOwnerByIndex(p_addr, 1), 11, "token of pool owner at index 1");
-    assertEq(nft.tokenOfOwnerByIndex(p_addr, 10), 20, "token of pool owner at index 10");
+    assertEq(pool.getTotalNftsForSale(), 11, "pool nfts for sale");
+    assertEq(jigzawNft.balanceOf(pool_addr), 11, "pool nft balance");
+    assertEq(jigzawNft.tokenOfOwnerByIndex(pool_addr, 0), 10, "token of pool owner at index 0");
+    assertEq(jigzawNft.tokenOfOwnerByIndex(pool_addr, 1), 11, "token of pool owner at index 1");
+    assertEq(jigzawNft.tokenOfOwnerByIndex(pool_addr, 10), 20, "token of pool owner at index 10");
     // check pool funds
-    assertEq(p_addr.balance, 0, "pool funds");
-    assertEq(p.getFunds(), 0);
+    assertEq(pool_addr.balance, 0, "pool funds");
+    assertEq(pool.getFunds(), 0);
     
     // check fee receiver funds
-    assertEq(nft_addr.balance, q.fee, "received fee");
+    assertEq(jigzawNft_addr.balance, q.fee, "received fee");
   }
 
   function test_Sell_InsufficientNfts() public {
@@ -294,13 +294,13 @@ contract MintSwapPoolTrading is MintSwapPoolTestBase {
     // get rid of all but 1
     vm.prank(wallet1);
     uint[] memory ids = _getTokenIdArray(1, 10);
-    nft.batchTransferIds(wallet1, wallet2, ids);
+    jigzawNft.batchTransferIds(wallet1, wallet2, ids);
 
     // try to sell 2
     ids = _getTokenIdArray(2, 10);
     vm.prank(wallet1);
     vm.expectRevert(abi.encodeWithSelector(LibErrors.InsufficientSenderNfts.selector, wallet1, 2, 1));
-    p.sell(ids);
+    pool.sell(ids);
   }
 
   function test_Sell_TooManyNfts() public {
@@ -310,7 +310,7 @@ contract MintSwapPoolTrading is MintSwapPoolTestBase {
     uint[] memory ids = _getTokenIdArray(3, 10);
     vm.prank(wallet1);
     vm.expectRevert(abi.encodeWithSelector(LibErrors.BadQuote.selector, wallet1, QuoteError.INSUFFICIENT_FUNDS));
-    p.sell(ids);
+    pool.sell(ids);
   }
 
   function test_Sell_None() public {
@@ -320,7 +320,7 @@ contract MintSwapPoolTrading is MintSwapPoolTestBase {
     uint[] memory ids = new uint[](0);
     vm.prank(wallet1);
     vm.expectRevert(abi.encodeWithSelector(LibErrors.BadQuote.selector, wallet1, QuoteError.INVALID_NUMITEMS));
-    p.sell(ids);
+    pool.sell(ids);
   }
 
   function test_Sell_OutOfRangeIds() public {
@@ -331,7 +331,7 @@ contract MintSwapPoolTrading is MintSwapPoolTestBase {
     uint[] memory ids = _getTokenIdArray(2, 20);
     vm.prank(wallet1);
     vm.expectRevert(abi.encodeWithSelector(LibErrors.TokenIdOutOfRange.selector, wallet1, 21));
-    p.sell(ids);
+    pool.sell(ids);
   }
 
   function test_Sell_SenderIsNotNftOwner() public {
@@ -340,14 +340,14 @@ contract MintSwapPoolTrading is MintSwapPoolTestBase {
 
     // send #10 to wallet2
     vm.prank(wallet1);
-    nft.safeTransferFrom(wallet1, wallet2, 10);
+    jigzawNft.safeTransferFrom(wallet1, wallet2, 10);
 
     // at this point, wallet1 has #11, wallet2 has #10
 
     uint[] memory ids = _getTokenIdArray(1, 10);
     vm.prank(wallet1);
     vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721InvalidOwner.selector, wallet1, 10));
-    p.sell(ids);
+    pool.sell(ids);
   }
 
   // mint-on-demand
@@ -359,70 +359,70 @@ contract MintSwapPoolTrading is MintSwapPoolTestBase {
     _sellSomeNfts(ids, 1 gwei);
 
     // check NFTs minted
-    assertEq(nft.totalSupply(), 2, "nft supply");
-    assertEq(nft.tokenByIndex(0), 10, "token at index 0");
-    assertEq(nft.tokenByIndex(1), 11, "token at index 1");
+    assertEq(jigzawNft.totalSupply(), 2, "nft supply");
+    assertEq(jigzawNft.tokenByIndex(0), 10, "token at index 0");
+    assertEq(jigzawNft.tokenByIndex(1), 11, "token at index 1");
 
     // check caller nfts
-    assertEq(nft.balanceOf(wallet1), 0);
+    assertEq(jigzawNft.balanceOf(wallet1), 0);
 
     // check pool NFTs
-    assertEq(nft.balanceOf(p_addr), 2);
-    assertEq(p.getTotalNftsForSale(), 11);
-    assertEq(nft.tokenOfOwnerByIndex(p_addr, 0), 10, "token of pool owner at index 0");
-    assertEq(nft.tokenOfOwnerByIndex(p_addr, 1), 11, "token of pool owner at index 0");
+    assertEq(jigzawNft.balanceOf(pool_addr), 2);
+    assertEq(pool.getTotalNftsForSale(), 11);
+    assertEq(jigzawNft.tokenOfOwnerByIndex(pool_addr, 0), 10, "token of pool owner at index 0");
+    assertEq(jigzawNft.tokenOfOwnerByIndex(pool_addr, 1), 11, "token of pool owner at index 0");
 
     // buy some more
     _buySomeNfts(4, 16 gwei);
 
     // check NFTs minted
-    assertEq(nft.totalSupply(), 4, "nft supply");
-    assertEq(nft.tokenByIndex(0), 10, "token at index 0");
-    assertEq(nft.tokenByIndex(1), 11, "token at index 1");
-    assertEq(nft.tokenByIndex(2), 12, "token at index 2");
-    assertEq(nft.tokenByIndex(3), 13, "token at index 3");
+    assertEq(jigzawNft.totalSupply(), 4, "nft supply");
+    assertEq(jigzawNft.tokenByIndex(0), 10, "token at index 0");
+    assertEq(jigzawNft.tokenByIndex(1), 11, "token at index 1");
+    assertEq(jigzawNft.tokenByIndex(2), 12, "token at index 2");
+    assertEq(jigzawNft.tokenByIndex(3), 13, "token at index 3");
 
     // check caller nfts
-    assertEq(nft.balanceOf(wallet1), 4);
+    assertEq(jigzawNft.balanceOf(wallet1), 4);
     // reverse order here because it's FIFO
-    assertEq(nft.tokenOfOwnerByIndex(wallet1, 0), 11, "token of owner at index 0");
-    assertEq(nft.tokenOfOwnerByIndex(wallet1, 1), 10, "token of owner at index 1");
-    assertEq(nft.tokenOfOwnerByIndex(wallet1, 2), 12, "token of owner at index 2");
-    assertEq(nft.tokenOfOwnerByIndex(wallet1, 3), 13, "token of owner at index 3");
+    assertEq(jigzawNft.tokenOfOwnerByIndex(wallet1, 0), 11, "token of owner at index 0");
+    assertEq(jigzawNft.tokenOfOwnerByIndex(wallet1, 1), 10, "token of owner at index 1");
+    assertEq(jigzawNft.tokenOfOwnerByIndex(wallet1, 2), 12, "token of owner at index 2");
+    assertEq(jigzawNft.tokenOfOwnerByIndex(wallet1, 3), 13, "token of owner at index 3");
 
     // check pool NFTs
-    assertEq(nft.balanceOf(p_addr), 0);
-    assertEq(p.getTotalNftsForSale(), 7 /* 11 - 4 */);
+    assertEq(jigzawNft.balanceOf(pool_addr), 0);
+    assertEq(pool.getTotalNftsForSale(), 7 /* 11 - 4 */);
   }
 
   // helper methods
 
   function _buySomeNfts(uint numItems, uint expectedNewSpotPrice) private {
-    BuyQuote memory q = p.getBuyQuote(numItems);
+    BuyQuote memory q = pool.getBuyQuote(numItems);
 
     wallet1.transfer(q.inputValue);
 
     vm.prank(wallet1);
-    p.buy{value: wallet1.balance}(numItems);
+    pool.buy{value: wallet1.balance}(numItems);
 
-    (, PoolStatus memory s) = p.getCurveStatus();
+    (, PoolStatus memory s) = pool.getCurveStatus();
     assertEq(s.priceWei, expectedNewSpotPrice, "expected spot price");
 
     // nullify received fees (to make test assertions easier later on)
-    vm.prank(nft_addr);
-    payable(address(0)).transfer(nft_addr.balance);
+    vm.prank(jigzawNft_addr);
+    payable(address(0)).transfer(jigzawNft_addr.balance);
   }
 
   function _sellSomeNfts(uint[] memory ids, uint expectedNewSpotPrice) private {
     vm.prank(wallet1);
-    p.sell(ids);
+    pool.sell(ids);
 
-    (, PoolStatus memory s) = p.getCurveStatus();
+    (, PoolStatus memory s) = pool.getCurveStatus();
     assertEq(s.priceWei, expectedNewSpotPrice, "expected spot price");
 
     // nullify received fees (to make test assertions easier later on)
-    vm.prank(nft_addr);
-    payable(address(0)).transfer(nft_addr.balance);
+    vm.prank(jigzawNft_addr);
+    payable(address(0)).transfer(jigzawNft_addr.balance);
 
     // nullify received funds (to make test assertions easier later on)
     vm.prank(wallet1);

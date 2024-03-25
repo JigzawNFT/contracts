@@ -11,26 +11,26 @@ contract JigzawNftSetDefaultImage is JigzawNftTestBase {
     super.setUp();
 
     vm.prank(owner1);
-    t.setLotteryTicketNFT(address(l));
+    jigzawNft.setLotteryTicketNFT(address(lotteryNft_addr));
   }
 
   function test_SetDefaultImageWhenOwner_Succeeds() public {
     vm.prank(owner1);
-    t.setDefaultImage("newImage");
-    assertEq(t.defaultImage(), "newImage");
+    jigzawNft.setDefaultImage("newImage");
+    assertEq(jigzawNft.defaultImage(), "newImage");
   }
 
   function test_SetDefaultImageWhenOwner_EmitsEvent() public {
     vm.prank(wallet1);
-    t.mint(1, "uri", _computeMinterSig(
+    jigzawNft.mint(1, "uri", _computeMinterSig(
       abi.encodePacked(wallet1, uint256(1), "uri"), 
       block.timestamp + 10 seconds
     ));
 
     vm.recordLogs();
 
-    vm.prank(t.owner());
-    t.setDefaultImage("ten");
+    vm.prank(jigzawNft.owner());
+    jigzawNft.setDefaultImage("ten");
 
     Vm.Log[] memory entries = vm.getRecordedLogs();
     assertEq(entries.length, 1, "Invalid entry count");
@@ -48,15 +48,15 @@ contract JigzawNftSetDefaultImage is JigzawNftTestBase {
   function test_SetDefaultImageWhenNotOwner_Fails() public {
     vm.prank(minter1);
     vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, minter1));
-    t.setDefaultImage("newImage");
+    jigzawNft.setDefaultImage("newImage");
 
     vm.prank(revealer1);
     vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, revealer1));
-    t.setDefaultImage("newImage");
+    jigzawNft.setDefaultImage("newImage");
 
     address random = address(0x8876);
     vm.prank(random);
     vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, random));
-    t.setDefaultImage("newImage");
+    jigzawNft.setDefaultImage("newImage");
   }
 }

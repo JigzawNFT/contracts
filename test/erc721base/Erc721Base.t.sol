@@ -7,15 +7,14 @@ import { IERC721 } from "openzeppelin/interfaces/IERC721.sol";
 import { IERC721Metadata } from "openzeppelin/interfaces/IERC721Metadata.sol";
 import { IERC721Enumerable } from "openzeppelin/interfaces/IERC721Enumerable.sol";
 import { IERC721Errors } from "src/IERC721Errors.sol";
-import { JigzawNftTestBase, MockERC721, GoodERC721Receiver, BadERC721Receiver } from "./JigzawNftTestBase.sol";
+import { TestBase01, MockERC721, GoodERC721Receiver, BadERC721Receiver} from "../utils/TestBase01.sol";
 import { Bytes32AddressLib } from "solmate/utils/Bytes32AddressLib.sol";
 
 
-contract JigzawNftERC721Base is JigzawNftTestBase {
+contract Erc721Base is TestBase01 {
   MockERC721 b;
 
-  function setUp() public override {
-    super.setUp();
+  function setUp() public {
     b = new MockERC721("Test", "TEST");
   }
 
@@ -582,7 +581,7 @@ contract JigzawNftERC721Base is JigzawNftTestBase {
 
     /*
     The reverse order is due to the fact that the last token is 
-    moved to the position of the token being removed from the list.
+    moved to the position of the token being removed from the lisjigzawNft.
     */
     assertEq(b.tokenOfOwnerByIndex(wallet1, 0), 4);
     assertEq(b.tokenOfOwnerByIndex(wallet1, 1), 3);
@@ -810,7 +809,7 @@ contract JigzawNftERC721Base is JigzawNftTestBase {
 
     /**
     Batch transfer range counts tokens from the end of the list backwards so that the 
-    list order is preserved, i.e. it transfers the most recently received tokens first.
+    list order is preserved, i.e. it transfers the most recently received tokens firsjigzawNft.
     */
     assertEq(b.tokenOfOwnerByIndex(wallet1, 0), 1);
     assertEq(b.tokenOfOwnerByIndex(wallet1, 1), 2);

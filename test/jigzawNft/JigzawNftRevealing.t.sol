@@ -12,13 +12,13 @@ contract JigzawNftRevealing is JigzawNftTestBase {
     super.setUp();
 
     vm.prank(owner1);
-    t.setLotteryTicketNFT(address(l));
+    jigzawNft.setLotteryTicketNFT(address(lotteryNft_addr));
 
     uint id = 1;
     string memory uri = "";
 
     vm.prank(wallet1);
-    t.mint(id, uri, _computeMinterSig(
+    jigzawNft.mint(id, uri, _computeMinterSig(
       abi.encodePacked(wallet1, id, uri), 
       block.timestamp + 10 seconds
     ));
@@ -31,17 +31,17 @@ contract JigzawNftRevealing is JigzawNftTestBase {
     );
 
     vm.prank(wallet1);
-    t.reveal(1, "uri1", sig);
+    jigzawNft.reveal(1, "uri1", sig);
 
-    assertEq(t.tokenURI(1), "uri1");
-    assertEq(t.revealed(1), true);
+    assertEq(jigzawNft.tokenURI(1), "uri1");
+    assertEq(jigzawNft.revealed(1), true);
   }
 
   function test_RevealWithRevealerAuthorisation_EmitsEvent() public {
     vm.recordLogs();
 
     vm.prank(wallet1);
-    t.reveal(1, "uri1", _computeRevealerSig(
+    jigzawNft.reveal(1, "uri1", _computeRevealerSig(
       abi.encodePacked(wallet1, uint(1), "uri1"),
       block.timestamp + 10 seconds
     ));
@@ -65,10 +65,10 @@ contract JigzawNftRevealing is JigzawNftTestBase {
     );
 
     vm.prank(wallet1);
-    t.reveal(1, "uri1", sig);
+    jigzawNft.reveal(1, "uri1", sig);
 
-    assertEq(t.tokenURI(1), "uri1");
-    assertEq(t.revealed(1), true);
+    assertEq(jigzawNft.tokenURI(1), "uri1");
+    assertEq(jigzawNft.revealed(1), true);
   }
 
   function test_RevealWithNotRevealerAuthorisation_Fails() public {
@@ -79,7 +79,7 @@ contract JigzawNftRevealing is JigzawNftTestBase {
 
     vm.prank(wallet1);
     vm.expectRevert(abi.encodeWithSelector(LibErrors.SignatureInvalid.selector, wallet1));
-    t.reveal(1, "uri1", sigOwner);
+    jigzawNft.reveal(1, "uri1", sigOwner);
 
     Auth.Signature memory sigMinter = _computeMinterSig(
       abi.encodePacked(uint(1), "uri1"),
@@ -88,7 +88,7 @@ contract JigzawNftRevealing is JigzawNftTestBase {
 
     vm.prank(wallet1);
     vm.expectRevert(abi.encodeWithSelector(LibErrors.SignatureInvalid.selector, wallet1));
-    t.reveal(1, "uri1", sigMinter);
+    jigzawNft.reveal(1, "uri1", sigMinter);
   }
 
   function test_RevealWithExpiredSignature_Fails() public {
@@ -99,7 +99,7 @@ contract JigzawNftRevealing is JigzawNftTestBase {
 
     vm.prank(wallet1);
     vm.expectRevert(abi.encodeWithSelector(LibErrors.SignatureExpired.selector, wallet1));
-    t.reveal(uint(1), "uri", sig);
+    jigzawNft.reveal(uint(1), "uri", sig);
   }
 
   function test_RevealWhenSignatureAlreadyUsed_Fails() public {
@@ -109,23 +109,23 @@ contract JigzawNftRevealing is JigzawNftTestBase {
     );
 
     vm.prank(wallet1);
-    t.reveal(uint(1), "uri", sig);
+    jigzawNft.reveal(uint(1), "uri", sig);
 
     vm.prank(wallet1);
     vm.expectRevert(abi.encodeWithSelector(LibErrors.SignatureAlreadyUsed.selector, wallet1));
-    t.reveal(uint(1), "uri", sig);
+    jigzawNft.reveal(uint(1), "uri", sig);
   }
 
   function test_RevealWhenAlreadyRevealed_Fails() public {
     vm.prank(wallet1);
-    t.reveal(uint(1), "uri", _computeRevealerSig(
+    jigzawNft.reveal(uint(1), "uri", _computeRevealerSig(
       abi.encodePacked(wallet1, uint(1), "uri"),
       block.timestamp + 10 seconds
     ));
 
     vm.prank(wallet1);
     vm.expectRevert(abi.encodeWithSelector(LibErrors.AlreadyRevealed.selector, 1));
-    t.reveal(uint(1), "uri", _computeRevealerSig(
+    jigzawNft.reveal(uint(1), "uri", _computeRevealerSig(
       abi.encodePacked(wallet1, uint(1), "uri"),
       block.timestamp + 20 seconds
     ));
@@ -134,7 +134,7 @@ contract JigzawNftRevealing is JigzawNftTestBase {
   function test_RevealNonMintedToken_Fails() public {
     vm.prank(wallet1);
     vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721TokenNotMinted.selector, 2));
-    t.reveal(uint(2), "uri", _computeRevealerSig(
+    jigzawNft.reveal(uint(2), "uri", _computeRevealerSig(
       abi.encodePacked(wallet1, uint(2), "uri"),
       block.timestamp + 10 seconds
     ));

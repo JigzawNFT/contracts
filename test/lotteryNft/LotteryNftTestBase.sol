@@ -5,26 +5,20 @@ import { Base64 } from "openzeppelin/utils/Base64.sol";
 import { Strings } from "openzeppelin/utils/Strings.sol";
 import { JigzawNFT } from "src/JigzawNFT.sol";  
 import { LotteryNFT } from "src/LotteryNFT.sol";
+import { ERC721, IERC721TokenReceiver } from "src/ERC721.sol";
 import { Auth } from "src/Auth.sol";
 import { TestBase01 } from "test/utils/TestBase01.sol";
 
-abstract contract JigzawNftTestBase is TestBase01 {  
+abstract contract LotteryNftTestBase is TestBase01 {  
   using Strings for uint256;
 
-  uint pool1_key = 0x123456;
-  address public pool1 = vm.addr(pool1_key);
-
-  JigzawNFT public jigzawNft;
   LotteryNFT public lotteryNft;
-
-  address jigzawNft_addr;
   address lotteryNft_addr;
 
-  function setUp() virtual public {
-    jigzawNft = new JigzawNFT(_getDefaultJigzawNftConfig());
-    jigzawNft_addr = address(jigzawNft);
+  address payable jigzawNft_addr = payable(vm.addr(0x123456));
 
-    lotteryNft = new LotteryNFT(_getDefaultLotteryNftConfig(jigzawNft));
+  function setUp() virtual public {
+    lotteryNft = new LotteryNFT(_getDefaultLotteryNftConfig(JigzawNFT(jigzawNft_addr)));
     lotteryNft_addr = address(lotteryNft);
   }
 
@@ -34,9 +28,9 @@ abstract contract JigzawNftTestBase is TestBase01 {
     string memory json = string(
       abi.encodePacked(
         '{',
-            '"name": "Unrevealed tile",',
-            '"description": "An unrevealed Jigzaw tile - see https://jigzaw.xyz for more info.",',
-            '"image": "', jigzawNft.defaultImage(), '"',
+            '"name": "Lottery ticket",',
+            '"description": "A lottery ticket for the Jigzaw NFT collection - see https://jigzaw.xyz for more info.",',
+            '"image": "', lotteryNft.defaultImage(), '"',
         '}'
       ) 
     );
@@ -46,4 +40,5 @@ abstract contract JigzawNftTestBase is TestBase01 {
 
   function testJigzawNftTestBase_ExcludeFromCoverage() public {}  
 }
+
 
