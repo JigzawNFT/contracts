@@ -76,6 +76,34 @@ contract JigzawNftMintingByMinter is JigzawNftTestBase {
     assertEq(tokenId, 1, "Invalid token id");
   }
 
+  function test_MintWithMinterAuthorisation_AwardsLotteryTickets() public {
+    uint id = 1;
+    string memory uri = "uri";
+
+    vm.prank(wallet1);
+    t.mint(id, uri, _computeMinterSig(
+      abi.encodePacked(wallet1, id, uri), 
+      block.timestamp + 10 seconds
+    ));
+
+    vm.prank(wallet1);
+    t.mint(id + 1, uri, _computeMinterSig(
+      abi.encodePacked(wallet1, id + 1, uri), 
+      block.timestamp + 10 seconds
+    ));
+
+    vm.prank(wallet2);
+    t.mint(id + 2, uri, _computeMinterSig(
+      abi.encodePacked(wallet2, id + 2, uri), 
+      block.timestamp + 10 seconds
+    ));
+
+
+    // 3 per mint
+    assertEq(l.balanceOf(wallet1), 6); 
+    assertEq(l.balanceOf(wallet2), 3);
+  }
+
   function test_MintWithNotMinterAuthorisation_Fails() public {
     uint id = 1;
     string memory uri = "uri";

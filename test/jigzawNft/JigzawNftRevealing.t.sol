@@ -58,6 +58,19 @@ contract JigzawNftRevealing is JigzawNftTestBase {
     assertEq(tokenId, 1, "Invalid token id");
   }
 
+  function test_RevealWithRevealerAuthorisation_AwardsLotteryTickets() public {
+    Auth.Signature memory sig = _computeRevealerSig(
+      abi.encodePacked(wallet1, uint(1), "uri1"),
+      block.timestamp + 10 seconds
+    );
+
+    vm.prank(wallet1);
+    t.reveal(1, "uri1", sig);
+
+    assertEq(t.tokenURI(1), "uri1");
+    assertEq(t.revealed(1), true);
+  }
+
   function test_RevealWithNotRevealerAuthorisation_Fails() public {
     Auth.Signature memory sigOwner = _computeOwnerSig(
       abi.encodePacked(uint(1), "uri1"),
