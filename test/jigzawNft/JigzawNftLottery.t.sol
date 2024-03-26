@@ -39,6 +39,8 @@ contract JigzawNftLottery is JigzawNftTestBase {
   }
 
   function test_DrawLottery_WhenNotYetReady_Fails() public {
+    assertEq(jigzawNft.canDrawLottery(), false, "canDrawLottery");
+    
     vm.prank(owner1);
     vm.expectRevert(LibErrors.LotteryCannotBeDrawnYet.selector);
     uint[] memory winners = new uint[](0);
@@ -47,6 +49,9 @@ contract JigzawNftLottery is JigzawNftTestBase {
 
   function test_DrawLottery_WhenTileRevealThresholdReached_Succeeds() public {
     _mintAndRevealTiles();
+
+    assertEq(jigzawNft.canDrawLottery(), true, "canDrawLottery");
+
     vm.prank(owner1);
     uint[] memory winners = new uint[](0);
     jigzawNft.drawLottery(winners);
@@ -54,6 +59,9 @@ contract JigzawNftLottery is JigzawNftTestBase {
 
   function test_DrawLottery_WhenDeadlinePassed_Succeeds() public {
     vm.warp(block.timestamp + 11);
+
+    assertEq(jigzawNft.canDrawLottery(), true, "canDrawLottery");
+
     vm.prank(owner1);
     uint[] memory winners = new uint[](0);
     jigzawNft.drawLottery(winners);
@@ -66,6 +74,8 @@ contract JigzawNftLottery is JigzawNftTestBase {
 
     vm.prank(owner1);
     jigzawNft.drawLottery(winners);
+
+    assertEq(jigzawNft.canDrawLottery(), false, "canDrawLottery");
 
     vm.prank(owner1);
     vm.expectRevert(LibErrors.LotteryAlreadyDrawn.selector);

@@ -345,6 +345,13 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, IJigzawNFT, Ownable {
   }
 
   /**
+   * @dev Check if the lottery can be drawn.
+   */
+  function canDrawLottery() external view returns (bool) {
+    return !lottery.drawn && (block.timestamp >= lottery.deadline || numRevealed >= lottery.tileRevealThreshold);
+  }
+
+  /**
    * @dev Draw the lottery.
    *
    * @param _winners The winning ticket numbers.

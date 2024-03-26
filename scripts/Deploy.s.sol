@@ -48,7 +48,7 @@ contract Deploy is Script {
       devRoyaltyFeeBips: 500, /* 500 bips = 5% */
       defaultImage: DEFAULT_TILE_IMG,
       lotteryPotFeeBips: 500, /* 500 bips = 5% */
-      lotteryDeadline: block.timestamp + 180 days,
+      lotteryDeadline: 1735689600, /* 2025-01-01 00:00:00 - keep it fixed so that CREATE2 returns same address each time */
       lotteryRevealThreshold: 9261 /* level 1 + level 2 + level 3 tiles */
     });
 
