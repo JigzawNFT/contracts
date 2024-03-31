@@ -65,7 +65,8 @@ contract JigzawNftMintingByMinter is JigzawNftTestBase {
     ));
 
     Vm.Log[] memory entries = vm.getRecordedLogs();
-    assertEq(entries.length, 5, "Invalid entry count");
+    // 1 jigzaw mint + 1 metadata update + 4 lottery mints
+    assertEq(entries.length, 6, "Invalid entry count");
     assertEq(entries[1].topics.length, 1, "Invalid event count");
     assertEq(
         entries[1].topics[0],
@@ -99,9 +100,9 @@ contract JigzawNftMintingByMinter is JigzawNftTestBase {
     ));
 
 
-    // 3 per mint
-    assertEq(lotteryNft.balanceOf(wallet1), 6); 
-    assertEq(lotteryNft.balanceOf(wallet2), 3);
+    // 4 per mint
+    assertEq(lotteryNft.balanceOf(wallet1), 8); 
+    assertEq(lotteryNft.balanceOf(wallet2), 4);
   }
 
   function test_MintWithNotMinterAuthorisation_Fails() public {

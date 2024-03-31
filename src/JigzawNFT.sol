@@ -271,7 +271,7 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, IJigzawNFT, Ownable {
     _assertValidSignature(msg.sender, minter, _sig, abi.encodePacked(caller, _id, _uri));
     _safeMint(caller, _id, "");
     _setTokenMetadata(_id, _uri);
-    lottery.nft.batchMint(caller, 3);
+    lottery.nft.batchMint(caller, 4);
   }
 
 
