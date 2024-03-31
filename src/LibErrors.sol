@@ -40,11 +40,6 @@ library LibErrors {
   error InsufficientSenderNfts(address sender, uint balanceRequired, uint balanceAvailable);
 
   /**
-  * @dev The token id is out of range.
-   */
-  error TokenIdOutOfRange(address caller, uint tokenId);
-
-  /**
    * @dev Invalid batch operation array lengths.
    */
   error InvalidBatchLengths(uint length1, uint length2);

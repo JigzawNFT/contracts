@@ -167,17 +167,7 @@ contract MintSwapPool is IERC721TokenReceiver, ExponentialCurve {
     if (tokenIds.length > tokenBal) {
       revert LibErrors.InsufficientSenderNfts(sender, tokenIds.length, tokenBal);
     }
-
-    // for each token
-    for (uint i = 0; i < tokenIds.length; i++) {
-      uint id = tokenIds[i];
-      
-      // must be within supported range
-      if (id < curve.mintStartId || id > curve.mintEndId) {
-        revert LibErrors.TokenIdOutOfRange(sender, id);
-      }
-    }
-
+    
     // update status
     status.priceWei = quote.newSpotPrice;
 

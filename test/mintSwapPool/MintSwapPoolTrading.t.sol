@@ -323,15 +323,48 @@ contract MintSwapPoolTrading is MintSwapPoolTestBase {
     pool.sell(ids);
   }
 
-  function test_Sell_OutOfRangeIds() public {
-    // will buy with ids: 10, 11
+  function test_Sell_OutOfRangeIds_IsOk() public {
+    // will buy with ids: 10, 11 - this will ensure pool has funds
     _buySomeNfts(2, 4 gwei);
+
+    vm.startPrank(wallet1);
+
+    // mint ids 20, 21
+    jigzawNft.mint(20, "uri", _computeMinterSig(
+      abi.encodePacked(wallet1, uint256(20), "uri"), 
+      block.timestamp + 10 seconds
+    ));
+    jigzawNft.mint(21, "uri", _computeMinterSig(
+      abi.encodePacked(wallet1, uint256(21), "uri"), 
+      block.timestamp + 10 seconds
+    ));
+
+    SellQuote memory q = pool.getSellQuote(2);
 
     // try to sell with ids: 20, 21
     uint[] memory ids = _getTokenIdArray(2, 20);
-    vm.prank(wallet1);
-    vm.expectRevert(abi.encodeWithSelector(LibErrors.TokenIdOutOfRange.selector, wallet1, 21));
     pool.sell(ids);
+
+    vm.stopPrank();
+
+    // check caller funds
+    assertEq(wallet1.balance, q.outputValue, "caller funds");
+    // check caller nfts
+    assertEq(jigzawNft.balanceOf(wallet1), 2, "caller nfts");
+    assertEq(jigzawNft.tokenOfOwnerByIndex(wallet1, 0), 10, "token of owner at index 0");
+    assertEq(jigzawNft.tokenOfOwnerByIndex(wallet1, 1), 11, "token of owner at index 1");
+
+    // check pool NFTs
+    assertEq(pool.getTotalNftsForSale(), 11, "pool nfts for sale");
+    assertEq(jigzawNft.balanceOf(pool_addr), 2, "pool nft balance");
+    assertEq(jigzawNft.tokenOfOwnerByIndex(pool_addr, 0), 20, "token of pool owner at index 0");
+    assertEq(jigzawNft.tokenOfOwnerByIndex(pool_addr, 1), 21, "token of pool owner at index 1");
+    // check pool funds
+    assertEq(pool_addr.balance, 0, "pool funds");
+    assertEq(pool.getFunds(), 0);
+    
+    // check fee receiver funds
+    assertEq(jigzawNft_addr.balance, q.fee, "received fee");
   }
 
   function test_Sell_SenderIsNotNftOwner() public {
