@@ -77,7 +77,7 @@ contract JigzawNftMintingByMinter is JigzawNftTestBase {
     assertEq(tokenId, 1, "Invalid token id");
   }
 
-  function test_MintWithMinterAuthorisation_WhenDifferentCaller_Succeeds() public {
+  function test_MintWithMinterAuthorisation_WhenCallerNotOwner_Succeeds() public {
     uint id = 2;
     string memory uri = "uri2";
 
