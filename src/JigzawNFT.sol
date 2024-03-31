@@ -197,14 +197,13 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, IJigzawNFT, Ownable {
   /**
    * @dev Reveal tokens.
    *
+   * @param _wallet the wallet to credit lottery tokens to.
    * @param _id The token id.
    * @param _uri The new token URI to set.
    * @param _sig The revealer authorisation signature.
    */
-  function reveal(uint256 _id, string calldata _uri, Auth.Signature calldata _sig) external {
-    address caller = msg.sender;
-
-    _assertValidSignature(caller, revealer, _sig, abi.encodePacked(caller, _id, _uri));
+  function reveal(address _wallet, uint256 _id, string calldata _uri, Auth.Signature calldata _sig) external {
+    _assertValidSignature(msg.sender, revealer, _sig, abi.encodePacked(_wallet, _id, _uri));
 
     _requireOwned(_id);
 
@@ -217,7 +216,7 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, IJigzawNFT, Ownable {
 
     _setTokenMetadata(_id, _uri);
 
-    lottery.nft.batchMint(caller, 1);
+    lottery.nft.batchMint(_wallet, 1);
   }
 
   function _setTokenMetadata(uint256 _id, string memory _uri) internal {
@@ -262,16 +261,16 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, IJigzawNFT, Ownable {
   /**
    * @dev Mint a token, authorized by the minter.
    *
+   * @param _wallet the wallet that will own the token as well as receive lottery token credits.
    * @param _id token id to mint.
    * @param _uri token uri.
    * @param _sig minter authorisation signature.
    */
-  function mint(uint256 _id, string calldata _uri, Signature calldata _sig) external {
-    address caller = msg.sender;
-    _assertValidSignature(msg.sender, minter, _sig, abi.encodePacked(caller, _id, _uri));
-    _safeMint(caller, _id, "");
+  function mint(address _wallet, uint256 _id, string calldata _uri, Signature calldata _sig) external {
+    _assertValidSignature(msg.sender, minter, _sig, abi.encodePacked(_wallet, _id, _uri));
+    _safeMint(_wallet, _id, "");
     _setTokenMetadata(_id, _uri);
-    lottery.nft.batchMint(caller, 4);
+    lottery.nft.batchMint(_wallet, 4);
   }
 
 

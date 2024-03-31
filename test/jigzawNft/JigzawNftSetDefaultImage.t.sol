@@ -22,7 +22,7 @@ contract JigzawNftSetDefaultImage is JigzawNftTestBase {
 
   function test_SetDefaultImageWhenOwner_EmitsEvent() public {
     vm.prank(wallet1);
-    jigzawNft.mint(1, "uri", _computeMinterSig(
+    jigzawNft.mint(wallet1, 1, "uri", _computeMinterSig(
       abi.encodePacked(wallet1, uint256(1), "uri"), 
       block.timestamp + 10 seconds
     ));

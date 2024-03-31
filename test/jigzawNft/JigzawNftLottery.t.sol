@@ -238,7 +238,7 @@ contract JigzawNftLottery is JigzawNftTestBase {
     vm.startPrank(wallet1);
 
     for (uint i = 1; i <= 10; i++) {
-      jigzawNft.reveal(i, "uri1", _computeRevealerSig(
+      jigzawNft.reveal(wallet1, i, "uri1", _computeRevealerSig(
         abi.encodePacked(wallet1, i, "uri1"),
         block.timestamp + 10 seconds
       ));

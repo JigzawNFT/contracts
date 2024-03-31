@@ -9,7 +9,7 @@ import { PoolCurve, PoolStatus } from "src/Common.sol";
 contract MintSwapPoolNftReceiver is MintSwapPoolTestBase {
   function test_MintedNfts_AreAccepted_Fuzz(uint id) public {
     vm.prank(pool_addr);
-    jigzawNft.mint(id, "", _computeMinterSig(
+    jigzawNft.mint(pool_addr, id, "", _computeMinterSig(
       abi.encodePacked(pool_addr, id, ""), 
       block.timestamp + 10 seconds
     ));
@@ -20,7 +20,7 @@ contract MintSwapPoolNftReceiver is MintSwapPoolTestBase {
   function test_TransferredNfts_AreAccepted_Fuzz(uint id) public {
     vm.startPrank(wallet1);
 
-    jigzawNft.mint(id, "", _computeMinterSig(
+    jigzawNft.mint(wallet1, id, "", _computeMinterSig(
       abi.encodePacked(wallet1, uint256(id), ""), 
       block.timestamp + 10 seconds
     ));

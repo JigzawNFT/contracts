@@ -18,7 +18,7 @@ contract JigzawNftTokenUri is JigzawNftTestBase {
     string memory uri = "";
 
     vm.prank(wallet1);
-    jigzawNft.mint(id, uri, _computeMinterSig(
+    jigzawNft.mint(wallet1, id, uri, _computeMinterSig(
       abi.encodePacked(wallet1, id, uri), 
       block.timestamp + 10 seconds
     ));
@@ -35,7 +35,7 @@ contract JigzawNftTokenUri is JigzawNftTestBase {
     );
 
     vm.prank(wallet1);
-    jigzawNft.reveal(uint(1), "uri", sig);
+    jigzawNft.reveal(wallet1, uint(1), "uri", sig);
 
     assertEq(jigzawNft.tokenURI(1), "uri");
   }

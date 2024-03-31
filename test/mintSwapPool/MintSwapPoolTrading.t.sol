@@ -330,11 +330,11 @@ contract MintSwapPoolTrading is MintSwapPoolTestBase {
     vm.startPrank(wallet1);
 
     // mint ids 20, 21
-    jigzawNft.mint(20, "uri", _computeMinterSig(
+    jigzawNft.mint(wallet1, 20, "uri", _computeMinterSig(
       abi.encodePacked(wallet1, uint256(20), "uri"), 
       block.timestamp + 10 seconds
     ));
-    jigzawNft.mint(21, "uri", _computeMinterSig(
+    jigzawNft.mint(wallet1, 21, "uri", _computeMinterSig(
       abi.encodePacked(wallet1, uint256(21), "uri"), 
       block.timestamp + 10 seconds
     ));
