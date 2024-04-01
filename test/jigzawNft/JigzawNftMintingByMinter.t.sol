@@ -136,15 +136,6 @@ contract JigzawNftMintingByMinter is JigzawNftTestBase {
     vm.prank(wallet1);
     vm.expectRevert(abi.encodeWithSelector(LibErrors.SignatureInvalid.selector, wallet1));
     jigzawNft.mint(wallet1, id, uri, sigOwner);
-
-    Auth.Signature memory sigRevealer = _computeRevealerSig(
-      abi.encodePacked(wallet1, id, uri), 
-      block.timestamp + 10 seconds
-    );
-
-    vm.prank(wallet1);
-    vm.expectRevert(abi.encodeWithSelector(LibErrors.SignatureInvalid.selector, wallet1));
-    jigzawNft.mint(wallet1, id, uri, sigRevealer);
   }
 
   function test_MintBadSignature_Fails() public {

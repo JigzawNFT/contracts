@@ -69,14 +69,9 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, IJigzawNFT, Ownable {
   address public pool;
 
   /**
-   * @dev The minter can approve new token mints.
+   * @dev The minter can approve new token mints and token reveals.
    */
   address public minter;
-
-  /**
-   * @dev The revealer can approve token reveals.
-   */
-  address public revealer;
 
   /**
    * @dev Default token image as a data URI.
@@ -108,8 +103,6 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, IJigzawNFT, Ownable {
     address owner;
     /** Minter. */
     address minter;
-    /** Revealer. */
-    address revealer;
     /** Dev royalty receiver  */
     address devRoyaltyReceiver;
     /** Dev royalty fee */
@@ -129,7 +122,6 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, IJigzawNFT, Ownable {
    */
   constructor(Config memory _config) ERC721("Jigzaw", "JIGZAW") Ownable(_config.owner) {
     minter = _config.minter;
-    revealer = _config.revealer;
     defaultImage = _config.defaultImage;
 
     lottery.feeBips = _config.lotteryPotFeeBips;
@@ -187,23 +179,15 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, IJigzawNFT, Ownable {
   // Functions - reveal token
 
   /**
-   * @dev Set the revealer.
-   * @param _revealer The address of the new revealer.
-   */
-  function setRevealer(address _revealer) external onlyOwner {
-    revealer = _revealer;
-  }
-
-  /**
    * @dev Reveal tokens.
    *
    * @param _wallet the wallet to credit lottery tokens to.
    * @param _id The token id.
    * @param _uri The new token URI to set.
-   * @param _sig The revealer authorisation signature.
+   * @param _sig The minter authorisation signature.
    */
   function reveal(address _wallet, uint256 _id, string calldata _uri, Auth.Signature calldata _sig) external {
-    _assertValidSignature(msg.sender, revealer, _sig, abi.encodePacked(_wallet, _id, _uri));
+    _assertValidSignature(msg.sender, minter, _sig, abi.encodePacked(_wallet, _id, _uri));
 
     _requireOwned(_id);
 
@@ -272,7 +256,6 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, IJigzawNFT, Ownable {
     _setTokenMetadata(_id, _uri);
     lottery.nft.batchMint(_wallet, 4);
   }
-
 
   // Pool functions 
 

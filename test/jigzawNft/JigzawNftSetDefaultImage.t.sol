@@ -50,10 +50,6 @@ contract JigzawNftSetDefaultImage is JigzawNftTestBase {
     vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, minter1));
     jigzawNft.setDefaultImage("newImage");
 
-    vm.prank(revealer1);
-    vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, revealer1));
-    jigzawNft.setDefaultImage("newImage");
-
     address random = address(0x8876);
     vm.prank(random);
     vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, random));

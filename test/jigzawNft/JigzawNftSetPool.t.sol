@@ -18,10 +18,6 @@ contract JigzawNftSetPool is JigzawNftTestBase {
     vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, minter1));
     jigzawNft.setPool(address(0x789));
 
-    vm.prank(revealer1);
-    vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, revealer1));
-    jigzawNft.setPool(address(0x789));
-
     address random = address(0x8876);
     vm.prank(random);
     vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, random));

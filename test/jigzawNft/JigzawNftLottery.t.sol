@@ -29,10 +29,6 @@ contract JigzawNftLottery is JigzawNftTestBase {
     vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, minter1));
     jigzawNft.drawLottery(winners);
 
-    vm.prank(revealer1);
-    vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, revealer1));
-    jigzawNft.drawLottery(winners);
-
     vm.prank(pool1);
     vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, pool1));
     jigzawNft.drawLottery(winners);
@@ -238,7 +234,7 @@ contract JigzawNftLottery is JigzawNftTestBase {
     vm.startPrank(wallet1);
 
     for (uint i = 1; i <= 10; i++) {
-      jigzawNft.reveal(wallet1, i, "uri1", _computeRevealerSig(
+      jigzawNft.reveal(wallet1, i, "uri1", _computeMinterSig(
         abi.encodePacked(wallet1, i, "uri1"),
         block.timestamp + 10 seconds
       ));

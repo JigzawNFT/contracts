@@ -17,9 +17,6 @@ abstract contract TestBase01 is Test {
   uint public minter1_key = 0x1234;
   address payable minter1 = payable(vm.addr(minter1_key));
 
-  uint public revealer1_key = 0x12345;
-  address payable revealer1 = payable(vm.addr(revealer1_key));
-
   address payable wallet1 = payable(address(0x1234567890));
   address payable wallet2 = payable(address(0x1234567890123));
 
@@ -34,7 +31,6 @@ abstract contract TestBase01 is Test {
     return JigzawNFT.Config({
       owner: owner1,
       minter: minter1,
-      revealer: revealer1,
       devRoyaltyFeeBips: 1000, /* 1000 bips = 10% */
       defaultImage: "img",
       devRoyaltyReceiver: owner1,
@@ -55,10 +51,6 @@ abstract contract TestBase01 is Test {
 
   function _computeMinterSig(bytes memory _data, uint _deadline) internal view returns (Auth.Signature memory) {
     return _computeSig(minter1_key, _data, _deadline);
-  }
-
-  function _computeRevealerSig(bytes memory _data, uint _deadline) internal view returns (Auth.Signature memory) {
-    return _computeSig(revealer1_key, _data, _deadline);
   }
 
   function _computeOwnerSig(bytes memory _data, uint _deadline) internal view returns (Auth.Signature memory) {

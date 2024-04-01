@@ -10,7 +10,6 @@ contract JigzawNftBasic is JigzawNftTestBase {
     assertEq(jigzawNft.symbol(), "JIGZAW", "symbol");
     assertEq(jigzawNft.owner(), owner1, "owner");
     assertEq(jigzawNft.minter(), minter1, "minter");
-    assertEq(jigzawNft.revealer(), revealer1, "revealer");
     assertEq(jigzawNft.pool(), address(0), "pool");
     assertEq(jigzawNft.defaultImage(), "img", "defaultImg");
 

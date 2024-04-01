@@ -59,10 +59,6 @@ contract JigzawNftMintingByPool is JigzawNftTestBase {
     vm.prank(minter1);
     vm.expectRevert(abi.encodeWithSelector(LibErrors.Unauthorized.selector, minter1));
     jigzawNft.batchMint(wallet1, 1, 2);
-
-    vm.prank(revealer1);
-    vm.expectRevert(abi.encodeWithSelector(LibErrors.Unauthorized.selector, revealer1));
-    jigzawNft.batchMint(wallet1, 1, 2);
   }
 
   function test_MintEmpty_Fails() public {

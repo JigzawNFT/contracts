@@ -15,10 +15,6 @@ contract JigzawNftSetLotteryNft is JigzawNftTestBase {
   }
 
   function test_SetLotteryNft_WhenNotOwner_Fails() public {
-    vm.prank(revealer1);
-    vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, revealer1));
-    jigzawNft.setLotteryNFT(address(0x789));
-
     vm.prank(minter1);
     vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, minter1));
     jigzawNft.setLotteryNFT(address(0x789));
