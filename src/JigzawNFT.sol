@@ -24,6 +24,8 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, IJigzawNFT, Ownable {
   struct Lottery {
     /** The winners of the lottery. */
     uint[] winners;
+    /** No. of winning tickets - to be set ahead of time. */
+    uint numWinningTickets;
     /** The pot. */
     uint pot;
     /** Whether the lottery has been drawn. */
@@ -330,7 +332,24 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, IJigzawNFT, Ownable {
    * @dev Check if the lottery can be drawn.
    */
   function canDrawLottery() external view returns (bool) {
-    return !lottery.drawn && (block.timestamp >= lottery.deadline || numRevealed >= lottery.tileRevealThreshold);
+    return !lottery.drawn && 0 < lottery.numWinningTickets && (block.timestamp >= lottery.deadline || numRevealed >= lottery.tileRevealThreshold);
+  }
+
+  /**
+   * @dev Set the no. of winning tickets for the lottery.
+   *
+   * This can only be called once. Subsequent calls to drawLottery() must have the exactly this no. of tickets.
+   */
+  function setLotteryNumWinningTickets(uint _num) external onlyOwner {
+    if (_num < 1) {
+      revert LibErrors.LotteryInvalidNumWinningTickets();
+    }
+
+    if (lottery.numWinningTickets > 0) {
+      revert LibErrors.LotteryNumWinningTicketsAlreadySet();
+    }
+
+    lottery.numWinningTickets = _num;
   }
 
   /**
@@ -345,6 +364,10 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, IJigzawNFT, Ownable {
 
     if (block.timestamp < lottery.deadline && numRevealed < lottery.tileRevealThreshold) {
       revert LibErrors.LotteryCannotBeDrawnYet();
+    }
+
+    if (lottery.numWinningTickets != _winners.length) {
+      revert LibErrors.LotteryNumWinningTicketsNotSet();
     }
 
     lottery.drawn = true;

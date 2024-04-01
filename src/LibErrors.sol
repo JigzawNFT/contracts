@@ -45,11 +45,6 @@ library LibErrors {
   error InvalidBatchLengths(uint length1, uint length2);
 
   /**
-   * @dev Invalid token input list.
-   */
-  error InvalidTokenList();
-
-  /**
    * @dev Invalid buy/sell quote.
    */
   error BadQuote(address sender, QuoteError quoteError);
@@ -93,4 +88,19 @@ library LibErrors {
    * @dev The lottery ticket NFT is invalid.
    */
   error LotteryNFTInvalid();
+
+  /**
+  * @dev Lottery no. of winning tickets already set.
+  */
+  error LotteryNumWinningTicketsAlreadySet();
+
+  /**
+  * @dev Lottery no. of winning tickets not yet set.
+  */
+  error LotteryNumWinningTicketsNotSet();
+
+  /**
+   * @dev Invalid number for no. of winning tickets in lottery.
+   */
+  error LotteryInvalidNumWinningTickets();
 }

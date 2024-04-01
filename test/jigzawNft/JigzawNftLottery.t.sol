@@ -43,33 +43,51 @@ contract JigzawNftLottery is JigzawNftTestBase {
     jigzawNft.drawLottery(winners);
   }
 
+  function test_DrawLottery_WhenNotYetSetNumWinningTickets_Fails() public {
+    _mintAndRevealTiles();
+
+    assertEq(jigzawNft.canDrawLottery(), false, "canDrawLottery");
+
+    uint[] memory winners = _buildLotteryWinnerList(1);
+
+    vm.prank(owner1);
+    vm.expectRevert(LibErrors.LotteryNumWinningTicketsNotSet.selector);
+    jigzawNft.drawLottery(winners);
+  }
+
   function test_DrawLottery_WhenTileRevealThresholdReached_Succeeds() public {
     _mintAndRevealTiles();
 
-    assertEq(jigzawNft.canDrawLottery(), true, "canDrawLottery");
+    uint[] memory winners = _buildLotteryWinnerList(1);
 
-    vm.prank(owner1);
-    uint[] memory winners = new uint[](0);
+    vm.startPrank(owner1);
+    jigzawNft.setLotteryNumWinningTickets(winners.length);
+    assertEq(jigzawNft.canDrawLottery(), true, "canDrawLottery");
     jigzawNft.drawLottery(winners);
+    vm.stopPrank();
   }
 
   function test_DrawLottery_WhenDeadlinePassed_Succeeds() public {
     vm.warp(block.timestamp + 11);
 
-    assertEq(jigzawNft.canDrawLottery(), true, "canDrawLottery");
+    uint[] memory winners = _buildLotteryWinnerList(1);
 
-    vm.prank(owner1);
-    uint[] memory winners = new uint[](0);
+    vm.startPrank(owner1);
+    jigzawNft.setLotteryNumWinningTickets(winners.length);
+    assertEq(jigzawNft.canDrawLottery(), true, "canDrawLottery");
     jigzawNft.drawLottery(winners);
+    vm.stopPrank();
   }
 
   function test_DrawLottery_Again_Fails() public {
     _mintAndRevealTiles();
 
-    uint[] memory winners = new uint[](0);
+    uint[] memory winners = _buildLotteryWinnerList(1);
 
-    vm.prank(owner1);
+    vm.startPrank(owner1);
+    jigzawNft.setLotteryNumWinningTickets(winners.length);
     jigzawNft.drawLottery(winners);
+    vm.stopPrank();
 
     assertEq(jigzawNft.canDrawLottery(), false, "canDrawLottery");
 
@@ -81,13 +99,15 @@ contract JigzawNftLottery is JigzawNftTestBase {
   function test_DrawLottery_SetsUpLotteryPot() public {
     _mintAndRevealTiles();
 
-    uint[] memory winners = new uint[](0);
+    uint[] memory winners = _buildLotteryWinnerList(1);
 
     payable(jigzawNft_addr).transfer(0.0005 ether);
     // c.log("jigzawNft_addr balance", address(jigzawNft_addr).balance);
 
-    vm.prank(owner1);
+    vm.startPrank(owner1);
+    jigzawNft.setLotteryNumWinningTickets(winners.length);
     jigzawNft.drawLottery(winners);
+    vm.stopPrank();
 
     JigzawNFT.Lottery memory lottery = jigzawNft.getLottery();
     assertEq(lottery.pot, 0.00025 ether, "lottery.pot");
@@ -96,12 +116,14 @@ contract JigzawNftLottery is JigzawNftTestBase {
   function test_DrawLottery_UpdatesRoyaltyInfo() public {
     _mintAndRevealTiles();
 
-    uint[] memory winners = new uint[](0);
+    uint[] memory winners = _buildLotteryWinnerList(1);
 
     JigzawNFT.DevRoyalties memory devRoyalties = jigzawNft.getDevRoyalties();
 
-    vm.prank(owner1);
+    vm.startPrank(owner1);
+    jigzawNft.setLotteryNumWinningTickets(winners.length);
     jigzawNft.drawLottery(winners);
+    vm.stopPrank();
 
     (address rr, uint rf) = jigzawNft.getRoyaltyInfo();
     assertEq(rr, devRoyalties.receiver, "royaltyReceiver");
@@ -116,8 +138,10 @@ contract JigzawNftLottery is JigzawNftTestBase {
     winners[1] = 5;
     winners[2] = 6;
 
-    vm.prank(owner1);
+    vm.startPrank(owner1);
+    jigzawNft.setLotteryNumWinningTickets(winners.length);
     jigzawNft.drawLottery(winners);
+    vm.stopPrank();
 
     JigzawNFT.Lottery memory lottery = jigzawNft.getLottery();
     assertEq(lottery.winners.length, 3, "winners.length");
@@ -243,6 +267,13 @@ contract JigzawNftLottery is JigzawNftTestBase {
     vm.stopPrank();
   }
 
+  function _buildLotteryWinnerList(uint _count) internal returns (uint[] memory winners) {
+    winners = new uint[](_count);
+    for (uint i = 0; i < _count; i++) {
+      winners[i] = i + 1;
+    }
+  }
+
   function _drawLotteryWinners() internal {
     _mintAndRevealTiles();
 
@@ -264,7 +295,9 @@ contract JigzawNftLottery is JigzawNftTestBase {
     winners[1] = 5;
     winners[2] = 6;
 
-    vm.prank(owner1);
+    vm.startPrank(owner1);
+    jigzawNft.setLotteryNumWinningTickets(winners.length);
     jigzawNft.drawLottery(winners);
+    vm.stopPrank();
   }
 }
