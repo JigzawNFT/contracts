@@ -43,7 +43,6 @@ contract Deploy is Script {
     JigzawNFT.Config memory jigzawNftConfig = JigzawNFT.Config({
       owner: wallet,
       minter: wallet,
-      revealer: wallet,
       devRoyaltyReceiver: DEV_ROYALTY_RECEIVER,
       devRoyaltyFeeBips: 500, /* 500 bips = 5% */
       defaultImage: DEFAULT_TILE_IMG,

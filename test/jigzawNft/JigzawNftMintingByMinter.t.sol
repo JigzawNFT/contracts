@@ -19,7 +19,7 @@ contract JigzawNftMintingByMinter is JigzawNftTestBase {
 
   function test_MintWithMinterAuthorisation_Succeeds() public {
     uint id = 2;
-    string memory uri = "uri2";
+    string memory uri = "";
 
     Auth.Signature memory sig = _computeMinterSig(
       abi.encodePacked(wallet1, id, uri), 
@@ -34,7 +34,7 @@ contract JigzawNftMintingByMinter is JigzawNftTestBase {
     assertEq(jigzawNft.balanceOf(wallet1), 1);
     assertEq(jigzawNft.tokenByIndex(0), 2);
     assertEq(jigzawNft.tokenOfOwnerByIndex(wallet1, 0), 2);
-    assertEq(jigzawNft.tokenURI(2), "uri2");
+    assertEq(jigzawNft.tokenURI(2), _buildDefaultTokenUri(2));
 
     id = 3;
     uri = "uri3";
@@ -79,7 +79,7 @@ contract JigzawNftMintingByMinter is JigzawNftTestBase {
 
   function test_MintWithMinterAuthorisation_WhenCallerNotOwner_Succeeds() public {
     uint id = 2;
-    string memory uri = "uri2";
+    string memory uri = "";
 
     Auth.Signature memory sig = _computeMinterSig(
       abi.encodePacked(wallet1, id, uri), 
@@ -94,12 +94,12 @@ contract JigzawNftMintingByMinter is JigzawNftTestBase {
     assertEq(jigzawNft.balanceOf(wallet1), 1);
     assertEq(jigzawNft.tokenByIndex(0), 2);
     assertEq(jigzawNft.tokenOfOwnerByIndex(wallet1, 0), 2);
-    assertEq(jigzawNft.tokenURI(2), "uri2");
+    assertEq(jigzawNft.tokenURI(2), _buildDefaultTokenUri(2));
   }
 
   function test_MintWithMinterAuthorisation_AwardsLotteryTickets() public {
     uint id = 1;
-    string memory uri = "uri";
+    string memory uri = "";
 
     vm.prank(wallet1);
     jigzawNft.mint(wallet1, id, uri, _computeMinterSig(
@@ -124,9 +124,39 @@ contract JigzawNftMintingByMinter is JigzawNftTestBase {
     assertEq(lotteryNft.balanceOf(wallet2), 4);
   }
 
-  function test_MintWithNotMinterAuthorisation_Fails() public {
+  function test_MintWithMinterAuthorisation_AndUriSet_RevealsTheToken() public {
     uint id = 1;
     string memory uri = "uri";
+
+    vm.recordLogs();
+
+    vm.prank(wallet1);
+    jigzawNft.mint(wallet1, id, uri, _computeMinterSig(
+      abi.encodePacked(wallet1, id, uri), 
+      block.timestamp + 10 seconds
+    ));
+
+    Vm.Log[] memory entries = vm.getRecordedLogs();
+
+    assertEq(jigzawNft.tokenURI(1), "uri", "token uri");
+    assertEq(jigzawNft.revealed(1), true, "revealed state");
+    assertEq(jigzawNft.numRevealed(), 1, "revealed count");
+
+    // Mint jigzaw -> Set metadata -> 4 x Mint lottery
+    assertEq(entries.length, 6, "Invalid entry count");
+    assertEq(entries[1].topics.length, 1, "Invalid event count");
+    assertEq(
+        entries[1].topics[0],
+        keccak256("MetadataUpdate(uint256)"),
+        "Invalid event signature"
+    );
+    (uint256 tokenId) = abi.decode(entries[1].data, (uint256));
+    assertEq(tokenId, 1, "Invalid token id");
+  }
+
+  function test_MintWithNotMinterAuthorisation_Fails() public {
+    uint id = 1;
+    string memory uri = "";
 
     Auth.Signature memory sigOwner = _computeOwnerSig(
       abi.encodePacked(wallet1, id, uri), 
@@ -140,7 +170,7 @@ contract JigzawNftMintingByMinter is JigzawNftTestBase {
 
   function test_MintBadSignature_Fails() public {
     uint id = 1;
-    string memory uri = "uri";
+    string memory uri = "";
 
     Auth.Signature memory sig = Auth.Signature({
       signature: bytes(""),
@@ -154,7 +184,7 @@ contract JigzawNftMintingByMinter is JigzawNftTestBase {
 
   function test_MintExpiredSignature_Fails() public {
     uint id = 1;
-    string memory uri = "uri";
+    string memory uri = "";
 
     Auth.Signature memory sig = _computeMinterSig(
       abi.encodePacked(wallet1, id, uri), 
@@ -168,7 +198,7 @@ contract JigzawNftMintingByMinter is JigzawNftTestBase {
 
   function test_MintSignatureAlreadyUsed_Fails() public {
     uint id = 1;
-    string memory uri = "uri";
+    string memory uri = "";
 
     Auth.Signature memory sig = _computeMinterSig(
       abi.encodePacked(wallet1, id, uri), 
@@ -185,7 +215,7 @@ contract JigzawNftMintingByMinter is JigzawNftTestBase {
 
   function test_MintAlreadyMintedToken_Fails() public {
     uint id = 1;
-    string memory uri = "uri";
+    string memory uri = "";
 
     Auth.Signature memory sig = _computeMinterSig(
       abi.encodePacked(wallet1, id, uri), 

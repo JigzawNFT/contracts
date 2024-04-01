@@ -193,6 +193,18 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, IJigzawNFT, Ownable {
 
     _requireOwned(_id);
 
+    _reveal(_id, _uri);
+
+    lottery.nft.batchMint(_wallet, 1);
+  }
+
+  /**
+   * @dev Helper method for revealing a token.
+   *
+   * @param _id The token id.
+   * @param _uri The token URI to set.
+   */
+  function _reveal(uint256 _id, string memory _uri) internal {
     if (revealed[_id]) {
       revert LibErrors.AlreadyRevealed(_id);
     }
@@ -201,8 +213,6 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, IJigzawNFT, Ownable {
     numRevealed++;
 
     _setTokenMetadata(_id, _uri);
-
-    lottery.nft.batchMint(_wallet, 1);
   }
 
   function _setTokenMetadata(uint256 _id, string memory _uri) internal {
@@ -245,17 +255,22 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, IJigzawNFT, Ownable {
   }
 
   /**
-   * @dev Mint a token, authorized by the minter.
+   * @dev Mint and optionally reveal a token, authorized by the minter.
    *
    * @param _wallet the wallet that will own the token as well as receive lottery token credits.
    * @param _id token id to mint.
-   * @param _uri token uri.
+   * @param _uri token uri - if set then token will be marked as revealed using _reveal().
    * @param _sig minter authorisation signature.
    */
   function mint(address _wallet, uint256 _id, string calldata _uri, Signature calldata _sig) external {
     _assertValidSignature(msg.sender, minter, _sig, abi.encodePacked(_wallet, _id, _uri));
+
     _safeMint(_wallet, _id, "");
-    _setTokenMetadata(_id, _uri);
+
+    if (bytes(_uri).length > 0) {
+      _reveal(_id, _uri);
+    }
+
     lottery.nft.batchMint(_wallet, 4);
   }
 
