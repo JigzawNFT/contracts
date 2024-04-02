@@ -96,13 +96,18 @@ contract JigzawNftLottery is JigzawNftTestBase {
     jigzawNft.drawLottery(winners);
   }
 
+  function test_GetLotteryPot_PriorToDrawingLottery_CalculatesBasedOnBalance() public {
+    payable(jigzawNft_addr).transfer(0.0006 ether);
+
+    assertEq(jigzawNft.getLotteryPot(), 0.0003 ether, "getLotteryPot");
+  }
+
   function test_DrawLottery_SetsUpLotteryPot() public {
     _mintAndRevealTiles();
 
     uint[] memory winners = _buildLotteryWinnerList(1);
 
     payable(jigzawNft_addr).transfer(0.0005 ether);
-    // c.log("jigzawNft_addr balance", address(jigzawNft_addr).balance);
 
     vm.startPrank(owner1);
     jigzawNft.setLotteryNumWinningTickets(winners.length);
@@ -110,7 +115,26 @@ contract JigzawNftLottery is JigzawNftTestBase {
     vm.stopPrank();
 
     JigzawNFT.Lottery memory lottery = jigzawNft.getLottery();
-    assertEq(lottery.pot, 0.00025 ether, "lottery.pot");
+    assertEq(lottery.drawnPot, 0.00025 ether, "lottery.drawnPot");
+  }
+
+  function test_GetLotteryPot_PostDrawingLottery_JustReturnsDrawnLottery() public {
+    _mintAndRevealTiles();
+
+    uint[] memory winners = _buildLotteryWinnerList(1);
+
+    payable(jigzawNft_addr).transfer(0.0005 ether);
+
+    vm.startPrank(owner1);
+    jigzawNft.setLotteryNumWinningTickets(winners.length);
+    jigzawNft.drawLottery(winners);
+    vm.stopPrank();
+
+    assertEq(jigzawNft.getLotteryPot(), 0.00025 ether, "getLotteryPot - 1");
+
+    payable(jigzawNft_addr).transfer(0.0005 ether);
+
+    assertEq(jigzawNft.getLotteryPot(), 0.00025 ether, "getLotteryPot - 2");    
   }
 
   function test_DrawLottery_UpdatesRoyaltyInfo() public {

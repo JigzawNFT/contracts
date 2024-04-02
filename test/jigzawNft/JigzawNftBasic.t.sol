@@ -22,9 +22,11 @@ contract JigzawNftBasic is JigzawNftTestBase {
     assertEq(lottery.deadline, block.timestamp + 10, "lottery.deadline");
     assertEq(lottery.tileRevealThreshold, 10, "lottery.tileRevealThreshold");
     assertEq(lottery.drawn, false, "lottery.drawn");
-    assertEq(lottery.pot, 0, "lottery.pot");
+    assertEq(lottery.drawnPot, 0, "lottery.drawnPot");
     assertEq(lottery.numWinningTickets, 0, "lottery.numWinningTickets");
     assertEq(address(lottery.nft), address(0), "lottery.ticketNFT");
+
+    assertEq(jigzawNft.getLotteryPot(), 0, "getLotteryPotSoFar");
 
     assertEq(jigzawNft.totalSupply(), 0, "totalSupply");
     (address r1, uint r2) = jigzawNft.royaltyInfo(0, 100);

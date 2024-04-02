@@ -26,8 +26,8 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, IJigzawNFT, Ownable {
     uint[] winners;
     /** No. of winning tickets - to be set ahead of time. */
     uint numWinningTickets;
-    /** The pot. */
-    uint pot;
+    /** The final drawn pot. */
+    uint drawnPot;
     /** Whether the lottery has been drawn. */
     bool drawn;
     /** The deadline for the lottery. */
@@ -331,6 +331,32 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, IJigzawNFT, Ownable {
 
 
   /**
+   * @dev Calculate the dev royalties and lottery pots so far based on the current contract balance.
+   */
+  function _calculatePots() internal view returns (uint devRoyaltiesPot, uint lotteryPot) {
+    uint totalBips = devRoyalties.feeBips + lottery.feeBips;
+    devRoyaltiesPot = address(this).balance * devRoyalties.feeBips / totalBips;
+    lotteryPot = address(this).balance - devRoyaltiesPot;
+  }
+
+
+  /**
+   * @dev Get the lottery.
+   *
+   * If the lottery hasn't been drawn yet, this will calculate the potential pot. 
+   * If the lottery has been drawn, this will return the actual pot.
+   */
+  function getLotteryPot() external view returns (uint) {
+    if (lottery.drawn) {
+      return lottery.drawnPot;
+    } else {
+      (, uint lotteryPot) = _calculatePots();
+      return lotteryPot;
+    }
+  }
+
+
+  /**
    * @dev Set the lottery NFT contract.
    * 
    * Requirements:
@@ -396,10 +422,8 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, IJigzawNFT, Ownable {
 
     lottery.drawn = true;
 
-    // calculate pots
-    uint totalBips = devRoyalties.feeBips + lottery.feeBips;
-    uint devRoyaltiesPot = address(this).balance * devRoyalties.feeBips / totalBips;
-    lottery.pot = address(this).balance - devRoyaltiesPot;
+    (uint devRoyaltiesPot, uint lotteryPot) = _calculatePots();
+    lottery.drawnPot = lotteryPot;
 
     // update royalty fee to just be the dev fee and also send all money to the dev receiver
     _setDefaultRoyalty(devRoyalties.receiver, devRoyalties.feeBips);
@@ -458,7 +482,7 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, IJigzawNFT, Ownable {
 
     // send winnings
     address wallet = lottery.nft.ownerOf(_ticket);
-    payable(wallet).transfer(lottery.pot / lottery.winners.length);
+    payable(wallet).transfer(lottery.drawnPot / lottery.winners.length);
   }
 
   // Modifiers
