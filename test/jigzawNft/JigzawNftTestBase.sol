@@ -14,20 +14,6 @@ abstract contract JigzawNftTestBase is TestBase01 {
   uint pool1_key = 0x123456;
   address public pool1 = vm.addr(pool1_key);
 
-  JigzawNFT public jigzawNft;
-  LotteryNFT public lotteryNft;
-
-  address jigzawNft_addr;
-  address lotteryNft_addr;
-
-  function setUp() virtual public {
-    jigzawNft = new JigzawNFT(_getDefaultJigzawNftConfig());
-    jigzawNft_addr = address(jigzawNft);
-
-    lotteryNft = new LotteryNFT(_getDefaultLotteryNftConfig(jigzawNft));
-    lotteryNft_addr = address(lotteryNft);
-  }
-
   // Helper methods
 
   function _buildDefaultTokenUri(uint /*tokenId*/) internal view returns (string memory) {

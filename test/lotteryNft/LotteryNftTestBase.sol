@@ -12,10 +12,7 @@ import { TestBase01 } from "test/utils/TestBase01.sol";
 abstract contract LotteryNftTestBase is TestBase01 {  
   using Strings for uint256;
 
-  LotteryNFT public lotteryNft;
-  address lotteryNft_addr;
-
-  function setUp() virtual public {
+  function setUp() virtual public override {
     lotteryNft = new LotteryNFT(_getDefaultLotteryNftConfig(JigzawNFT(minter1)));
     lotteryNft_addr = address(lotteryNft);
   }

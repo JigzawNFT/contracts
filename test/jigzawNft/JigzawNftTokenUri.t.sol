@@ -11,17 +11,15 @@ contract JigzawNftTokenUri is JigzawNftTestBase {
   function setUp() virtual override public {
     super.setUp();
 
-    vm.prank(owner1);
-    jigzawNft.setLotteryNFT(address(lotteryNft_addr));
+    vm.startPrank(owner1);
+    jigzawNft.setLotteryNFT(lotteryNft_addr);
+    vm.stopPrank();
 
     uint id = 1;
     string memory uri = "";
 
     vm.prank(wallet1);
-    jigzawNft.mint(wallet1, id, uri, _computeMinterSig(
-      abi.encodePacked(wallet1, id, uri), 
-      block.timestamp + 10 seconds
-    ));
+    _jigzawNft_mint(wallet1, 1, uri, 1);        
   }
 
   function test_TokenUriReturnsDefaultUri() public {
@@ -29,13 +27,8 @@ contract JigzawNftTokenUri is JigzawNftTestBase {
   }
 
   function test_TokenUriReturnsRevealedUri() public {
-    Auth.Signature memory sig = _computeMinterSig(
-      abi.encodePacked(wallet1, uint(1), "uri"),
-      block.timestamp + 10 seconds
-    );
-
     vm.prank(wallet1);
-    jigzawNft.reveal(wallet1, uint(1), "uri", sig);
+    _jigzawNft_reveal(wallet1, 1, "uri", 1);        
 
     assertEq(jigzawNft.tokenURI(1), "uri");
   }

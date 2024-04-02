@@ -14,7 +14,7 @@ import { Bytes32AddressLib } from "solmate/utils/Bytes32AddressLib.sol";
 contract Erc721Base is TestBase01 {
   MockERC721 b;
 
-  function setUp() public {
+  function setUp() public override {
     b = new MockERC721("Test", "TEST");
   }
 

@@ -79,10 +79,9 @@ contract Deploy is Script {
         mintEndId: 7056,
         startPriceWei: 0.01 ether,
         /*
-        Delta is equiv. to 1.0005 => increase by 0.05% 
-        At last item (no. 7056) the price will be 0.34 ether
+        Delta is equiv. to 1.0006 => increase by 0.06% 
         */
-        delta: 1000500000000000000 
+        delta: 1000600000000000000 
       })
     });
 

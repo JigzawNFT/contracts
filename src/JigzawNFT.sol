@@ -51,6 +51,17 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, IJigzawNFT, Ownable {
   }
 
   /**
+   * @dev Mint/reveal call parameters.
+   */
+  struct MintRevealParams {
+    address wallet;
+    uint256 tokenId;
+    string uri;
+    uint256 lotteryTickets;
+    Auth.Signature authSig;
+  }
+
+  /**
    * @dev Lottery info.
    */
   Lottery private lottery;
@@ -183,19 +194,18 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, IJigzawNFT, Ownable {
   /**
    * @dev Reveal tokens.
    *
-   * @param _wallet the wallet to credit lottery tokens to.
-   * @param _id The token id.
-   * @param _uri The new token URI to set.
-   * @param _sig The minter authorisation signature.
+   * @param _params The reveal parameters.
    */
-  function reveal(address _wallet, uint256 _id, string calldata _uri, Auth.Signature calldata _sig) external {
-    _assertValidSignature(msg.sender, minter, _sig, abi.encodePacked(_wallet, _id, _uri));
+  function reveal(MintRevealParams calldata _params) external {
+    _assertValidSignature(msg.sender, minter, _params.authSig, abi.encodePacked(_params.wallet, _params.tokenId, _params.uri, _params.lotteryTickets));
 
-    _requireOwned(_id);
+    _requireOwned(_params.tokenId);
 
-    _reveal(_id, _uri);
+    _reveal(_params.tokenId, _params.uri);
 
-    lottery.nft.batchMint(_wallet, 1);
+    if (_params.lotteryTickets > 0) {
+      lottery.nft.batchMint(_params.wallet, _params.lotteryTickets);
+    }
   }
 
   /**
@@ -257,21 +267,20 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, IJigzawNFT, Ownable {
   /**
    * @dev Mint and optionally reveal a token, authorized by the minter.
    *
-   * @param _wallet the wallet that will own the token as well as receive lottery token credits.
-   * @param _id token id to mint.
-   * @param _uri token uri - if set then token will be marked as revealed using _reveal().
-   * @param _sig minter authorisation signature.
+   * @param _params The reveal parameters.
    */
-  function mint(address _wallet, uint256 _id, string calldata _uri, Signature calldata _sig) external {
-    _assertValidSignature(msg.sender, minter, _sig, abi.encodePacked(_wallet, _id, _uri));
+  function mint(MintRevealParams calldata _params) external {
+    _assertValidSignature(msg.sender, minter, _params.authSig, abi.encodePacked(_params.wallet, _params.tokenId, _params.uri, _params.lotteryTickets));
 
-    _safeMint(_wallet, _id, "");
+    _safeMint(_params.wallet, _params.tokenId, "");
 
-    if (bytes(_uri).length > 0) {
-      _reveal(_id, _uri);
+    if (bytes(_params.uri).length > 0) {
+      _reveal(_params.tokenId, _params.uri);
     }
 
-    lottery.nft.batchMint(_wallet, 4);
+    if (_params.lotteryTickets > 0) {
+      lottery.nft.batchMint(_params.wallet, _params.lotteryTickets);
+    }
   }
 
   // Pool functions 

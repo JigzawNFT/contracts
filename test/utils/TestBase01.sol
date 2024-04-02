@@ -20,9 +20,23 @@ abstract contract TestBase01 is Test {
   address payable wallet1 = payable(address(0x1234567890));
   address payable wallet2 = payable(address(0x1234567890123));
 
+  JigzawNFT public jigzawNft;
+  address jigzawNft_addr;
+
+  LotteryNFT public lotteryNft;
+  address lotteryNft_addr;
+
   constructor() payable {
     c.log("Test contract address", address(this));
     c.log("msg.sender", msg.sender);
+  }
+
+  function setUp() public virtual {    
+    jigzawNft = new JigzawNFT(_getDefaultJigzawNftConfig());
+    jigzawNft_addr = address(jigzawNft);
+
+    lotteryNft = new LotteryNFT(_getDefaultLotteryNftConfig(jigzawNft));
+    lotteryNft_addr = address(lotteryNft);
   }
 
   // Helper methods
@@ -64,6 +78,36 @@ abstract contract TestBase01 is Test {
       signature: abi.encodePacked(r, s, v),
       deadline: _deadline
     });
+  }
+
+  function _jigzawNft_mint(address _wallet, uint _tokenId, string memory _uri, uint _lotteryTickets) internal {
+    JigzawNFT.MintRevealParams memory params = JigzawNFT.MintRevealParams({
+      wallet: _wallet,
+      tokenId: _tokenId,
+      uri: _uri,
+      lotteryTickets: _lotteryTickets,
+      authSig: _computeMinterSig(
+        abi.encodePacked(_wallet, _tokenId, _uri, _lotteryTickets), 
+        block.timestamp + 10 seconds
+      )
+    });
+
+    jigzawNft.mint(params);
+  }
+
+  function _jigzawNft_reveal(address _wallet, uint _tokenId, string memory _uri, uint _lotteryTickets) internal {
+    JigzawNFT.MintRevealParams memory params = JigzawNFT.MintRevealParams({
+      wallet: _wallet,
+      tokenId: _tokenId,
+      uri: _uri,
+      lotteryTickets: _lotteryTickets,
+      authSig: _computeMinterSig(
+        abi.encodePacked(_wallet, _tokenId, _uri, _lotteryTickets), 
+        block.timestamp + 10 seconds
+      )
+    });
+
+    jigzawNft.reveal(params);
   }
 
   function _toBytes32(address _addr) internal pure returns (bytes32) {

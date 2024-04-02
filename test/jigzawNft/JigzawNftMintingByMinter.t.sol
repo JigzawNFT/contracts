@@ -6,28 +6,25 @@ import {console2 as c} from "forge-std/Test.sol";
 import { Vm } from "forge-std/Vm.sol";
 import { JigzawNftTestBase } from "./JigzawNftTestBase.sol";
 import { Auth } from "src/Auth.sol";
+import { JigzawNFT } from "src/JigzawNFT.sol";
 import { LibErrors } from "src/LibErrors.sol";
 import { IERC721Errors } from "src/IERC721Errors.sol";
 
 contract JigzawNftMintingByMinter is JigzawNftTestBase {
-  function setUp() public override {
+  function setUp() virtual override public {
     super.setUp();
 
-    vm.prank(owner1);
+    vm.startPrank(owner1);
     jigzawNft.setLotteryNFT(lotteryNft_addr);
+    vm.stopPrank();
   }
 
   function test_MintWithMinterAuthorisation_Succeeds() public {
     uint id = 2;
     string memory uri = "";
 
-    Auth.Signature memory sig = _computeMinterSig(
-      abi.encodePacked(wallet1, id, uri), 
-      block.timestamp + 10 seconds
-    );
-
     vm.prank(wallet1);
-    jigzawNft.mint(wallet1, id, uri, sig);
+    _jigzawNft_mint(wallet1, id, uri, 1);
 
     assertEq(jigzawNft.ownerOf(2), wallet1);
     assertEq(jigzawNft.totalSupply(), 1);
@@ -39,13 +36,8 @@ contract JigzawNftMintingByMinter is JigzawNftTestBase {
     id = 3;
     uri = "uri3";
 
-    sig = _computeMinterSig(
-      abi.encodePacked(wallet1, id, uri), 
-      block.timestamp + 10 seconds
-    );
-
     vm.prank(wallet1);
-    jigzawNft.mint(wallet1, id, uri, sig);
+    _jigzawNft_mint(wallet1, id, uri, 1);
 
     assertEq(jigzawNft.ownerOf(3), wallet1);
     assertEq(jigzawNft.totalSupply(), 2);
@@ -59,10 +51,7 @@ contract JigzawNftMintingByMinter is JigzawNftTestBase {
     vm.recordLogs();
 
     vm.prank(wallet1);
-    jigzawNft.mint(wallet1, 1, "uri", _computeMinterSig(
-      abi.encodePacked(wallet1, uint256(1), "uri"), 
-      block.timestamp + 10 seconds
-    ));
+    _jigzawNft_mint(wallet1, 1, "uri", 4);
 
     Vm.Log[] memory entries = vm.getRecordedLogs();
     // 1 jigzaw mint + 1 metadata update + 4 lottery mints
@@ -81,13 +70,8 @@ contract JigzawNftMintingByMinter is JigzawNftTestBase {
     uint id = 2;
     string memory uri = "";
 
-    Auth.Signature memory sig = _computeMinterSig(
-      abi.encodePacked(wallet1, id, uri), 
-      block.timestamp + 10 seconds
-    );
-
     vm.prank(wallet2);
-    jigzawNft.mint(wallet1, id, uri, sig);
+    _jigzawNft_mint(wallet1, id, uri, 1);
 
     assertEq(jigzawNft.ownerOf(2), wallet1);
     assertEq(jigzawNft.totalSupply(), 1);
@@ -102,26 +86,16 @@ contract JigzawNftMintingByMinter is JigzawNftTestBase {
     string memory uri = "";
 
     vm.prank(wallet1);
-    jigzawNft.mint(wallet1, id, uri, _computeMinterSig(
-      abi.encodePacked(wallet1, id, uri), 
-      block.timestamp + 10 seconds
-    ));
+    _jigzawNft_mint(wallet1, id, uri, 4);
 
     vm.prank(wallet1);
-    jigzawNft.mint(wallet1, id + 1, uri, _computeMinterSig(
-      abi.encodePacked(wallet1, id + 1, uri), 
-      block.timestamp + 10 seconds
-    ));
+    _jigzawNft_mint(wallet1, id + 1, uri, 5);
 
     vm.prank(wallet2);
-    jigzawNft.mint(wallet2, id + 2, uri, _computeMinterSig(
-      abi.encodePacked(wallet2, id + 2, uri), 
-      block.timestamp + 10 seconds
-    ));
+    _jigzawNft_mint(wallet2, id + 2, uri, 0);
 
-    // 4 per mint
-    assertEq(lotteryNft.balanceOf(wallet1), 8); 
-    assertEq(lotteryNft.balanceOf(wallet2), 4);
+    assertEq(lotteryNft.balanceOf(wallet1), 9); 
+    assertEq(lotteryNft.balanceOf(wallet2), 0);
   }
 
   function test_MintWithMinterAuthorisation_AndUriSet_RevealsTheToken() public {
@@ -131,10 +105,7 @@ contract JigzawNftMintingByMinter is JigzawNftTestBase {
     vm.recordLogs();
 
     vm.prank(wallet1);
-    jigzawNft.mint(wallet1, id, uri, _computeMinterSig(
-      abi.encodePacked(wallet1, id, uri), 
-      block.timestamp + 10 seconds
-    ));
+    _jigzawNft_mint(wallet1, id, uri, 4);
 
     Vm.Log[] memory entries = vm.getRecordedLogs();
 
@@ -158,14 +129,18 @@ contract JigzawNftMintingByMinter is JigzawNftTestBase {
     uint id = 1;
     string memory uri = "";
 
-    Auth.Signature memory sigOwner = _computeOwnerSig(
-      abi.encodePacked(wallet1, id, uri), 
-      block.timestamp + 10 seconds
-    );
-
     vm.prank(wallet1);
     vm.expectRevert(abi.encodeWithSelector(LibErrors.SignatureInvalid.selector, wallet1));
-    jigzawNft.mint(wallet1, id, uri, sigOwner);
+    jigzawNft.mint(JigzawNFT.MintRevealParams({
+      wallet: wallet1,
+      tokenId: id,
+      uri: uri,
+      lotteryTickets: 1,
+      authSig: _computeOwnerSig(
+        abi.encodePacked(wallet1, id, uri), 
+        block.timestamp + 10 seconds
+      )
+    }));
   }
 
   function test_MintBadSignature_Fails() public {
@@ -179,61 +154,56 @@ contract JigzawNftMintingByMinter is JigzawNftTestBase {
 
     vm.prank(wallet1);
     vm.expectRevert(abi.encodeWithSelector(LibErrors.SignatureInvalid.selector, wallet1));
-    jigzawNft.mint(wallet1, id, uri, sig);
+    jigzawNft.mint(JigzawNFT.MintRevealParams({
+      wallet: wallet1,
+      tokenId: id,
+      uri: uri,
+      lotteryTickets: 1,
+      authSig: sig
+    }));
   }
 
   function test_MintExpiredSignature_Fails() public {
     uint id = 1;
     string memory uri = "";
 
-    Auth.Signature memory sig = _computeMinterSig(
-      abi.encodePacked(wallet1, id, uri), 
-      block.timestamp - 1 seconds
-    );
-
     vm.prank(wallet1);
     vm.expectRevert(abi.encodeWithSelector(LibErrors.SignatureExpired.selector, wallet1));
-    jigzawNft.mint(wallet1, id, uri, sig);
+    jigzawNft.mint(JigzawNFT.MintRevealParams({
+      wallet: wallet1,
+      tokenId: id,
+      uri: uri,
+      lotteryTickets: 1,
+      authSig: _computeMinterSig(
+        abi.encodePacked(wallet1, id, uri, uint(1)), 
+        block.timestamp - 1 seconds
+      )
+    }));
   }
 
   function test_MintSignatureAlreadyUsed_Fails() public {
     uint id = 1;
     string memory uri = "";
 
-    Auth.Signature memory sig = _computeMinterSig(
-      abi.encodePacked(wallet1, id, uri), 
-      block.timestamp + 10 seconds
-    );
-
     vm.prank(wallet1);
-    jigzawNft.mint(wallet1, id, uri, sig);
+    _jigzawNft_mint(wallet1, id, uri, 1);
 
     vm.prank(wallet1);
     vm.expectRevert(abi.encodeWithSelector(LibErrors.SignatureAlreadyUsed.selector, wallet1));
-    jigzawNft.mint(wallet1, id, uri, sig);
+    _jigzawNft_mint(wallet1, id, uri, 1);
   }
 
   function test_MintAlreadyMintedToken_Fails() public {
     uint id = 1;
     string memory uri = "";
 
-    Auth.Signature memory sig = _computeMinterSig(
-      abi.encodePacked(wallet1, id, uri), 
-      block.timestamp + 10 seconds
-    );
-
     vm.prank(wallet1);
-    jigzawNft.mint(wallet1, id, uri, sig);
+    _jigzawNft_mint(wallet1, id, uri, 1);
 
     uri = "uri2";
 
-    sig = _computeMinterSig(
-      abi.encodePacked(wallet1, id, uri), 
-      block.timestamp + 10 seconds
-    );
-
     vm.prank(wallet1);
     vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721TokenAlreadyMinted.selector, 1));
-    jigzawNft.mint(wallet1, id, uri, sig);
+    _jigzawNft_mint(wallet1, id, uri, 1);
   }
 }

@@ -7,11 +7,12 @@ import { JigzawNftTestBase } from "./JigzawNftTestBase.sol";
 import { Ownable } from "openzeppelin/access/Ownable.sol";
 
 contract JigzawNftSetDefaultImage is JigzawNftTestBase {
-  function setUp() public override {
+  function setUp() virtual override public {
     super.setUp();
 
-    vm.prank(owner1);
-    jigzawNft.setLotteryNFT(address(lotteryNft_addr));
+    vm.startPrank(owner1);
+    jigzawNft.setLotteryNFT(lotteryNft_addr);
+    vm.stopPrank();
   }
 
   function test_SetDefaultImageWhenOwner_Succeeds() public {
@@ -22,10 +23,7 @@ contract JigzawNftSetDefaultImage is JigzawNftTestBase {
 
   function test_SetDefaultImageWhenOwner_EmitsEvent() public {
     vm.prank(wallet1);
-    jigzawNft.mint(wallet1, 1, "uri", _computeMinterSig(
-      abi.encodePacked(wallet1, uint256(1), "uri"), 
-      block.timestamp + 10 seconds
-    ));
+    _jigzawNft_mint(wallet1, 1, "uri", 1);
 
     vm.recordLogs();
 

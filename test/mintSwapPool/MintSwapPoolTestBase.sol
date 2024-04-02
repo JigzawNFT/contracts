@@ -10,28 +10,17 @@ import { PoolCurve, PoolStatus } from "src/Common.sol";
 
 
 abstract contract MintSwapPoolTestBase is TestBase01 {  
-  JigzawNFT public jigzawNft;
   MintSwapPool public pool;
-  LotteryNFT public lotteryNft;
-
-  address payable jigzawNft_addr;
   address payable pool_addr;
-  address payable lotteryNft_addr;
 
-  function setUp() virtual public {
-    jigzawNft = new JigzawNFT(_getDefaultJigzawNftConfig());
-    jigzawNft_addr = payable(address(jigzawNft));
+  function setUp() virtual public override {
+    super.setUp();
 
     pool = new MintSwapPool(_getDefaultPoolConfig());
     pool_addr = payable(address(pool));
-
-    lotteryNft = new LotteryNFT(_getDefaultLotteryNftConfig(jigzawNft));
-    lotteryNft_addr = payable(address(lotteryNft));
     
-    vm.startPrank(owner1);
+    vm.prank(owner1);
     jigzawNft.setPool(pool_addr);
-    jigzawNft.setLotteryNFT(lotteryNft_addr);
-    vm.stopPrank();
   }
 
   // Helper methods

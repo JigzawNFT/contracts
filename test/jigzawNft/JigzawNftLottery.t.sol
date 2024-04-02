@@ -13,8 +13,8 @@ contract JigzawNftLottery is JigzawNftTestBase {
     super.setUp();
 
     vm.startPrank(owner1);
-    jigzawNft.setPool(pool1);    
     jigzawNft.setLotteryNFT(lotteryNft_addr);
+    jigzawNft.setPool(pool1);    
     vm.stopPrank();
   }
 
@@ -258,10 +258,7 @@ contract JigzawNftLottery is JigzawNftTestBase {
     vm.startPrank(wallet1);
 
     for (uint i = 1; i <= 10; i++) {
-      jigzawNft.reveal(wallet1, i, "uri1", _computeMinterSig(
-        abi.encodePacked(wallet1, i, "uri1"),
-        block.timestamp + 10 seconds
-      ));
+      _jigzawNft_reveal(wallet1, i, "uri1", 1);
     }
 
     vm.stopPrank();
