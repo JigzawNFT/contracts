@@ -73,6 +73,7 @@ contract Deploy is Script {
     c.log("Deploying MintSwapPool...");
 
     MintSwapPool.Config memory poolConfig = MintSwapPool.Config({
+      owner: wallet,
       nft: address(jigzawNft),
       curve: PoolCurve({
         mintStartId: 1,
