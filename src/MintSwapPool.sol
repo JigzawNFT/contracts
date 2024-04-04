@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.24;
 
+import { Ownable } from "openzeppelin/access/Ownable.sol";
 import { IJigzawNFT } from "./IJigzawNFT.sol";
 import { LibErrors } from "./LibErrors.sol";
 import { PoolCurve, PoolStatus, QuoteError, BuyQuote, SellQuote } from "./Common.sol";
@@ -26,10 +27,15 @@ import { IERC721TokenReceiver } from "./ERC721.sol";
  * Different ranges of NFTs (e.g token ids 1 to 20 could be one "range") can have different bonding curves. Each curve only 
  * has access to its own liquidity.
  */
-contract MintSwapPool is IERC721TokenReceiver, ExponentialCurve {
+contract MintSwapPool is Ownable, IERC721TokenReceiver, ExponentialCurve {
   IJigzawNFT public nft;
   PoolCurve public curve;
   PoolStatus public status;
+
+  /**
+   * @dev Wheter trading is enabled or not.
+   */
+  bool public enabled = false;
 
   // Constructor
 
@@ -37,13 +43,15 @@ contract MintSwapPool is IERC721TokenReceiver, ExponentialCurve {
    * @dev Configuration parameters.
    */
   struct Config {
+    /** Owner of pool */
+    address owner;
     /** JigzawNFT contractx. */
     address nft;
     /** Price curves (and thus liquidity pools) */
     PoolCurve curve;
   }
 
-  constructor(Config memory _config) {
+  constructor(Config memory _config) Ownable(_config.owner) {
     if (!validateSpotPrice(_config.curve.startPriceWei)) {
       revert LibErrors.InvalidMintPrice(_config.curve.startPriceWei);
     }
@@ -66,7 +74,20 @@ contract MintSwapPool is IERC721TokenReceiver, ExponentialCurve {
     });
   }
 
+  // ---------------------------------------------------------------
+  // Config
+  // ---------------------------------------------------------------
 
+  /**
+   * @dev Set whether trading is enabled.
+   */
+  function setEnabled(bool _enabled) external onlyOwner {
+    enabled = _enabled;
+  }
+
+  /**
+   * @dev Get the curve config and status.
+   */
   function getCurveStatus() public view returns (PoolCurve memory, PoolStatus memory) {
     return (curve, status);
   }
@@ -77,6 +98,10 @@ contract MintSwapPool is IERC721TokenReceiver, ExponentialCurve {
   // ---------------------------------------------------------------
 
   function buy(uint numItems) external payable returns (BuyQuote memory quote) {
+    if (!enabled) {
+      revert LibErrors.TradingDisabled();
+    }
+
     address sender = payable(msg.sender);
 
     quote = getBuyQuote(numItems);
@@ -154,6 +179,10 @@ contract MintSwapPool is IERC721TokenReceiver, ExponentialCurve {
 
 
   function sell(uint[] calldata tokenIds) external returns (SellQuote memory quote) {
+    if (!enabled) {
+      revert LibErrors.TradingDisabled();
+    }
+
     address sender = payable(msg.sender);
 
     quote = getSellQuote(tokenIds.length);

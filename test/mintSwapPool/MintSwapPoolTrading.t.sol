@@ -9,6 +9,13 @@ import { PoolCurve, PoolStatus, QuoteError, BuyQuote, SellQuote } from "src/Comm
 import { FixedPointMathLib } from "solmate/utils/FixedPointMathLib.sol";
 
 contract MintSwapPoolTrading is MintSwapPoolTestBase {
+  function setUp() virtual public override {
+    super.setUp();
+    
+    vm.prank(owner1);
+    pool.setEnabled(true);
+  }
+
   using FixedPointMathLib for uint256;
 
   // getTotalNftsForSale - initial
@@ -72,6 +79,15 @@ contract MintSwapPoolTrading is MintSwapPoolTestBase {
   }
 
   // buy - initial
+
+  function test_Buy_WhenTradingDisabled() public {
+    vm.prank(owner1);
+    pool.setEnabled(false);
+
+    vm.prank(wallet1);
+    vm.expectRevert(abi.encodeWithSelector(LibErrors.TradingDisabled.selector));
+    pool.buy(1);
+  }
 
   function test_Buy_Initial_BuyOne() public {
     BuyQuote memory q = pool.getBuyQuote(1);
@@ -229,6 +245,18 @@ contract MintSwapPoolTrading is MintSwapPoolTestBase {
   }
 
   // sell
+
+  function test_Sell_WhenTradingDisabled() public {
+    vm.prank(owner1);
+    pool.setEnabled(false);
+
+    uint[] memory ids = new uint[](1);
+    ids[0] = 10;
+
+    vm.prank(wallet1);
+    vm.expectRevert(abi.encodeWithSelector(LibErrors.TradingDisabled.selector));
+    pool.sell(ids);
+  }
 
   function test_Sell_SellOne() public {
     _buySomeNfts(1, 2 gwei);

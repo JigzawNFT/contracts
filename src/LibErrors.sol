@@ -65,6 +65,11 @@ library LibErrors {
   error InvalidMintEndId(uint id);
 
   /**
+   * @dev Pool trading is disabled.
+   */
+  error TradingDisabled();
+
+  /**
    * @dev The lottery has already been drawn.
    */
   error LotteryAlreadyDrawn();

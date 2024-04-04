@@ -9,6 +9,8 @@ import { PoolCurve, PoolStatus } from "src/Common.sol";
 contract MintSwapPoolBasic is MintSwapPoolTestBase {
   function test_DefaultConfig() public {
     assertEq(address(pool.nft()), jigzawNft_addr);
+    assertEq(pool.owner(), owner1, "owner");
+    assertEq(pool.enabled(), false, "enabled");
     
     (PoolCurve memory c, PoolStatus memory s) = pool.getCurveStatus();
     assertEq(c.mintStartId, 10);
@@ -24,6 +26,7 @@ contract MintSwapPoolBasic is MintSwapPoolTestBase {
     vm.assume(price >= 1 gwei);
 
     pool = new MintSwapPool(MintSwapPool.Config({
+      owner: owner1,
       nft: jigzawNft_addr,
       curve: PoolCurve({
         mintStartId: 1,
@@ -39,6 +42,7 @@ contract MintSwapPoolBasic is MintSwapPoolTestBase {
 
     vm.expectRevert(abi.encodeWithSelector(LibErrors.InvalidMintPrice.selector, price));
     pool = new MintSwapPool(MintSwapPool.Config({
+      owner: owner1,
       nft: jigzawNft_addr,
       curve: PoolCurve({
         mintStartId: 1,
@@ -54,6 +58,7 @@ contract MintSwapPoolBasic is MintSwapPoolTestBase {
     vm.assume(end >= start);
 
     pool = new MintSwapPool(MintSwapPool.Config({
+      owner: owner1,
       nft: jigzawNft_addr,
       curve: PoolCurve({
         mintStartId: start,
@@ -67,6 +72,7 @@ contract MintSwapPoolBasic is MintSwapPoolTestBase {
   function test_MintRange_Bad() public {
     vm.expectRevert(abi.encodeWithSelector(LibErrors.InvalidMintStartId.selector, 0));
     pool = new MintSwapPool(MintSwapPool.Config({
+      owner: owner1,
       nft: jigzawNft_addr,
       curve: PoolCurve({
         mintStartId: 0,
@@ -78,6 +84,7 @@ contract MintSwapPoolBasic is MintSwapPoolTestBase {
 
     vm.expectRevert(abi.encodeWithSelector(LibErrors.InvalidMintEndId.selector, 1));
     pool = new MintSwapPool(MintSwapPool.Config({
+      owner: owner1,
       nft: jigzawNft_addr,
       curve: PoolCurve({
         mintStartId: 2,

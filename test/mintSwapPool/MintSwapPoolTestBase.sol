@@ -27,6 +27,7 @@ abstract contract MintSwapPoolTestBase is TestBase01 {
 
   function _getDefaultPoolConfig() internal view returns (MintSwapPool.Config memory) {
     return MintSwapPool.Config({
+      owner: owner1,
       nft: jigzawNft_addr,
       curve: PoolCurve({
         mintStartId: 10,
@@ -35,7 +36,7 @@ abstract contract MintSwapPoolTestBase is TestBase01 {
         delta: 2 * 1e18
       })
     });
-  }  
+  }
 
   function testPoolTestBase_ExcludeFromCoverage() public {}  
 }

@@ -9,10 +9,10 @@ import { ERC2981 } from "openzeppelin/token/common/ERC2981.sol";
 import { IERC4906 } from "openzeppelin/interfaces/IERC4906.sol";
 import { Base64 } from "openzeppelin/utils/Base64.sol";
 import { Strings } from "openzeppelin/utils/Strings.sol";
+import { Ownable } from "openzeppelin/access/Ownable.sol";
 import { LibErrors } from "./LibErrors.sol";
 import { IJigzawNFT } from "./IJigzawNFT.sol";
 import { ILotteryNFT } from "./ILotteryNFT.sol";
-import { Ownable } from "openzeppelin/access/Ownable.sol";
 
 
 contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, IJigzawNFT, Ownable {
