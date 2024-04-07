@@ -116,9 +116,6 @@ contract Deploy is Script {
       c.log("Lottery already enabled on Jigzaw contract...");    
     }
 
-    // temp: enable pool trading
-    // pool.setEnabled(true);
-
     c.log("All done");
 
     vm.stopBroadcast();        
