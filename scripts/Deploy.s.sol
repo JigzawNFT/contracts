@@ -17,18 +17,11 @@ contract Deploy is Script {
 
   address internal constant DEV_ROYALTY_RECEIVER = 0x314E889E5B20d7D48B17c2890B44A42723e2F8a6;
 
-  function _assertDeployedAddressIsEmpty(bytes memory creationCode, bytes memory constructorArgs) internal view returns (address) {
-    address expectedAddr = vm.computeCreate2Address(
+  function _getDeployedAddress(bytes memory creationCode, bytes memory constructorArgs) internal view returns (address payable) {
+    return payable(vm.computeCreate2Address(
       CREATE2_SALT, 
       hashInitCode(creationCode, constructorArgs)
-    );
-
-    if (expectedAddr.code.length > 0) {
-      c.log("!!!! Already deployed at:", expectedAddr);
-      revert("Already deployd");
-    }
-
-    return expectedAddr;
+    ));
   }
 
 
@@ -51,10 +44,16 @@ contract Deploy is Script {
       lotteryRevealThreshold: 9261 /* level 1 + level 2 + level 3 tiles */
     });
 
-    _assertDeployedAddressIsEmpty(type(JigzawNFT).creationCode, abi.encode(jigzawNftConfig));
 
-    JigzawNFT jigzawNft = new JigzawNFT{salt: CREATE2_SALT}(jigzawNftConfig);
-    c.log("JigzawNFT:", address(jigzawNft));
+    JigzawNFT jigzawNft;
+    address payable jigzawNftAddress = _getDeployedAddress(type(JigzawNFT).creationCode, abi.encode(jigzawNftConfig));
+    if (jigzawNftAddress.code.length > 0) {
+      c.log("JigzawNFT already deployed at:", jigzawNftAddress);
+      jigzawNft = JigzawNFT(jigzawNftAddress);
+    } else {
+      jigzawNft = new JigzawNFT{salt: CREATE2_SALT}(jigzawNftConfig);
+      c.log("JigzawNFT:", address(jigzawNft));
+    }
     
     c.log("Deploying LotteryNFT...");
 
@@ -65,10 +64,15 @@ contract Deploy is Script {
       royaltyFeeBips: 500 /* 500 bips = 5% */
     });
 
-    _assertDeployedAddressIsEmpty(type(LotteryNFT).creationCode, abi.encode(lotteryNftConfig));
-
-    LotteryNFT lotteryNft = new LotteryNFT{salt: CREATE2_SALT}(lotteryNftConfig);
-    c.log("LotteryNFT:", address(lotteryNft));
+    LotteryNFT lotteryNft;
+    address lotteryNftAddress = _getDeployedAddress(type(LotteryNFT).creationCode, abi.encode(lotteryNftConfig));
+    if (lotteryNftAddress.code.length > 0) {
+      c.log("LotteryNFT already deployed at:", lotteryNftAddress);
+      lotteryNft = LotteryNFT(lotteryNftAddress);
+    } else {
+      lotteryNft = new LotteryNFT{salt: CREATE2_SALT}(lotteryNftConfig);
+      c.log("LotteryNFT:", address(lotteryNft));
+    }
 
     c.log("Deploying MintSwapPool...");
 
@@ -86,16 +90,34 @@ contract Deploy is Script {
       })
     });
 
-    _assertDeployedAddressIsEmpty(type(MintSwapPool).creationCode, abi.encode(poolConfig));
+    MintSwapPool pool;
+    address poolAddress = _getDeployedAddress(type(MintSwapPool).creationCode, abi.encode(poolConfig));
+    if (poolAddress.code.length > 0) {
+      c.log("MintSwapPool already deployed at:", poolAddress);
+      pool = MintSwapPool(poolAddress);
+    } else {
+      pool = new MintSwapPool{salt: CREATE2_SALT}(poolConfig);
+      c.log("MintSwapPool:", poolAddress);
+    }
 
-    MintSwapPool pool = new MintSwapPool{salt: CREATE2_SALT}(poolConfig);
-    c.log("MintSwapPool:", address(pool));
+    address currentPool = jigzawNft.pool();
+    if (currentPool != poolAddress) {
+      c.log("Enable pool on Jigzaw contract...");
+      jigzawNft.setPool(poolAddress);
+    } else {
+      c.log("Pool already enabled on Jigzaw contract...");    
+    }
 
-    c.log("Enable pool on Jigzaw contract...");
-    jigzawNft.setPool(address(pool));
+    address currentLottery = address(jigzawNft.getLottery().nft);
+    if (currentLottery != lotteryNftAddress) {
+      c.log("Enable lottery on Jigzaw contract...");
+      jigzawNft.setLotteryNFT(lotteryNftAddress);
+    } else {
+      c.log("Lottery already enabled on Jigzaw contract...");    
+    }
 
-    c.log("Enable lottery on Jigzaw contract...");
-    jigzawNft.setLotteryNFT(address(lotteryNft));
+    // temp: enable pool trading
+    // pool.setEnabled(true);
 
     c.log("All done");
 
