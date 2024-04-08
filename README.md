@@ -3,8 +3,6 @@
 
 # JigzawNFT contracts
 
-**NOTE: These contract are still a work-in-progress and subject to change.**
-
 Smart contracts for [JigzawNFT](https://jigzaw.xyz).
 
 Features:
