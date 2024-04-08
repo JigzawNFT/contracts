@@ -36,7 +36,11 @@ Technicals details:
 
 ## On-chain addresses
 
-_TODO: Live deployed addresses here_
+Base mainnet:
+
+* `JigzawNFT` - [0x2C98fe404CEb07218eE408E7311895A099550Fb1](https://basescan.org/address/0x2C98fe404CEb07218eE408E7311895A099550Fb1)
+* `LotteryNFT` - [0x2afDCA75a879e109715F29965Ff52df90277Dc4D](https://basescan.org/address/0x2afDCA75a879e109715F29965Ff52df90277Dc4D)
+* `MintSwapPool` - [0xeB90b427b91cb6235FAfce3CD628164c21EAcbb4](https://basescan.org/address/0xeB90b427b91cb6235FAfce3CD628164c21EAcbb4)
 
 ## Development
 
@@ -112,6 +116,12 @@ Then run:
 
 ```shell
 $ bun deploy-public
+```
+
+To verify contracts on Base:
+
+```shell
+$ bun basescan-verify
 ```
 
 ## License

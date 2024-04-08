@@ -48,6 +48,7 @@ contract LotteryNFT is ERC721, ERC2981, ILotteryNFT {
       || type(ILotteryNFT).interfaceId == interfaceId;
   }
 
+
   /**
    * @dev See {IERC721Metadata-tokenURI}.
    */

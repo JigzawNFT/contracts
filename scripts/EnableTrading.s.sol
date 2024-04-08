@@ -1,27 +1,34 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.24;
 
-import { Script, console2 as c } from "forge-std/Script.sol";
-import { Strings } from "openzeppelin/utils/Strings.sol";
+import { console2 as c } from "forge-std/Script.sol";
+import { JigzawNFT } from "src/JigzawNFT.sol";
+import { LotteryNFT } from "src/LotteryNFT.sol";
 import { MintSwapPool } from "src/MintSwapPool.sol";
-import { PoolCurve } from "src/Common.sol";
+import { ScriptBase } from "./ScriptBase.sol";
 
-contract EnableTrading is Script {
-  address internal constant POOL_ADDRESS = 0x28c659ec5bF449062fcbAe73474f8a67E8502235;
-
+contract EnableTrading is ScriptBase {
   function run() public {
-    address wallet = msg.sender;
+    Config memory cfg = _getScriptConfig();
+
+    address wallet = cfg.owner;
     c.log("Wallet:", wallet);
 
     vm.startBroadcast(wallet);
 
     c.log("Enabling trading...");
 
-    MintSwapPool pool = MintSwapPool(POOL_ADDRESS);
+    JigzawNFT.Config memory jigzawNftConfig = _getJigzawNftConfig(cfg);
+    address payable jigzawNftAddress = _getDeployedAddress(type(JigzawNFT).creationCode, abi.encode(jigzawNftConfig));
+
+    MintSwapPool.Config memory poolConfig = _getMintSwapPoolConfig(cfg, jigzawNftAddress);
+    address poolAddress = _getDeployedAddress(type(MintSwapPool).creationCode, abi.encode(poolConfig));
+
+    MintSwapPool pool = MintSwapPool(poolAddress);
     pool.setEnabled(true);
 
     c.log("All done");
 
-    vm.stopBroadcast();        
+    vm.stopBroadcast();    
   }
 }

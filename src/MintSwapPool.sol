@@ -11,7 +11,7 @@ import { IERC721TokenReceiver } from "./ERC721.sol";
 /**
  * @dev NFT liquidity pool that both mints and swaps.
  *
- * Inspired by ERC404 and SudoSwap, this provides a way for users to mint, buy and sell NFTs easily from/to a self-managed 
+ * Inspired by SudoSwap, this provides a way for users to mint, buy and sell NFTs easily from/to a self-managed 
  * liquidity pool. 
  *
  * Initially no NFTs are minted. The first purchase mints an NFT. The price of an NFT increases with each mint. A minted 
