@@ -15,8 +15,6 @@ const contracts = {
   },
 }
 
-
 for (const [name, { address, constructorArgs }] of Object.entries(contracts)) {
-  console.log(`forge verify-contract --chain-id ${process.env.CHAIN_ID} --etherscan-api-key ${process.env.VERIFIER_API_KEY} --verifier-url ${process.env.VERIFIER_URL} --num-of-optimizations 200 --watch --constructor-args ${constructorArgs} ${address} src/${name}.sol:${name}`)
   await $`forge verify-contract --chain-id ${process.env.CHAIN_ID} --etherscan-api-key ${process.env.VERIFIER_API_KEY} --verifier-url ${process.env.VERIFIER_URL} --num-of-optimizations 200 --watch --constructor-args ${constructorArgs} ${address} src/${name}.sol:${name}`
 }
