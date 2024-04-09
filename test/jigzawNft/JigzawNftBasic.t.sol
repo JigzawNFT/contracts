@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.24;
 
+import { Ownable } from "openzeppelin/access/Ownable.sol";
 import { JigzawNFT } from "src/JigzawNFT.sol";
 import { JigzawNftTestBase } from "./JigzawNftTestBase.sol";
 
@@ -36,5 +37,16 @@ contract JigzawNftBasic is JigzawNftTestBase {
     (address rec, uint fee) = jigzawNft.getRoyaltyInfo();
     assertEq(rec, jigzawNft_addr, "getRoyaltyInfo.receiver");
     assertEq(fee, 2000, "getRoyaltyInfo.fee");
+  }
+
+  function test_ClaimGasRefunds_WhenOwner() public {
+    vm.prank(owner1);
+    jigzawNft.claimGasRefund();
+  }
+
+  function test_ClaimGasRefunds_WhenNotOwner() public {
+    vm.prank(wallet1);
+    vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, wallet1));
+    jigzawNft.claimGasRefund();
   }
 }

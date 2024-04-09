@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.24;
 
-import { Ownable } from "openzeppelin/access/Ownable.sol";
 import { IJigzawNFT } from "./IJigzawNFT.sol";
 import { LibErrors } from "./LibErrors.sol";
 import { PoolCurve, PoolStatus, QuoteError, BuyQuote, SellQuote } from "./Common.sol";
 import { ExponentialCurve } from "./ExponentialCurve.sol";
 import { IERC721TokenReceiver } from "./ERC721.sol";
+import { BlastOwnable } from "./BlastOwnable.sol";
 
 /**
  * @dev NFT liquidity pool that both mints and swaps.
@@ -27,7 +27,7 @@ import { IERC721TokenReceiver } from "./ERC721.sol";
  * Different ranges of NFTs (e.g token ids 1 to 20 could be one "range") can have different bonding curves. Each curve only 
  * has access to its own liquidity.
  */
-contract MintSwapPool is Ownable, IERC721TokenReceiver, ExponentialCurve {
+contract MintSwapPool is BlastOwnable, IERC721TokenReceiver, ExponentialCurve {
   IJigzawNFT public nft;
   PoolCurve public curve;
   PoolStatus public status;
@@ -51,7 +51,7 @@ contract MintSwapPool is Ownable, IERC721TokenReceiver, ExponentialCurve {
     PoolCurve curve;
   }
 
-  constructor(Config memory _config) Ownable(_config.owner) {
+  constructor(Config memory _config) BlastOwnable(_config.owner) {
     if (!validateSpotPrice(_config.curve.startPriceWei)) {
       revert LibErrors.InvalidMintPrice(_config.curve.startPriceWei);
     }

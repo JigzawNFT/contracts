@@ -48,6 +48,7 @@ contract ScriptBase is Script {
 
   function _getLotteryNftConfig(Config memory cfg, address jigzawNftAddress) internal pure returns (LotteryNFT.Config memory) {
     return LotteryNFT.Config({
+      owner: cfg.owner,
       minter: jigzawNftAddress,
       defaultImage: DEFAULT_LOTTERY_IMG,
       royaltyReceiver: cfg.devRoyaltyReceiver,

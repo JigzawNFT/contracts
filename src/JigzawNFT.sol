@@ -13,9 +13,10 @@ import { Ownable } from "openzeppelin/access/Ownable.sol";
 import { LibErrors } from "./LibErrors.sol";
 import { IJigzawNFT } from "./IJigzawNFT.sol";
 import { ILotteryNFT } from "./ILotteryNFT.sol";
+import { BlastOwnable } from "./BlastOwnable.sol";
 
 
-contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, IJigzawNFT, Ownable {
+contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, IJigzawNFT, BlastOwnable {
   using Strings for uint256;
 
   /**
@@ -133,7 +134,7 @@ contract JigzawNFT is Auth, ERC721, ERC2981, IERC4906, IJigzawNFT, Ownable {
   /**
    * @dev Constructor.
    */
-  constructor(Config memory _config) ERC721("Jigzaw", "JIGZAW") Ownable(_config.owner) {
+  constructor(Config memory _config) ERC721("Jigzaw", "JIGZAW") BlastOwnable(_config.owner) {
     minter = _config.minter;
     defaultImage = _config.defaultImage;
 

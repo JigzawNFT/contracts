@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.24;
 
+import { Ownable } from "openzeppelin/access/Ownable.sol";
 import { MintSwapPool } from "src/MintSwapPool.sol";
 import { LibErrors } from "src/LibErrors.sol";
 import { MintSwapPoolTestBase } from "./MintSwapPoolTestBase.sol";
@@ -20,6 +21,17 @@ contract MintSwapPoolBasic is MintSwapPoolTestBase {
 
     assertEq(s.lastMintId, 9);
     assertEq(s.priceWei, 1 gwei);
+  }
+
+  function test_ClaimGasRefunds_WhenOwner() public {
+    vm.prank(owner1);
+    pool.claimGasRefund();
+  }
+
+  function test_ClaimGasRefunds_WhenNotOwner() public {
+    vm.prank(wallet1);
+    vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, wallet1));
+    pool.claimGasRefund();
   }
 
   function test_MintPrice_Fuzz(uint128 price) public {

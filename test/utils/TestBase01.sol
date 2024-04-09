@@ -56,6 +56,7 @@ abstract contract TestBase01 is Test {
 
   function _getDefaultLotteryNftConfig(JigzawNFT t) internal view returns (LotteryNFT.Config memory) {
     return LotteryNFT.Config({
+      owner: owner1,
       minter: address(t),
       defaultImage: "img",
       royaltyReceiver: owner1,

@@ -7,8 +7,9 @@ import { IERC165 } from "openzeppelin/interfaces/IERC165.sol";
 import { Base64 } from "openzeppelin/utils/Base64.sol";
 import { LibErrors } from "./LibErrors.sol";
 import { ILotteryNFT } from "./ILotteryNFT.sol";
+import { BlastOwnable } from "./BlastOwnable.sol";
 
-contract LotteryNFT is ERC721, ERC2981, ILotteryNFT {
+contract LotteryNFT is ERC721, ERC2981, ILotteryNFT, BlastOwnable {
   /**
    * @dev Minter.
    */
@@ -23,6 +24,8 @@ contract LotteryNFT is ERC721, ERC2981, ILotteryNFT {
    * @dev Configuration parameters for constructor.
    */
   struct Config {
+    /** Owner. */
+    address owner;
     /** Minter. */
     address minter;
     /** Default token image as a data URI. */
@@ -36,7 +39,7 @@ contract LotteryNFT is ERC721, ERC2981, ILotteryNFT {
   /**
    * @dev Constructor.
    */
-  constructor(Config memory _config) ERC721("Jigzaw Lottery", "JIGZAW_LOTTERY") {
+  constructor(Config memory _config) ERC721("Jigzaw Lottery", "JIGZAW_LOTTERY") BlastOwnable(_config.owner) {
     minter = _config.minter;
     defaultImage = _config.defaultImage;
     _setDefaultRoyalty(_config.royaltyReceiver, _config.royaltyFeeBips);

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.24;
 
+import { Ownable } from "openzeppelin/access/Ownable.sol";
 import { LotteryNftTestBase } from "./LotteryNftTestBase.sol";
 
 contract LotteryNftBasic is LotteryNftTestBase {
@@ -14,5 +15,16 @@ contract LotteryNftBasic is LotteryNftTestBase {
     (address r1, uint r2) = lotteryNft.royaltyInfo(0, 100);
     assertEq(r1, owner1, "royaltyInfo.receiver");
     assertEq(r2, 10, "royaltyInfo.fee");
+  }
+
+  function test_ClaimGasRefunds_WhenOwner() public {
+    vm.prank(owner1);
+    lotteryNft.claimGasRefund();
+  }
+
+  function test_ClaimGasRefunds_WhenNotOwner() public {
+    vm.prank(wallet1);
+    vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, wallet1));
+    lotteryNft.claimGasRefund();
   }
 }
