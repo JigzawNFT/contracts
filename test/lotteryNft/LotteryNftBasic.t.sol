@@ -19,12 +19,12 @@ contract LotteryNftBasic is LotteryNftTestBase {
 
   function test_ClaimGasRefunds_WhenOwner() public {
     vm.prank(owner1);
-    lotteryNft.claimGasRefund();
+    lotteryNft.claimGasRefunds();
   }
 
   function test_ClaimGasRefunds_WhenNotOwner() public {
     vm.prank(wallet1);
     vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, wallet1));
-    lotteryNft.claimGasRefund();
+    lotteryNft.claimGasRefunds();
   }
 }

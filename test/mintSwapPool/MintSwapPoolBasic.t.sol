@@ -25,13 +25,13 @@ contract MintSwapPoolBasic is MintSwapPoolTestBase {
 
   function test_ClaimGasRefunds_WhenOwner() public {
     vm.prank(owner1);
-    pool.claimGasRefund();
+    pool.claimGasRefunds();
   }
 
   function test_ClaimGasRefunds_WhenNotOwner() public {
     vm.prank(wallet1);
     vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, wallet1));
-    pool.claimGasRefund();
+    pool.claimGasRefunds();
   }
 
   function test_MintPrice_Fuzz(uint128 price) public {

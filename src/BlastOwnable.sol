@@ -6,11 +6,9 @@ import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 /**
  * @dev Interface for Blast yield contract.
  * 
- * https://docs.blast.io/building/guides/eth-yield
  * https://docs.blast.io/building/guides/gas-fees
  */
 interface IBlast {
-  function configureAutomaticYield() external;
   function configureClaimableGas() external;
   function claimAllGas(address contractAddress, address recipientOfGas) external returns (uint256);
 }
@@ -37,12 +35,11 @@ contract BlastOwnable is Ownable {
     IS_BLAST = (size > 0);
     if (IS_BLAST) {
       IBlast c = IBlast(YIELD_CONTRACT_ADDRESS);
-      c.configureAutomaticYield();
       c.configureClaimableGas();
     }
   }
 
-  function claimGasRefund() external onlyOwner {
+  function claimGasRefunds() external onlyOwner {
     if (IS_BLAST) {
       IBlast(YIELD_CONTRACT_ADDRESS).claimAllGas(address(this), owner());
     }

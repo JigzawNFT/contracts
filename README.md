@@ -116,10 +116,13 @@ Then run:
 $ bun deploy-public
 ```
 
-To verify contracts on Base:
+To verify contracts on the public chain:
 
 ```shell
-$ bun basescan-verify
+$ export CHAIN_ID="..."
+$ export VERIFIER_API_KEY="..." # for blastscan/etc.
+$ export VERIFIER_URL="..." # e.g https://api.blastscan.io/api
+$ bun verify-contracts
 ```
 
 ## License

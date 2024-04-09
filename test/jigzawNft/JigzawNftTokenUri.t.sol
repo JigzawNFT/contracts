@@ -15,7 +15,6 @@ contract JigzawNftTokenUri is JigzawNftTestBase {
     jigzawNft.setLotteryNFT(lotteryNft_addr);
     vm.stopPrank();
 
-    uint id = 1;
     string memory uri = "";
 
     vm.prank(wallet1);

@@ -41,12 +41,12 @@ contract JigzawNftBasic is JigzawNftTestBase {
 
   function test_ClaimGasRefunds_WhenOwner() public {
     vm.prank(owner1);
-    jigzawNft.claimGasRefund();
+    jigzawNft.claimGasRefunds();
   }
 
   function test_ClaimGasRefunds_WhenNotOwner() public {
     vm.prank(wallet1);
     vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, wallet1));
-    jigzawNft.claimGasRefund();
+    jigzawNft.claimGasRefunds();
   }
 }
