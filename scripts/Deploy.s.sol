@@ -19,7 +19,7 @@ contract Deploy is ScriptBase {
     c.log("Deploying JigzawNFT...");
 
     JigzawNFT.Config memory jigzawNftConfig = _getJigzawNftConfig(cfg);
-    c.log("JigzawNFT config:");
+    c.log("JigzawNFT constructor args:");
     c.logBytes(abi.encode(jigzawNftConfig));
 
     JigzawNFT jigzawNft;
@@ -35,7 +35,7 @@ contract Deploy is ScriptBase {
     c.log("Deploying LotteryNFT...");
 
     LotteryNFT.Config memory lotteryNftConfig = _getLotteryNftConfig(cfg, jigzawNftAddress);
-    c.log("LotteryNFT config:");
+    c.log("LotteryNFT constructor args:");
     c.logBytes(abi.encode(lotteryNftConfig));
 
     LotteryNFT lotteryNft;
@@ -51,7 +51,7 @@ contract Deploy is ScriptBase {
     c.log("Deploying MintSwapPool...");
 
     MintSwapPool.Config memory poolConfig = _getMintSwapPoolConfig(cfg, jigzawNftAddress);
-    c.log("MintSwapPool config:");
+    c.log("MintSwapPool constructor args:");
     c.logBytes(abi.encode(poolConfig));
 
     MintSwapPool pool;

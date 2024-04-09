@@ -34,11 +34,11 @@ Technicals details:
 
 ## On-chain addresses
 
-Base mainnet:
+Blast mainnet:
 
-* `JigzawNFT` - [0x2C98fe404CEb07218eE408E7311895A099550Fb1](https://basescan.org/address/0x2C98fe404CEb07218eE408E7311895A099550Fb1)
-* `LotteryNFT` - [0x2afDCA75a879e109715F29965Ff52df90277Dc4D](https://basescan.org/address/0x2afDCA75a879e109715F29965Ff52df90277Dc4D)
-* `MintSwapPool` - [0xeB90b427b91cb6235FAfce3CD628164c21EAcbb4](https://basescan.org/address/0xeB90b427b91cb6235FAfce3CD628164c21EAcbb4)
+* `JigzawNFT` - [0xC28f799d293526d6525D823D56836E99C5eB3122](https://blastscan.io/address/0xC28f799d293526d6525D823D56836E99C5eB3122)
+* `LotteryNFT` - [0xeb714A107d48c0F0170DF71beA09C45622EDA4bc](https://blastscan.io/address/0xeb714A107d48c0F0170DF71beA09C45622EDA4bc)
+* `MintSwapPool` - [0xE30795EE4E5ea1b5C7ED735B418d54b50A0d2D22](https://blastscan.io/address/0xE30795EE4E5ea1b5C7ED735B418d54b50A0d2D22)
 
 ## Development
 
