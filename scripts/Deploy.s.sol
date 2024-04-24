@@ -80,6 +80,9 @@ contract Deploy is ScriptBase {
       c.log("Lottery already enabled on Jigzaw contract...");    
     }
 
+    c.log("Enable trading on MintSwapPool...");
+    pool.setEnabled(true);
+
     c.log("All done");
 
     vm.stopBroadcast();        
